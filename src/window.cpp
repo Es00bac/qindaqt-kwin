@@ -2652,6 +2652,13 @@ void Window::setDecoration(std::shared_ptr<KDecoration3::Decoration> decoration)
                 updateDecorationInputShape();
             }
         });
+        // QindaQt's corner tab can leave the rest of the title row visually
+        // transparent. A title geometry change also changes that cutout.
+        connect(decoration.get(), &KDecoration3::Decoration::titleBarChanged, this, [this]() {
+            if (!isDeleted()) {
+                updateDecorationInputShape();
+            }
+        });
         connect(decoratedWindow()->decoratedWindow(), &KDecoration3::DecoratedWindow::sizeChanged, this, [this]() {
             if (!isDeleted()) {
                 updateDecorationInputShape();
@@ -2683,6 +2690,17 @@ void Window::updateDecorationInputShape()
     const RectF outerRect = innerRect + borders + resizeBorders;
 
     m_decoration.inputRegion = Region(outerRect.roundedOut()) - innerRect.roundedIn();
+
+    // QindaQt's BeOS-style title tab paints only part of the otherwise full
+    // decoration top border. Keep the unpainted cutout transparent to input as
+    // well, so the next eligible window or desktop receives pointer events.
+    // The region is in frame coordinates and can only subtract from the
+    // decoration's normal input shape; clients cannot gain extra input area.
+    const QVariant cutout = decoration()->property("qindaqtTransparentDecorationRegion");
+    if (cutout.metaType() == QMetaType::fromType<QRegion>()) {
+        m_decoration.inputRegion = m_decoration.inputRegion.subtracted(
+            Region(cutout.value<QRegion>()));
+    }
 }
 
 void Window::updateDecorationBorderRadius()
