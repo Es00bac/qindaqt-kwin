@@ -87,6 +87,10 @@ no seeding for them (container-wm ADR-0291):
   virtual backend in an isolated `$HOME` and session bus, and lists the bus
   names, D-Bus answers and files it created, and saves `support-information.txt`.
 
+- `qindaqt/tools/check-coinstall-runtime <stage>`: runs stock KWin and the staged
+  fork simultaneously on private buses and HOME directories, proving native
+  endpoints and config separation without a system install.
+
 ## Helper tests
 
 `-DQINDAQT_KWIN_BUILD_TESTS=ON` builds the tests of qindaqt-kwin's own helpers
@@ -99,7 +103,7 @@ without KWin's autotests; run them with
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
       -DKDE_INSTALL_USE_QT_SYS_PATHS=ON -DKDE_INSTALL_LIBDIR=lib64 \
       -DKDE_INSTALL_LIBEXECDIR=/usr/libexec -DBUILD_TESTING=OFF
-cmake --build build
+nice -n12 ionice -c3 cmake --build build -- -j8 -l20
 DESTDIR=$PWD/stage cmake --install build
 ```
 
