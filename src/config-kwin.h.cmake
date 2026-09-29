@@ -14,7 +14,7 @@
 #cmakedefine01 KWIN_BUILD_GLOBALSHORTCUTS
 #cmakedefine01 KWIN_BUILD_X11
 #cmakedefine01 KWIN_BUILD_QACCESSIBILITYCLIENT
-constexpr QLatin1String KWIN_CONFIG("qindaqt-kwinrc");
+constexpr QLatin1String KWIN_CONFIG("qindaqt/kwinrc");
 constexpr QLatin1String KWIN_VERSION_STRING("${PROJECT_VERSION}");
 constexpr QLatin1String XCB_VERSION_STRING("${XCB_VERSION}");
 constexpr QLatin1String KWIN_KILLER_BIN("${KWIN_KILLER_BIN}");

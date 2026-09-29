@@ -890,7 +890,7 @@ void OutputConfigurationStore::registerOutputs(const QList<BackendOutput *> &out
 
 void OutputConfigurationStore::load()
 {
-    const QString jsonPath = QStandardPaths::locate(QStandardPaths::ConfigLocation, QStringLiteral("qindaqt-kwinoutputconfig.json"));
+    const QString jsonPath = QStandardPaths::locate(QStandardPaths::ConfigLocation, QStringLiteral("qindaqt/kwinoutputconfig.json"));
     if (jsonPath.isEmpty()) {
         return;
     }
@@ -1508,7 +1508,7 @@ void OutputConfigurationStore::save()
     setups["data"] = setupData;
     array.append(setups);
 
-    const QString path = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/qindaqt-kwinoutputconfig.json";
+    const QString path = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/qindaqt/kwinoutputconfig.json";
     QFile f(path);
     if (!f.open(QIODevice::WriteOnly)) {
         qCWarning(KWIN_OUTPUT_CONFIG, "Couldn't open output config file %s", qPrintable(path));

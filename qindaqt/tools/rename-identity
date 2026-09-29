@@ -86,14 +86,16 @@ RULES = [
     # Installed headers: /usr/include/kwin -> /usr/include/qindaqt-kwin.
     Rule("header directory", r"(\$\{KDE_INSTALL_INCLUDEDIR\}/)kwin(?=[/\s>\")])", r"\1qindaqt-kwin",
          files=["*CMakeLists.txt", "*.cmake", "*.cmake.in"]),
-    # Config files in $XDG_CONFIG_HOME and $XDG_STATE_HOME. The QindaQt session
-    # imports each one once from the KDE file (container-wm ADR-0289).
-    Rule("config kwinrc", r"(?<=[\"'])kwinrc(?=[\"'])", "qindaqt-kwinrc"),
-    Rule("config kwinrulesrc", r"(?<=[\"'])kwinrulesrc(?=[\"'])", "qindaqt-kwinrulesrc"),
-    Rule("config kwinoutputconfig.json", r"(?<=[\"'/])kwinoutputconfig\.json(?=[\"'])", "qindaqt-kwinoutputconfig.json"),
-    Rule("config kcminputrc", r"(?<=[\"'])kcminputrc(?=[\"'])", "qindaqt-kwininputrc"),
-    Rule("config kxkbrc", r"(?<=[\"'])kxkbrc(?=[\"'])", "qindaqt-kwinxkbrc"),
-    Rule("state kwinstaterc", r"(?<=[\"'])kwinstaterc(?=[\"'])", "qindaqt-kwinstaterc"),
+    # Config and state live in QindaQt's own folders, $XDG_CONFIG_HOME/qindaqt
+    # and $XDG_STATE_HOME/qindaqt; the QindaQt session imports each file once
+    # from its KDE counterpart (container-wm ADR-0289).
+    Rule("config kwinrc", r"(?<=[\"'])kwinrc(?=[\"'])", "qindaqt/kwinrc"),
+    Rule("config kwinrulesrc", r"(?<=[\"'])kwinrulesrc(?=[\"'])", "qindaqt/kwinrulesrc"),
+    Rule("config kwinoutputconfig.json", r"(?<=[\"'])kwinoutputconfig\.json(?=[\"'])", "qindaqt/kwinoutputconfig.json"),
+    Rule("config kwinoutputconfig.json path", r"(?<=[\"'])/kwinoutputconfig\.json(?=[\"'])", "/qindaqt/kwinoutputconfig.json"),
+    Rule("config kcminputrc", r"(?<=[\"'])kcminputrc(?=[\"'])", "qindaqt/kwininputrc"),
+    Rule("config kxkbrc", r"(?<=[\"'])kxkbrc(?=[\"'])", "qindaqt/kwinxkbrc"),
+    Rule("state kwinstaterc", r"(?<=[\"'])kwinstaterc(?=[\"'])", "qindaqt/kwinstaterc"),
     # D-Bus. Carve-outs keep their KDE names until PF21 because the KDE portal and
     # Spectacle call them: ScreenShot2, EIS (remote desktop, input capture),
     # TabletModeManager (/org/kde/KWin) and VirtualKeyboard (/VirtualKeyboard).

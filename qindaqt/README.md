@@ -19,8 +19,8 @@ upstream base is recorded in [UPSTREAM.md](UPSTREAM.md).
 | QML modules | `org.kde.kwin*` | `org.qindaqt.kwin*` (and `org.qindaqt.KWin.Effect.WindowView`) |
 | Data | `/usr/share/kwin-wayland` and the legacy `kwin/` roots | `/usr/share/qindaqt-kwin` only |
 | Hung-window helper | `/usr/libexec/kwin_killer_helper`, `org.kde.kwin.killer`; KAuth and ksysguard's helper for processes of root or another user | `/usr/libexec/qindaqt-kwin/killer-helper`, `org.qindaqt.kwin.killer`; for processes of root or another user, pkexec runs `/usr/libexec/qindaqt-kwin/terminate-process` under the polkit action `org.qindaqt.kwin.terminate-process` (always `auth_admin`); no KAuth |
-| Config (`$XDG_CONFIG_HOME`) | `kwinrc`, `kwinrulesrc`, `kwinoutputconfig.json`, `kcminputrc`, `kxkbrc` | `qindaqt-kwinrc`, `qindaqt-kwinrulesrc`, `qindaqt-kwinoutputconfig.json`, `qindaqt-kwininputrc`, `qindaqt-kwinxkbrc` |
-| State (`$XDG_STATE_HOME`) | `kwinstaterc` | `qindaqt-kwinstaterc` |
+| Config (`$XDG_CONFIG_HOME`) | `kwinrc`, `kwinrulesrc`, `kwinoutputconfig.json`, `kcminputrc`, `kxkbrc` | QindaQt's config folder: `qindaqt/kwinrc`, `qindaqt/kwinrulesrc`, `qindaqt/kwinoutputconfig.json`, `qindaqt/kwininputrc`, `qindaqt/kwinxkbrc` |
+| State (`$XDG_STATE_HOME`) | `kwinstaterc` | `qindaqt/kwinstaterc` |
 | D-Bus | service `org.kde.KWin`, interfaces `org.kde.KWin*`, `org.kde.kwin.*`, paths `/KWin`, `/Effects`, `/org/kde/KWin/…` | service `org.qindaqt.KWin`, interfaces `org.qindaqt.KWin*`, paths under `/org/qindaqt/KWin`; installed XML `org.qindaqt.KWin*.xml` |
 | Notifications, logging | `kwin.notifyrc`, `org_kde_kwin.categories` | `qindaqt-kwin.notifyrc` (component `qindaqt-kwin`), `qindaqt-kwin.categories` |
 | Translation domain | `kwin` | `qindaqt-kwin` (no catalogs are installed) |
@@ -40,7 +40,7 @@ systemd unit, the hicolor `kwin` icons, the kcfg files, `kwindowprop`.
   `org.kde.kwin.qpa`, the effect metadata key `org.kde.kwin.effect`.
 - The application and KGlobalAccel component name `kwin`: KF6GlobalAccel files
   KWin's shortcuts under it in `kglobalshortcutsrc`, shared until M6.
-  `KConfig::setMainConfigName("qindaqt-kwinrc")` keeps the default config
+  `KConfig::setMainConfigName("qindaqt/kwinrc")` keeps the default config
   separate anyway. Qt's QML disk cache therefore still lands in
   `~/.cache/kwin/qmlcache`; its entries are keyed by source path, so the fork
   and stock KWin never read each other's.
@@ -61,6 +61,19 @@ systemd unit, the hicolor `kwin` icons, the kcfg files, `kwindowprop`.
 A source line that must keep a stock name despite a rename rule carries the
 comment marker `qindaqt-identity: keep`.
 
+## QindaQt defaults
+
+The fork's compiled-in defaults are QindaQt's, so a fresh QindaQt session needs
+no seeding for them (container-wm ADR-0289):
+
+| Setting | KWin default | qindaqt-kwin default | Why |
+|---|---|---|---|
+| Window decoration (`[org.kde.kdecoration2] library`) | `org.kde.breeze`, fallback Aurorae | `org.qindaqt`, also the fallback | QindaQt's own decoration |
+| Window switcher (`[TabBox] LayoutName`) | `thumbnail_grid` | `qindaqt`, falling back to the bundled `thumbnail_grid` | QindaQt's switcher from container-wm |
+| `[Windows] ElectricBorderMaximize`, `ElectricBorderTiling` | on | off | an ordinary drag stays a move; QindaQt's Meta+Shift drag docks |
+| `[MouseBindings] CommandAll3` (Meta+right button) | Resize | Nothing | the shell's live customization chord receives it |
+| `[Effect-blur] BlurStrength`, `NoiseStrength` | 15, 5 | 8, 2 | Theming v2 materials (container-wm ADR-0206) |
+
 ## Tools
 
 - `qindaqt/tools/rename-identity [--check]`: applies the string-level
@@ -71,7 +84,7 @@ comment marker `qindaqt-identity: keep`.
   `qindaqt/manifests/`), or when a staged path still carries a stock name.
 - `qindaqt/tools/smoke-test <stage> <out>`: starts a staged install with the
   virtual backend in an isolated `$HOME` and session bus, and lists the bus
-  names, D-Bus answers and files it created.
+  names, D-Bus answers and files it created, and saves `support-information.txt`.
 
 ## Helper tests
 
@@ -103,5 +116,7 @@ In the build tree the program is `build/program/qindaqt-kwin`, because
 | Tablet proximity continues past the decoration | a pen entering range over a title bar reached no application | 0287 |
 | Build only what QindaQt ships | KCMs, KRunner, handbook, catalogs, migrations and the systemd unit would collide with stock KWin | 0289 |
 | Own program, library, plugin, data, config and D-Bus names | co-installation with stock KWin and Plasma | 0289 |
+| Config and state in QindaQt's folders | QindaQt conventions: the compositor's files sit with QindaQt's own | 0289 |
+| QindaQt's defaults compiled in | the fork is QindaQt's compositor, not a renamed KDE copy | 0289 |
 | Vendored kdecoration, decorations only from the fork namespace | KWin links kdecoration's private library, whose ABI follows Plasma releases | 0289 |
 | Native termination of hung processes of root or another user (`qindaqt/helpers/terminate-process`) | KAuth needed polkit-kde and ksysguard's helper; the root helper pins the process with a pidfd and checks its start time, so a reused PID is never signalled | 0289 |

@@ -43,8 +43,10 @@
 #include <QCommandLineParser>
 #include <QDBusInterface>
 #include <QDebug>
+#include <QDir>
 #include <QFileInfo>
 #include <QProcess>
+#include <QStandardPaths>
 #include <QWindow>
 #include <QtPlugin>
 #include <qplatformdefs.h>
@@ -269,7 +271,13 @@ int main(int argc, char *argv[])
     // QindaQt: the application name stays "kwin" (KF6GlobalAccel derives the
     // shortcut component from it until M6), so name the default config file
     // explicitly; KSharedConfig::openConfig() would otherwise open kwinrc.
-    KConfig::setMainConfigName(QStringLiteral("qindaqt-kwinrc"));
+    // AGENT-CONTRACT: the compositor's files live in QindaQt's folders,
+    // $XDG_CONFIG_HOME/qindaqt and $XDG_STATE_HOME/qindaqt, which the QindaQt
+    // session writes and imports into (container-wm ADR-0289). Create them
+    // before anything saves there.
+    KConfig::setMainConfigName(QStringLiteral("qindaqt/kwinrc"));
+    QDir().mkpath(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + QStringLiteral("/qindaqt"));
+    QDir().mkpath(QStandardPaths::writableLocation(QStandardPaths::GenericStateLocation) + QStringLiteral("/qindaqt"));
 #if defined(Q_OS_LINUX)
     // Some Linux distros may set ambient capabilities, so clear CAP_SYS_NICE here to avoid
     // leaking it to all child processes.

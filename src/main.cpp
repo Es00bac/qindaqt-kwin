@@ -84,7 +84,7 @@ Application::Application(int &argc, char **argv)
     , m_eventFilter(new XcbEventFilter())
 #endif
     , m_configLock(false)
-    , m_config(KSharedConfig::openConfig(QStringLiteral("qindaqt-kwinrc")))
+    , m_config(KSharedConfig::openConfig(QStringLiteral("qindaqt/kwinrc")))
     , m_kxkbConfig()
     , m_kdeglobals(KSharedConfig::openConfig(QStringLiteral("kdeglobals")))
 {
@@ -117,10 +117,10 @@ void Application::start()
         m_config->reparseConfiguration();
     }
     if (!m_kxkbConfig) {
-        m_kxkbConfig = KSharedConfig::openConfig(QStringLiteral("qindaqt-kwinxkbrc"), KConfig::NoGlobals);
+        m_kxkbConfig = KSharedConfig::openConfig(QStringLiteral("qindaqt/kwinxkbrc"), KConfig::NoGlobals);
     }
     if (!m_inputConfig) {
-        m_inputConfig = KSharedConfig::openConfig(QStringLiteral("qindaqt-kwininputrc"), KConfig::NoGlobals);
+        m_inputConfig = KSharedConfig::openConfig(QStringLiteral("qindaqt/kwininputrc"), KConfig::NoGlobals);
     }
 
     performStartup();

@@ -130,7 +130,7 @@ void KeyboardLayoutTest::initTestCase()
     qRegisterMetaType<KWin::Window *>();
     QVERIFY(waylandServer()->init(s_socketName));
 
-    kwinApp()->setKxkbConfig(KSharedConfig::openConfig(QStringLiteral("qindaqt-kwinxkbrc"), KConfig::NoGlobals));
+    kwinApp()->setKxkbConfig(KSharedConfig::openConfig(QStringLiteral("qindaqt/kwinxkbrc"), KConfig::NoGlobals));
 
     layoutGroup = kwinApp()->kxkbConfig()->group(QStringLiteral("Layout"));
     layoutGroup.deleteGroup();
