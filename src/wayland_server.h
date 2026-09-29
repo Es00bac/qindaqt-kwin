@@ -17,6 +17,8 @@
 namespace KWin
 {
 
+class SessionLockController;
+class SessionLockWindow;
 class AppMenuManagerInterface;
 class ClientConnection;
 class CompositorInterface;
@@ -184,6 +186,9 @@ public:
      * @returns true if screen is locked.
      */
     bool isScreenLocked() const;
+    SessionLockController *sessionLock() const;
+    bool isLockScreenInputSurface(SurfaceInterface *surface) const;
+    void registerSessionLockWindow(SessionLockWindow *window);
 
     void initWorkspace();
 
@@ -235,9 +240,9 @@ Q_SIGNALS:
     void initialized();
     void foreignTransientChanged(KWin::SurfaceInterface *child);
     void lockStateChanged();
+    void screenAboutToLock();
 
 private:
-    int createScreenLockerConnection();
     void initScreenLocker();
     void registerXdgGenericWindow(Window *window);
     void registerXdgToplevelWindow(XdgToplevelWindow *window);
@@ -247,15 +252,6 @@ private:
     void handleOutputRemoved(BackendOutput *output);
     void handleOutputEnabled(LogicalOutput *output);
     void handleOutputDisabled(LogicalOutput *output);
-
-    class LockScreenPresentationWatcher : public QObject
-    {
-    public:
-        LockScreenPresentationWatcher(WaylandServer *server);
-
-    private:
-        QSet<LogicalOutput *> m_signaledOutputs;
-    };
 
     Display *m_display = nullptr;
     CompositorInterface *m_compositor = nullptr;
@@ -279,7 +275,7 @@ private:
     QPointer<ClientConnection> m_xwaylandConnection;
     InputMethodV1Interface *m_inputMethod = nullptr;
     QPointer<ClientConnection> m_inputMethodServerConnection;
-    QPointer<ClientConnection> m_screenLockerClientConnection;
+    SessionLockController *m_sessionLock = nullptr;
     XdgForeignV2Interface *m_XdgForeign = nullptr;
     XdgActivationV1Integration *m_xdgActivationIntegration = nullptr;
 #if KWIN_BUILD_X11

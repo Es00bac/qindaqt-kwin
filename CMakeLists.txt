@@ -95,6 +95,13 @@ if (NOT Qt6Test_FOUND)
     set(BUILD_TESTING OFF CACHE BOOL "Build the testing tree.")
 endif()
 
+option(QINDAQT_SESSION_LOCK_TEST_AUTHORIZATION "Permit native-test lock clients; installation forbidden" OFF)
+if(QINDAQT_SESSION_LOCK_TEST_AUTHORIZATION)
+    if(NOT BUILD_TESTING)
+        message(FATAL_ERROR "Lock test authorization requires BUILD_TESTING")
+    endif()
+    install(CODE [[message(FATAL_ERROR "Lock authorization test builds cannot be installed")]])
+endif()
 if (BUILD_TESTING)
     find_package(KPipeWire)
 
@@ -511,6 +518,7 @@ set(QINDAQT_KWIN_PKEXEC "/usr/bin/pkexec" CACHE FILEPATH "pkexec, which runs qin
 option(QINDAQT_KWIN_BUILD_TESTS "Build the tests of qindaqt-kwin's own helpers without KWin's autotests" OFF)
 add_subdirectory(qindaqt)
 add_subdirectory(src)
+add_subdirectory(qindaqt/session-lock)
 
 if (BUILD_TESTING)
     if (Qt6WaylandClient_VERSION VERSION_GREATER_EQUAL "6.10.0")

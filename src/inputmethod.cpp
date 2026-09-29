@@ -20,9 +20,6 @@
 #include "wayland_server.h"
 #include "window.h"
 #include "workspace.h"
-#if KWIN_BUILD_SCREENLOCKER
-#include <KScreenLocker/KsldApp>
-#endif
 
 #include "internalinputmethodcontext.h"
 #include "pointer_input.h"
@@ -108,7 +105,7 @@ void InputMethod::init()
         m_inputMethodCrashes = 0;
     });
 #if KWIN_BUILD_SCREENLOCKER
-    connect(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::aboutToLock, this, &InputMethod::hide);
+    connect(waylandServer(), &WaylandServer::screenAboutToLock, this, &InputMethod::hide);
 #endif
 
     new VirtualKeyboardDBus(this);

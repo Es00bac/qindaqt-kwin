@@ -53,6 +53,7 @@ ecm_add_qtwayland_server_protocol_kde(WaylandProtocols_xml
         ${WaylandProtocols_DATADIR}/staging/drm-lease/drm-lease-v1.xml
         ${WaylandProtocols_DATADIR}/staging/ext-data-control/ext-data-control-v1.xml
         ${WaylandProtocols_DATADIR}/staging/ext-idle-notify/ext-idle-notify-v1.xml
+        ${WaylandProtocols_DATADIR}/staging/ext-session-lock/ext-session-lock-v1.xml
         ${WaylandProtocols_DATADIR}/staging/fifo/fifo-v1.xml
         ${WaylandProtocols_DATADIR}/staging/fractional-scale/fractional-scale-v1.xml
         ${WaylandProtocols_DATADIR}/staging/linux-drm-syncobj/linux-drm-syncobj-v1.xml

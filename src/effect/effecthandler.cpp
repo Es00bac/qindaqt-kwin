@@ -53,9 +53,6 @@
 #if KWIN_BUILD_TABBOX
 #include "tabbox/tabbox.h"
 #endif
-#if KWIN_BUILD_SCREENLOCKER
-#include <KScreenLocker/KsldApp>
-#endif
 
 #include <KDecoration3/Decoration>
 #include <KDecoration3/DecorationSettings>
@@ -214,12 +211,12 @@ EffectsHandler::EffectsHandler(Compositor *compositor, WorkspaceScene *scene)
 #endif
     connect(workspace()->screenEdges(), &ScreenEdges::approaching, this, &EffectsHandler::screenEdgeApproaching);
 #if KWIN_BUILD_SCREENLOCKER
-    connect(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged, this, [this] {
-        const bool locked = ScreenLocker::KSldApp::self()->lockState() == ScreenLocker::KSldApp::Locked;
+    connect(waylandServer(), &WaylandServer::lockStateChanged, this, [this] {
+        const bool locked = waylandServer()->isScreenLocked();
         Q_EMIT screenLockingChanged(locked);
     });
 
-    connect(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::aboutToLock, this, &EffectsHandler::screenAboutToLock);
+    connect(waylandServer(), &WaylandServer::screenAboutToLock, this, &EffectsHandler::screenAboutToLock);
 #endif
 
     m_cursor.position = input()->globalPointer();
@@ -1418,7 +1415,7 @@ QString EffectsHandler::supportInformation(const QString &name) const
 bool EffectsHandler::isScreenLocked() const
 {
 #if KWIN_BUILD_SCREENLOCKER
-    return ScreenLocker::KSldApp::self()->lockState() == ScreenLocker::KSldApp::Locked;
+    return waylandServer()->isScreenLocked();
 #else
     return false;
 #endif

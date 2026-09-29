@@ -212,6 +212,8 @@ public:
      * @returns Whether the SurfaceInterface is currently mapped
      */
     bool isMapped() const;
+    // Session-lock roles require no prior commit or buffer attachment.
+    bool isPristine() const;
 
     /**
      * Finds the SurfaceInterface at the given @p position in surface-local coordinates.

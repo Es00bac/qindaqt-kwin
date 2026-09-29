@@ -61,9 +61,6 @@
 #include <decorations/decoratedwindow.h>
 
 // screenlocker
-#if KWIN_BUILD_SCREENLOCKER
-#include <KScreenLocker/KsldApp>
-#endif
 // Qt
 #include <QAction>
 #include <QKeyEvent>
@@ -303,7 +300,6 @@ public:
             return false;
         }
 
-        ScreenLocker::KSldApp::self()->userActivity();
 
         auto window = input()->findToplevel(event->position);
         if (window && window->isClient() && window->isLockScreen()) {
@@ -324,7 +320,6 @@ public:
             return false;
         }
 
-        ScreenLocker::KSldApp::self()->userActivity();
 
         auto window = input()->findToplevel(event->position);
         if (window && window->isClient() && window->isLockScreen()) {
@@ -357,7 +352,6 @@ public:
             return false;
         }
 
-        ScreenLocker::KSldApp::self()->userActivity();
 
         auto seat = waylandServer()->seat();
         if (pointerSurfaceAllowed()) {
@@ -370,31 +364,6 @@ public:
     {
         if (!waylandServer()->isScreenLocked()) {
             return false;
-        }
-
-        // FIXME: Ideally we want to move all whitelisted global shortcuts here and process it here instead of lockscreen
-        if (event->key == Qt::Key_PowerOff) {
-            // globalshortcuts want to use this
-            return false;
-        }
-
-        ScreenLocker::KSldApp::self()->userActivity();
-
-        // send event to KSldApp for global accel
-        // if event is set to accepted it means a whitelisted shortcut was triggered
-        // in that case we filter it out and don't process it further
-        QKeyEvent keyEvent(event->state == KeyboardKeyState::Released ? QEvent::KeyRelease : QEvent::KeyPress,
-                           event->key,
-                           event->modifiers,
-                           event->nativeScanCode,
-                           event->nativeVirtualKey,
-                           0,
-                           event->text,
-                           event->state == KeyboardKeyState::Repeated);
-        keyEvent.setAccepted(false);
-        QCoreApplication::sendEvent(ScreenLocker::KSldApp::self(), &keyEvent);
-        if (keyEvent.isAccepted()) {
-            return true;
         }
 
         // continue normal processing
@@ -414,7 +383,6 @@ public:
             return false;
         }
 
-        ScreenLocker::KSldApp::self()->userActivity();
 
         Window *window = input()->findToplevel(event->pos);
         if (window && surfaceAllowed(window->surface())) {
@@ -430,7 +398,6 @@ public:
             return false;
         }
 
-        ScreenLocker::KSldApp::self()->userActivity();
 
         auto seat = waylandServer()->seat();
         seat->setTimestamp(event->time);
@@ -443,7 +410,6 @@ public:
             return false;
         }
 
-        ScreenLocker::KSldApp::self()->userActivity();
 
         auto seat = waylandServer()->seat();
         seat->setTimestamp(event->time);
@@ -510,13 +476,7 @@ public:
 private:
     bool surfaceAllowed(SurfaceInterface *s) const
     {
-        if (s) {
-            if (Window *t = waylandServer()->findWindow(s)) {
-                return t->isLockScreen() || t->isInputMethod() || t->isLockScreenOverlay();
-            }
-            return false;
-        }
-        return true;
+        return waylandServer()->isLockScreenInputSurface(s);
     }
     bool pointerSurfaceAllowed() const
     {

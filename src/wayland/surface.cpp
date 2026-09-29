@@ -348,6 +348,7 @@ void SurfaceInterfacePrivate::surface_set_input_region(Resource *resource, struc
 
 void SurfaceInterfacePrivate::surface_commit(Resource *resource)
 {
+    hasCommitted = true;
     const bool sync = subsurface.handle && subsurface.handle->isSynchronized();
 
     if (syncObjV1 && syncObjV1->maybeEmitProtocolErrors()) {
@@ -825,6 +826,11 @@ void SurfaceInterfacePrivate::applyState(SurfaceState *next)
     }
 
     Q_EMIT q->committed();
+}
+
+bool SurfaceInterface::isPristine() const
+{
+    return !d->hasCommitted && !d->pending->buffer && !d->current->buffer;
 }
 
 bool SurfaceInterfacePrivate::computeEffectiveMapped() const

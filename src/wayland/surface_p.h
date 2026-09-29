@@ -214,6 +214,7 @@ public:
     std::vector<std::unique_ptr<PresentationTimeFeedback>> pendingPresentationFeedbacks;
 
     bool m_tearingDown = false;
+    bool hasCommitted = false;
 
 protected:
     void surface_destroy_resource(Resource *resource) override;

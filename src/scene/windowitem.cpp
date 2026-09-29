@@ -5,6 +5,7 @@
 */
 
 #include "scene/windowitem.h"
+#include "wayland/seat.h"
 #include "effect/effecthandler.h"
 #include "internalwindow.h"
 #include "scene/decorationitem.h"
@@ -49,6 +50,7 @@ WindowItem::WindowItem(Window *window, Item *parent)
     connect(window, &Window::desktopsChanged, this, &WindowItem::updateVisibility);
     connect(window, &Window::offscreenRenderingChanged, this, &WindowItem::updateVisibility);
     connect(waylandServer(), &WaylandServer::lockStateChanged, this, &WindowItem::updateVisibility);
+    connect(waylandServer()->seat(), &SeatInterface::focusedTextInputSurfaceChanged, this, &WindowItem::updateVisibility);
     connect(workspace(), &Workspace::currentActivityChanged, this, &WindowItem::updateVisibility);
     connect(workspace(), &Workspace::currentDesktopChanged, this, &WindowItem::updateVisibility);
     updateVisibility();
@@ -160,7 +162,7 @@ bool WindowItem::computeVisibility() const
         return false;
     }
     if (waylandServer()->isScreenLocked()) {
-        return m_window->isLockScreen() || m_window->isInputMethod() || m_window->isLockScreenOverlay();
+        return waylandServer()->isLockScreenInputSurface(m_window->surface());
     }
     if (!m_window->isOnCurrentDesktop()) {
         if (m_forceVisibleByDesktopCount == 0) {

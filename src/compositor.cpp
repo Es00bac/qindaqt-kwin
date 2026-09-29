@@ -7,6 +7,7 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "compositor.h"
+#include "../qindaqt/session-lock/sessionlockcontroller.h"
 
 #include "config-kwin.h"
 
@@ -628,6 +629,7 @@ void Compositor::composite(RenderLoop *renderLoop)
 
     auto totalTimeQuery = std::make_unique<CpuRenderTimeQuery>();
     auto frame = std::make_shared<OutputFrame>(renderLoop, std::chrono::nanoseconds(1'000'000'000'000 / output->refreshRate()));
+    if (auto lock = waylandServer()->sessionLock()) { lock->trackFrame(output, frame); }
     std::optional<double> desiredArtificalHdrHeadroom;
 
     // brightness animations should be skipped when

@@ -7,6 +7,8 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 #include "wayland_server.h"
+#include "../qindaqt/session-lock/sessionlockcontroller.h"
+#include "../qindaqt/session-lock/sessionlockwindow.h"
 
 #include "config-kwin.h"
 
@@ -109,9 +111,6 @@
 #include <unistd.h>
 
 // screenlocker
-#if KWIN_BUILD_SCREENLOCKER
-#include <KScreenLocker/KsldApp>
-#endif
 
 namespace KWin
 {
@@ -156,6 +155,11 @@ public:
             return false;
         }
 
+        if (interfaceName == QByteArrayLiteral("ext_session_lock_manager_v1")) {
+            auto lock = waylandServer()->sessionLock();
+            return lock && lock->isTrustedLocker(client);
+        }
+        if (interfaceName == QByteArrayLiteral("kde_lockscreen_overlay_v1")) { return false; }
         if (client->processId() == getpid()) {
             return true;
         }
@@ -237,7 +241,7 @@ ClientConnection *WaylandServer::inputMethodConnection() const
 
 ClientConnection *WaylandServer::screenLockerClientConnection() const
 {
-    return m_screenLockerClientConnection;
+    return m_sessionLock ? m_sessionLock->client() : nullptr;
 }
 
 void WaylandServer::registerWindow(Window *window)
@@ -651,46 +655,10 @@ void WaylandServer::initWorkspace()
 
 void WaylandServer::initScreenLocker()
 {
-#if KWIN_BUILD_SCREENLOCKER
-    auto *screenLockerApp = ScreenLocker::KSldApp::self();
-
-    ScreenLocker::KSldApp::self()->setGreeterEnvironment(kwinApp()->processStartupEnvironment());
-
-    connect(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::aboutToLock, this, [this]() {
-        new LockScreenPresentationWatcher(this);
-    });
-
-    connect(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::aboutToStartGreeter, this, [this]() {
-        if (m_screenLockerClientConnection) {
-            m_screenLockerClientConnection->destroy();
-            delete m_screenLockerClientConnection;
-            m_screenLockerClientConnection = nullptr;
-        }
-        int clientFd = createScreenLockerConnection();
-        if (clientFd < 0) {
-            return;
-        }
-        ScreenLocker::KSldApp::self()->setWaylandFd(clientFd);
-    });
-
-    connect(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::unlocked, this, [this]() {
-        if (m_screenLockerClientConnection) {
-            m_screenLockerClientConnection->destroy();
-            delete m_screenLockerClientConnection;
-            m_screenLockerClientConnection = nullptr;
-        }
-
-        ScreenLocker::KSldApp::self()->setWaylandFd(-1);
-    });
-
-    connect(screenLockerApp, &ScreenLocker::KSldApp::lockStateChanged, this, &WaylandServer::lockStateChanged);
-
-    ScreenLocker::KSldApp::self()->initialize();
-
-    if (kwinApp()->initiallyLocked()) {
-        ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
-    }
-#endif
+    m_sessionLock = new SessionLockController(m_display, this);
+    connect(m_sessionLock, &SessionLockController::aboutToLock, this, &WaylandServer::screenAboutToLock);
+    connect(m_sessionLock, &SessionLockController::lockStateChanged, this, &WaylandServer::lockStateChanged);
+    if (kwinApp()->initiallyLocked()) { m_sessionLock->lockWithoutClient(); }
 }
 
 WaylandServer::SocketPairConnection WaylandServer::createConnection()
@@ -704,16 +672,6 @@ WaylandServer::SocketPairConnection WaylandServer::createConnection()
     ret.connection = m_display->createClient(sx[0]);
     ret.fd = sx[1];
     return ret;
-}
-
-int WaylandServer::createScreenLockerConnection()
-{
-    const auto socket = createConnection();
-    if (!socket.connection) {
-        return -1;
-    }
-    m_screenLockerClientConnection = socket.connection;
-    return socket.fd;
 }
 
 #if KWIN_BUILD_X11
@@ -804,14 +762,17 @@ XdgSurfaceWindow *WaylandServer::findXdgSurfaceWindow(SurfaceInterface *surface)
 
 bool WaylandServer::isScreenLocked() const
 {
-#if KWIN_BUILD_SCREENLOCKER
-    if (!kwinApp()->supportsLockScreen()) {
-        return false;
-    }
-    return ScreenLocker::KSldApp::self()->lockState() == ScreenLocker::KSldApp::Locked || ScreenLocker::KSldApp::self()->lockState() == ScreenLocker::KSldApp::AcquiringLock;
-#else
-    return false;
-#endif
+    return m_sessionLock && m_sessionLock->isLocked();
+}
+SessionLockController *WaylandServer::sessionLock() const { return m_sessionLock; }
+void WaylandServer::registerSessionLockWindow(SessionLockWindow *window) { registerWindow(window); }
+bool WaylandServer::isLockScreenInputSurface(SurfaceInterface *surface) const
+{
+    if (!m_sessionLock || !surface) { return false; }
+    if (m_sessionLock->isLockSurface(surface)) { return true; }
+    auto window = findWindow(surface);
+    return window && window->isInputMethod() && surface->client() == inputMethodConnection()
+        && m_sessionLock->isLockSurface(seat()->focusedKeyboardSurface());
 }
 
 bool WaylandServer::isKeyboardShortcutsInhibited() const
@@ -876,33 +837,6 @@ void WaylandServer::setRenderBackend(RenderBackend *backend)
     }
 }
 
-#if KWIN_BUILD_SCREENLOCKER
-WaylandServer::LockScreenPresentationWatcher::LockScreenPresentationWatcher(WaylandServer *server)
-{
-    connect(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::unlocked, this, [this] {
-        delete this;
-    });
-    connect(server, &WaylandServer::windowAdded, this, [this](Window *window) {
-        if (window->isLockScreen()) {
-            // only signal lockScreenShown once all outputs have been presented at least once
-            connect(window->output()->backendOutput()->renderLoop(), &RenderLoop::framePresented, this, [this, windowGuard = QPointer(window)]() {
-                // window might be destroyed before a frame is presented, so it's wrapped in QPointer
-                if (windowGuard) {
-                    m_signaledOutputs << windowGuard->output();
-                    if (m_signaledOutputs.size() == workspace()->outputs().size()) {
-                        ScreenLocker::KSldApp::self()->lockScreenShown();
-                        delete this;
-                    }
-                }
-            });
-        }
-    });
-    QTimer::singleShot(1000, this, [this]() {
-        ScreenLocker::KSldApp::self()->lockScreenShown();
-        delete this;
-    });
-}
-#endif
 }
 
 #include "moc_wayland_server.cpp"

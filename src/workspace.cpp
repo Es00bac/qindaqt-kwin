@@ -75,9 +75,6 @@
 #include <KStartupInfo>
 #endif
 // screenlocker
-#if KWIN_BUILD_SCREENLOCKER
-#include <KScreenLocker/KsldApp>
-#endif
 #include <KConfig>
 #include <KConfigGroup>
 #include <KLocalizedString>
@@ -357,7 +354,7 @@ void Workspace::init()
     });
 
 #if KWIN_BUILD_SCREENLOCKER
-    connect(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::locked, this, &Workspace::slotEndInteractiveMoveResize);
+    connect(waylandServer(), &WaylandServer::screenAboutToLock, this, &Workspace::slotEndInteractiveMoveResize);
 #endif
 
     const auto outputs = kwinApp()->outputBackend()->outputs();

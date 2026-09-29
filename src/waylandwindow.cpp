@@ -33,8 +33,7 @@ enum WaylandGeometryType {
 Q_DECLARE_FLAGS(WaylandGeometryTypes, WaylandGeometryType)
 
 WaylandWindow::WaylandWindow(SurfaceInterface *surface)
-    : m_isScreenLocker(surface->client() == waylandServer()->screenLockerClientConnection())
-    , m_pid(surface->client()->processId())
+    : m_pid(surface->client()->processId())
 {
     setSurface(surface);
 
@@ -75,7 +74,8 @@ bool WaylandWindow::isClient() const
 
 bool WaylandWindow::isLockScreen() const
 {
-    return m_isScreenLocker;
+    // Only ext-session-lock surfaces grant lock-screen identity.
+    return false;
 }
 
 bool WaylandWindow::isLocalhost() const

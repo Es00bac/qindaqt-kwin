@@ -35,9 +35,6 @@
 // KDecoration
 #include <KDecoration3/Decoration>
 // screenlocker
-#if KWIN_BUILD_SCREENLOCKER
-#include <KScreenLocker/KsldApp>
-#endif
 
 #include <KLocalizedString>
 
@@ -114,7 +111,7 @@ void PointerInputRedirection::init()
     connect(workspace(), &Workspace::outputsChanged, this, &PointerInputRedirection::updateAfterScreenChange);
 #if KWIN_BUILD_SCREENLOCKER
     if (kwinApp()->supportsLockScreen()) {
-        connect(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged, this, [this]() {
+        connect(waylandServer(), &WaylandServer::lockStateChanged, this, [this]() {
             if (waylandServer()->seat()->hasPointer()) {
                 waylandServer()->seat()->cancelPointerPinchGesture();
                 waylandServer()->seat()->cancelPointerSwipeGesture();
@@ -1059,7 +1056,7 @@ CursorImage::CursorImage(PointerInputRedirection *parent)
 
 #if KWIN_BUILD_SCREENLOCKER
     if (kwinApp()->supportsLockScreen()) {
-        connect(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged, this, &CursorImage::reevaluteSource);
+        connect(waylandServer(), &WaylandServer::lockStateChanged, this, &CursorImage::reevaluteSource);
     }
 #endif
     connect(m_pointer, &PointerInputRedirection::decorationChanged, this, &CursorImage::updateDecoration);

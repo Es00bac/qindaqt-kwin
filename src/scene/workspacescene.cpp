@@ -438,6 +438,7 @@ Scene::OverlayCandidates WorkspaceScene::overlayCandidates(ssize_t maxTotalCount
     QStack<ClipCorner> cornerStack;
     const auto overlayItems = m_overlayItem->sortedChildItems();
     for (Item *item : overlayItems | std::views::reverse) {
+        if (waylandServer()->isScreenLocked() && item != cursorItem()) { continue; }
         if (!item->isVisible() || !painted_delegate->viewport().intersects(item->mapToView(item->boundingRect(), painted_delegate))) {
             continue;
         }
@@ -704,6 +705,13 @@ void WorkspaceScene::paint(const RenderTarget &renderTarget, const QPoint &devic
         const Region deviceRepaint = deviceRegion & bounds;
         if (!deviceRepaint.isEmpty()) {
             m_renderer->renderItem(renderTarget, viewport, m_overlayItem.get(), PAINT_SCREEN_TRANSFORMED, deviceRepaint, WindowPaintData{}, [this](Item *item) {
+                // AGENT-GUARD: paint-only desktop chrome has no lock role and
+                // must never survive the black fallback or a locker crash.
+                if (waylandServer()->isScreenLocked() && item != m_overlayItem.get()) {
+                    auto ancestor = item;
+                    while (ancestor && ancestor != cursorItem()) { ancestor = ancestor->parentItem(); }
+                    if (!ancestor) { return true; }
+                }
                 return !painted_delegate->shouldRenderItem(item);
             }, [this](Item *item) {
                 return painted_delegate->shouldRenderHole(item);
