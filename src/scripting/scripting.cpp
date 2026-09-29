@@ -110,6 +110,10 @@ KWin::AbstractScript::AbstractScript(int id, QString scriptName, QString pluginN
 
     new ScriptAdaptor(this);
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/qindaqt/KWin/Scripting/Script") + QString::number(scriptId()), this, QDBusConnection::ExportAdaptors);
+    // AGENT-NOTE: carve-out until PF21 (container-wm ADR-0289). Gabbee's KWin
+    // backend runs scripts at /Scripting/Script<N> under the KDE service name; run()
+    // and stop() are this object's only public slots, as in the adaptor.
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/Scripting/Script") + QString::number(scriptId()), QStringLiteral("org.kde.kwin.Script"), this, QDBusConnection::ExportAllSlots); // qindaqt-identity: keep
 }
 
 KWin::AbstractScript::~AbstractScript()
@@ -680,6 +684,9 @@ KWin::Scripting::Scripting(QObject *parent)
     m_qmlEngine->rootContext()->setContextObject(new KLocalizedQmlContext(m_qmlEngine));
     init();
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/qindaqt/KWin/Scripting"), this, QDBusConnection::ExportScriptableContents | QDBusConnection::ExportScriptableInvokables);
+    // AGENT-NOTE: carve-out until PF21 (container-wm ADR-0289): Gabbee loads and
+    // unloads its focus script through /Scripting under the KDE service name.
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/Scripting"), QStringLiteral("org.kde.kwin.Scripting"), this, QDBusConnection::ExportScriptableContents | QDBusConnection::ExportScriptableInvokables); // qindaqt-identity: keep
     connect(Workspace::self(), &Workspace::configChanged, this, &Scripting::start);
     connect(Workspace::self(), &Workspace::workspaceInitialized, this, &Scripting::start);
 }
@@ -887,6 +894,7 @@ int KWin::Scripting::loadDeclarativeScript(const QString &filePath, const QStrin
 
 KWin::Scripting::~Scripting()
 {
+    QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/Scripting")); // qindaqt-identity: keep
     QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/org/qindaqt/KWin/Scripting"));
     s_self = nullptr;
 }

@@ -53,9 +53,10 @@ systemd unit, the hicolor `kwin` icons, the kcfg files, `kwindowprop`.
   `org.kde.kdecoration3`.
 - Carve-outs until PF21: the fork also owns `org.kde.KWin`, and ScreenShot2
   (`org.kde.KWin.ScreenShot2`), the EIS remote desktop and input capture
-  objects, TabletModeManager (`/org/kde/KWin`) and VirtualKeyboard
-  (`/VirtualKeyboard`) keep their KDE names, because the KDE portal, Spectacle
-  and Kirigami call them. The `X-KDE-*` privileged-client keys are honoured
+  objects, TabletModeManager (`/org/kde/KWin`), VirtualKeyboard
+  (`/VirtualKeyboard`) and Scripting (`/Scripting`, `/Scripting/Script<N>`, also
+  under the new names) keep their KDE names, because the KDE portal, Spectacle,
+  Kirigami and Gabbee call them. The `X-KDE-*` privileged-client keys are honoured
   until then too.
 
 A source line that must keep a stock name despite a rename rule carries the
