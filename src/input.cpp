@@ -1812,7 +1812,12 @@ public:
             QCoreApplication::sendEvent(decoration->decoration(), &leaveEvent);
         }
 
-        return true;
+        // QindaQt: proximity continues to the forward filter. tablet-v2 only
+        // sends motion to a surface that received proximity_in, and
+        // TabletToolV2Interface::setCurrentSurface() re-sends it only after a
+        // first one, so a pen entering range over a title bar was ignored by
+        // the application below until the pen left range again.
+        return false;
     }
 
     bool tabletToolAxisEvent(TabletToolAxisEvent *event) override
