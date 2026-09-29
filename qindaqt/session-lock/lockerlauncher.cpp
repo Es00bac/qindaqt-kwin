@@ -125,7 +125,7 @@ void LockerLauncher::setTestProgram(const QString &program)
 }
 QByteArray LockerLauncher::readTestOutput()
 {
-    return m_process.readAllStandardOutput();
+    return m_process.readAllStandardOutput() + m_process.readAllStandardError();
 }
 void LockerLauncher::stopTestFixture()
 {

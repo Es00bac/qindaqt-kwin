@@ -246,6 +246,16 @@ if(QINDAQT_SESSION_LOCK_TEST_AUTHORIZATION)
     target_compile_definitions(testNativeSessionLock PRIVATE
         QINDAQT_LOCK_PROBE_PATH="$<TARGET_FILE:qindaqt-lock-probe>"
         QINDAQT_LOCK_INJECTION_PATH="$<TARGET_FILE:qindaqt-lock-loader-witness>")
+    # External consumer interoperability is explicit, private and non-installable.
+    # PF7 acceptance sets this to the built Qt fixture; baseline server gates do not.
+    set(QINDAQT_PRIVATE_QT_LOCK_PROBE "" CACHE FILEPATH "Non-installed native Qt lock interoperability probe")
+    if(QINDAQT_PRIVATE_QT_LOCK_PROBE)
+        if(NOT EXISTS "${QINDAQT_PRIVATE_QT_LOCK_PROBE}")
+            message(FATAL_ERROR "Native Qt lock fixture is unavailable")
+        endif()
+        target_sources(testNativeSessionLock PRIVATE ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_lock_qt_test.cpp)
+        target_compile_definitions(testNativeSessionLock PRIVATE QINDAQT_PRIVATE_QT_LOCK_PROBE="${QINDAQT_PRIVATE_QT_LOCK_PROBE}")
+    endif()
     target_include_directories(testNativeSessionLock PRIVATE ${PROJECT_SOURCE_DIR}/src/plugins/screenshot ${PROJECT_SOURCE_DIR}/src/plugins/screencast)
     target_link_libraries(testNativeSessionLock KF6::Service KF6::I18n)
     ecm_qt_declare_logging_category(testNativeSessionLock HEADER screenshotlogging.h IDENTIFIER KWIN_SCREENSHOT CATEGORY_NAME kwin_screenshot DEFAULT_SEVERITY Warning)

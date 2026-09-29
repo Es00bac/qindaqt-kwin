@@ -97,3 +97,17 @@ parent cannot ptrace that disposable protected child. Actual private D-Bus prove
 clientless black fallback becomes Protected only after physical feedback. These
 fixtures are compile-time confined to the existing non-installable test build.
 The native Qt greeter/PAM process and service integration remain later slices.
+
+## Native Qt interoperability fixture
+
+The consumer builds the non-installed `qindaqt-private-lock-window`, using its
+real `qindaqt-session-lock` Qt shell integration. Set the explicit test-build
+CMake FILEPATH `QINDAQT_PRIVATE_QT_LOCK_PROBE` to that built executable, then run
+the full private matrix. The added `nativeQtSurfaces` rows require actual mapped
+roles, native input eligibility and physical framebuffer pixels on both outputs
+at normal and 150% scale, incremental hotplug/removal and crash-black protection.
+No PAM-success/unlock method is exposed by this fixture. The baseline server
+matrix without that external consumer remains a separate 27-check gate; PF7
+qualification requires the Qt rows too. Production builds contain no fixture
+path or authorization. Qt's initial shell construction commit is suppressed
+until configure acknowledgement; server security validation is unchanged.

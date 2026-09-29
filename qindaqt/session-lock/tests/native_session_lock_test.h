@@ -26,5 +26,9 @@ private Q_SLOTS:
     void launcherEnvironment();
     void launcherConnectionIsolation();
     void nativeLockBackendProtection();
+#if defined(QINDAQT_PRIVATE_QT_LOCK_PROBE)
+    void nativeQtSurfaces_data();
+    void nativeQtSurfaces();
+#endif
 };
 }
