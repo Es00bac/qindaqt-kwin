@@ -50,6 +50,7 @@ private Q_SLOTS:
     void initTestCase();
     void init();
     void cleanup();
+    void testTransparentDecorationCutout();
     void testAxis_data();
     void testAxis();
     void testDoubleClickOnAllDesktops();
@@ -154,6 +155,70 @@ void DecorationInputTest::init()
 void DecorationInputTest::cleanup()
 {
     Test::destroyWaylandConnection();
+}
+
+void DecorationInputTest::testTransparentDecorationCutout()
+{
+    // Exercise the downstream QindaQt contract through real stacked Wayland
+    // surfaces. A geometry/painter assertion alone cannot prove click-through.
+    auto pointer = std::unique_ptr<KWayland::Client::Pointer>(Test::waylandSeat()->createPointer());
+    QVERIFY(pointer->isValid());
+    QSignalSpy buttons(pointer.get(), &KWayland::Client::Pointer::buttonStateChanged);
+    auto [below, belowSurface, belowToplevel, belowDecoration] = showWindow();
+    QVERIFY(below);
+    below->move(QPoint(100, 100));
+    auto [above, aboveSurface, aboveToplevel, aboveDecoration] = showWindow();
+    QVERIFY(above);
+    QVERIFY(above->isDecorated());
+    above->move(QPoint(100, below->bufferGeometry().top() + 10));
+    above->setKeepAbove(true);
+    const auto originalFrame = above->frameGeometry();
+    auto *chrome = above->decoration();
+    const int titleHeight = above->frameMargins().top();
+    QVERIFY(titleHeight > 4);
+    const QPointF cutoutPoint = above->frameGeometry().topLeft()
+        + QPointF(400, titleHeight / 2.0);
+    const QPointF retainedPoint = above->frameGeometry().topLeft()
+        + QPointF(150, titleHeight / 2.0);
+    QVERIFY(below->bufferGeometry().contains(cutoutPoint));
+    QVERIFY(above->hitTest(cutoutPoint));
+
+    quint32 timestamp = 1;
+    // The decoration publishes its cutout before notifying titleBarChanged.
+    chrome->setProperty("qindaqtTransparentDecorationRegion",
+                        QRegion(QRect(300, -8, 220, titleHeight + 8)));
+    chrome->titleBarChanged();
+    QVERIFY(!above->hitTest(cutoutPoint));
+    QVERIFY(above->hitTest(retainedPoint));
+    MOTION(cutoutPoint);
+    QCOMPARE(input()->pointer()->focus(), below);
+    QVERIFY(Test::waylandSync());
+    QTRY_COMPARE(pointer->enteredSurface(), belowSurface.get());
+    QVERIFY(!input()->pointer()->decoration());
+    PRESS;
+    RELEASE;
+    QVERIFY(Test::waylandSync());
+    QTRY_COMPARE(buttons.count(), 2);
+    QCOMPARE(pointer->enteredSurface(), belowSurface.get());
+    QCOMPARE(above->frameGeometry(), originalFrame);
+    QVERIFY(workspace()->moveResizeWindow() != above);
+
+    // A retained painted title still belongs to the upper decoration.
+    MOTION(retainedPoint);
+    QTRY_VERIFY(input()->pointer()->decoration());
+    QCOMPARE(input()->pointer()->decoration()->window(), above);
+
+    // Removing the property (another theme) restores stock full-width input;
+    // invalid values likewise cannot expand or silently subtract input.
+    chrome->setProperty("qindaqtTransparentDecorationRegion", QVariant());
+    chrome->titleBarChanged();
+    QVERIFY(above->hitTest(cutoutPoint));
+    MOTION(cutoutPoint);
+    QTRY_VERIFY(input()->pointer()->decoration());
+    QCOMPARE(input()->pointer()->decoration()->window(), above);
+    chrome->setProperty("qindaqtTransparentDecorationRegion", QStringLiteral("invalid"));
+    chrome->titleBarChanged();
+    QVERIFY(above->hitTest(cutoutPoint));
 }
 
 void DecorationInputTest::testAxis_data()
