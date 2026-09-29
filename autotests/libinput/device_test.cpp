@@ -176,8 +176,8 @@ T dbusProperty(const QString &name, const char *property)
 {
     QDBusInterface interface{
         QStringLiteral("org.kde.kwin.tests.libinputdevice"),
-        QStringLiteral("/org/kde/KWin/InputDevice/") + name,
-        QStringLiteral("org.kde.KWin.InputDevice")};
+        QStringLiteral("/org/qindaqt/KWin/InputDevice/") + name,
+        QStringLiteral("org.qindaqt.KWin.InputDevice")};
     return interface.property(property).value<T>();
 }
 }

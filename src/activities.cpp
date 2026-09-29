@@ -34,7 +34,8 @@ Activities::Activities()
     connect(m_controller, &KActivities::Controller::currentActivityChanged, this, &Activities::slotCurrentChanged);
     connect(m_controller, &KActivities::Controller::serviceStatusChanged, this, &Activities::slotServiceStatusChanged);
 
-    m_config = KSharedConfig::openStateConfig();
+    // QindaQt: not the application-name default, which would be kwinstaterc.
+    m_config = KSharedConfig::openStateConfig(QStringLiteral("qindaqt-kwinstaterc"));
     auto lastDesktopConfig = m_config->group("Activities").group("LastVirtualDesktop");
 
     // migrate old config

@@ -39,6 +39,7 @@
 #include <KSignalHandler>
 
 // Qt
+#include <KConfig>
 #include <QCommandLineParser>
 #include <QDBusInterface>
 #include <QDebug>
@@ -265,6 +266,10 @@ pid_t ApplicationWayland::xwaylandPid() const
 
 int main(int argc, char *argv[])
 {
+    // QindaQt: the application name stays "kwin" (KF6GlobalAccel derives the
+    // shortcut component from it until M6), so name the default config file
+    // explicitly; KSharedConfig::openConfig() would otherwise open kwinrc.
+    KConfig::setMainConfigName(QStringLiteral("qindaqt-kwinrc"));
 #if defined(Q_OS_LINUX)
     // Some Linux distros may set ambient capabilities, so clear CAP_SYS_NICE here to avoid
     // leaking it to all child processes.
@@ -438,8 +443,8 @@ int main(int argc, char *argv[])
 #endif
 
     if (parser.isSet(replaceOption)) {
-        QDBusMessage msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/KWin"),
-                                                          QStringLiteral("org.kde.KWin"), QStringLiteral("replace"));
+        QDBusMessage msg = QDBusMessage::createMethodCall(QStringLiteral("org.qindaqt.KWin"), QStringLiteral("/org/qindaqt/KWin"),
+                                                          QStringLiteral("org.qindaqt.KWin"), QStringLiteral("replace"));
         QDBusConnection::sessionBus().call(msg, QDBus::NoBlock);
         return 0;
     }

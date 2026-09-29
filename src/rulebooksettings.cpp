@@ -21,7 +21,7 @@ RuleBookSettings::RuleBookSettings(KSharedConfig::Ptr config, QObject *parent)
 }
 
 RuleBookSettings::RuleBookSettings(QObject *parent)
-    : RuleBookSettings(KSharedConfig::openConfig(QStringLiteral("kwinrulesrc"), KConfig::NoGlobals), parent)
+    : RuleBookSettings(KSharedConfig::openConfig(QStringLiteral("qindaqt-kwinrulesrc"), KConfig::NoGlobals), parent)
 {
 }
 

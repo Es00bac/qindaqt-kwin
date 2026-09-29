@@ -36,9 +36,9 @@ using namespace KWin;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_dbus_interface-0");
 
-const QString s_destination{QStringLiteral("org.kde.KWin")};
-const QString s_path{QStringLiteral("/KWin")};
-const QString s_interface{QStringLiteral("org.kde.KWin")};
+const QString s_destination{QStringLiteral("org.qindaqt.KWin")};
+const QString s_path{QStringLiteral("/org/qindaqt/KWin")};
+const QString s_interface{QStringLiteral("org.qindaqt.KWin")};
 
 class TestDbusInterface : public QObject
 {

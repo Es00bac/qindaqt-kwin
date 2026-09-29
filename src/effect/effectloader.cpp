@@ -228,7 +228,7 @@ void ScriptedEffectLoader::queryAndLoadAll()
 
 QList<KPluginMetaData> ScriptedEffectLoader::findAllEffects() const
 {
-    // QindaQt: upstream also lists the legacy kwin/effects root; the identity
+    // QindaQt: upstream also lists the legacy qindaqt-kwin/effects root; the identity
     // rename maps both roots to qindaqt-kwin/effects, so list it once.
     return KPackage::PackageLoader::self()->listPackages(s_serviceType, QStringLiteral("qindaqt-kwin/effects"));
 }

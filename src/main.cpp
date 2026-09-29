@@ -84,7 +84,7 @@ Application::Application(int &argc, char **argv)
     , m_eventFilter(new XcbEventFilter())
 #endif
     , m_configLock(false)
-    , m_config(KSharedConfig::openConfig(QStringLiteral("kwinrc")))
+    , m_config(KSharedConfig::openConfig(QStringLiteral("qindaqt-kwinrc")))
     , m_kxkbConfig()
     , m_kdeglobals(KSharedConfig::openConfig(QStringLiteral("kdeglobals")))
 {
@@ -117,10 +117,10 @@ void Application::start()
         m_config->reparseConfiguration();
     }
     if (!m_kxkbConfig) {
-        m_kxkbConfig = KSharedConfig::openConfig(QStringLiteral("kxkbrc"), KConfig::NoGlobals);
+        m_kxkbConfig = KSharedConfig::openConfig(QStringLiteral("qindaqt-kwinxkbrc"), KConfig::NoGlobals);
     }
     if (!m_inputConfig) {
-        m_inputConfig = KSharedConfig::openConfig(QStringLiteral("kcminputrc"), KConfig::NoGlobals);
+        m_inputConfig = KSharedConfig::openConfig(QStringLiteral("qindaqt-kwininputrc"), KConfig::NoGlobals);
     }
 
     performStartup();
@@ -164,6 +164,10 @@ bool Application::wasCrash()
 
 void Application::createAboutData()
 {
+    // AGENT-NOTE: the component name stays "kwin": KF6GlobalAccel files KWin's
+    // shortcuts under it in kglobalshortcutsrc, which QindaQt shares until M6
+    // (container-wm ADR-0289). Config files, notifications and the translation
+    // domain are named explicitly as qindaqt-kwin instead.
     KAboutData aboutData(QStringLiteral("kwin"), // The program name used internally
                          i18n("KWin"), // A displayable program name string
                          KWIN_VERSION_STRING, // The program version string
@@ -221,7 +225,7 @@ void Application::setupMalloc()
 
 void Application::setupLocalizedString()
 {
-    KLocalizedString::setApplicationDomain(QByteArrayLiteral("kwin"));
+    KLocalizedString::setApplicationDomain(QByteArrayLiteral("qindaqt-kwin"));
 }
 
 void Application::createWorkspace()

@@ -105,7 +105,7 @@ KWinWrapper::~KWinWrapper()
 
 void KWinWrapper::run()
 {
-    m_kwinProcess->setProgram("kwin_wayland");
+    m_kwinProcess->setProgram("qindaqt-kwin");
 
     QStringList args;
 

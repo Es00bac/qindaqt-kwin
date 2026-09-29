@@ -28,7 +28,7 @@ FTraceLogger::FTraceLogger(QObject *parent)
     if (qEnvironmentVariableIsSet("KWIN_PERF_FTRACE")) {
         setEnabled(true);
     } else {
-        QDBusConnection::sessionBus().registerObject(QStringLiteral("/FTrace"), this, QDBusConnection::ExportScriptableContents);
+        QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/qindaqt/KWin/FTrace"), this, QDBusConnection::ExportScriptableContents);
     }
 }
 

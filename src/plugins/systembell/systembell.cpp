@@ -46,8 +46,8 @@ SystemBellEffect::SystemBellEffect()
     : m_configWatcher(KConfigWatcher::create(KSharedConfig::openConfig("kaccessrc")))
     , m_kdeglobals(QStringLiteral("kdeglobals"))
 {
-    QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/kde/KWin/Effect/SystemBell1"),
-                                                 QStringLiteral("org.kde.KWin.Effect.SystemBell1"),
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/qindaqt/KWin/Effect/SystemBell1"),
+                                                 QStringLiteral("org.qindaqt.KWin.Effect.SystemBell1"),
                                                  this,
                                                  QDBusConnection::ExportAllSlots);
 

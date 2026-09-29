@@ -36,16 +36,24 @@
 namespace KWin
 {
 
+// AGENT-NOTE: carve-out until PF21 (container-wm ADR-0289). The KDE portal,
+// Spectacle and Kirigami's tablet-mode watcher still reach ScreenShot2, the EIS
+// remote desktop and input capture objects, TabletModeManager (/org/kde/KWin)
+// and VirtualKeyboard (/VirtualKeyboard) through the KDE service name, so the fork owns
+// that name as well. Every other object exists only under /org/qindaqt/KWin.
+static const QString s_legacyServiceName = QStringLiteral("org.kde.KWin"); // qindaqt-identity: keep
+
 DBusInterface::DBusInterface(QObject *parent)
     : QObject(parent)
-    , m_serviceName(QStringLiteral("org.kde.KWin"))
+    , m_serviceName(QStringLiteral("org.qindaqt.KWin"))
 {
     (void)new KWinAdaptor(this);
 
     QDBusConnection dbus = QDBusConnection::sessionBus();
-    dbus.registerObject(QStringLiteral("/KWin"), this);
+    dbus.registerObject(QStringLiteral("/org/qindaqt/KWin"), this);
     dbus.registerService(m_serviceName);
-    dbus.connect(QString(), QStringLiteral("/KWin"), QStringLiteral("org.kde.KWin"), QStringLiteral("reloadConfig"),
+    dbus.registerService(s_legacyServiceName);
+    dbus.connect(QString(), QStringLiteral("/org/qindaqt/KWin"), QStringLiteral("org.qindaqt.KWin"), QStringLiteral("reloadConfig"),
                  Workspace::self(), SLOT(slotReloadConfig()));
 
     connect(Workspace::self(), &Workspace::showingDesktopChanged, this, &DBusInterface::onShowingDesktopChanged);
@@ -53,6 +61,7 @@ DBusInterface::DBusInterface(QObject *parent)
 
 DBusInterface::~DBusInterface()
 {
+    QDBusConnection::sessionBus().unregisterService(s_legacyServiceName);
     QDBusConnection::sessionBus().unregisterService(m_serviceName);
 }
 
@@ -158,7 +167,7 @@ QVariantMap DBusInterface::queryWindowInfo()
         [this](Window *t) {
             if (!t) {
                 QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(
-                    QStringLiteral("org.kde.KWin.Error.UserCancel"),
+                    QStringLiteral("org.qindaqt.KWin.Error.UserCancel"),
                     QStringLiteral("User cancelled the query")));
                 return;
             }
@@ -166,7 +175,7 @@ QVariantMap DBusInterface::queryWindowInfo()
                 QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createReply(clientToVariantMap(t)));
             } else {
                 QDBusConnection::sessionBus().send(m_replyQueryWindowInfo.createErrorReply(
-                    QStringLiteral("org.kde.KWin.Error.InvalidWindow"),
+                    QStringLiteral("org.qindaqt.KWin.Error.InvalidWindow"),
                     QStringLiteral("Tried to query information about an unmanaged window")));
             }
         });
@@ -229,8 +238,8 @@ CompositorDBusInterface::CompositorDBusInterface(Compositor *parent)
     connect(m_compositor, &Compositor::compositingToggled, this, &CompositorDBusInterface::compositingToggled);
     new CompositingAdaptor(this);
     QDBusConnection dbus = QDBusConnection::sessionBus();
-    dbus.registerObject(QStringLiteral("/Compositor"), this);
-    dbus.connect(QString(), QStringLiteral("/Compositor"), QStringLiteral("org.kde.kwin.Compositing"),
+    dbus.registerObject(QStringLiteral("/org/qindaqt/KWin/Compositor"), this);
+    dbus.connect(QString(), QStringLiteral("/org/qindaqt/KWin/Compositor"), QStringLiteral("org.qindaqt.KWin.Compositing"),
                  QStringLiteral("reinit"), this, SLOT(reinitialize()));
 }
 
@@ -294,8 +303,8 @@ VirtualDesktopManagerDBusInterface::VirtualDesktopManagerDBusInterface(VirtualDe
     qDBusRegisterMetaType<KWin::DBusDesktopDataVector>();
 
     new VirtualDesktopManagerAdaptor(this);
-    QDBusConnection::sessionBus().registerObject(QStringLiteral("/VirtualDesktopManager"),
-                                                 QStringLiteral("org.kde.KWin.VirtualDesktopManager"),
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/qindaqt/KWin/VirtualDesktopManager"),
+                                                 QStringLiteral("org.qindaqt.KWin.VirtualDesktopManager"),
                                                  this);
 
     connect(m_manager, &VirtualDesktopManager::currentChanged, this, [this]() {
@@ -439,8 +448,8 @@ PluginManagerDBusInterface::PluginManagerDBusInterface(PluginManager *manager)
 {
     new PluginsAdaptor(this);
 
-    QDBusConnection::sessionBus().registerObject(QStringLiteral("/Plugins"),
-                                                 QStringLiteral("org.kde.KWin.Plugins"),
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/qindaqt/KWin/Plugins"),
+                                                 QStringLiteral("org.qindaqt.KWin.Plugins"),
                                                  this);
 }
 

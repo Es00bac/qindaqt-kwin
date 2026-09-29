@@ -7,12 +7,8 @@ add_custom_target(
         ${CMAKE_CURRENT_BINARY_DIR}/org.kde.kwin.InputDevice.xml
 )
 
-install(
-    FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/org.kde.kwin.InputDevice.xml
-    DESTINATION
-        ${KDE_INSTALL_DBUSINTERFACEDIR}
-)
+# QindaQt: installed under its qindaqt-kwin name (container-wm ADR-0289).
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/org.kde.kwin.InputDevice.xml DESTINATION ${KDE_INSTALL_DBUSINTERFACEDIR} RENAME org.qindaqt.KWin.InputDevice.xml)
 
 target_sources(kwin PRIVATE
     connection.cpp

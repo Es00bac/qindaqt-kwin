@@ -20,13 +20,13 @@ namespace KWin
 static void announceChangedProperties(const QVariantMap &properties)
 {
     QDBusMessage message = QDBusMessage::createSignal(
-        QStringLiteral("/org/kde/KWin/NightLight"),
+        QStringLiteral("/org/qindaqt/KWin/NightLight"),
         QStringLiteral("org.freedesktop.DBus.Properties"),
         QStringLiteral("PropertiesChanged")
     );
 
     message.setArguments({
-        QStringLiteral("org.kde.KWin.NightLight"),
+        QStringLiteral("org.qindaqt.KWin.NightLight"),
         properties,
         QStringList(), // invalidated_properties
     });
@@ -101,13 +101,13 @@ NightLightDBusInterface::NightLightDBusInterface(NightLightManager *parent)
     });
 
     new NightLightAdaptor(this);
-    QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/kde/KWin/NightLight"), this);
-    QDBusConnection::sessionBus().registerService(QStringLiteral("org.kde.KWin.NightLight"));
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/qindaqt/KWin/NightLight"), this);
+    QDBusConnection::sessionBus().registerService(QStringLiteral("org.qindaqt.KWin.NightLight"));
 }
 
 NightLightDBusInterface::~NightLightDBusInterface()
 {
-    QDBusConnection::sessionBus().unregisterService(QStringLiteral("org.kde.KWin.NightLight"));
+    QDBusConnection::sessionBus().unregisterService(QStringLiteral("org.qindaqt.KWin.NightLight"));
 }
 
 bool NightLightDBusInterface::isInhibited() const

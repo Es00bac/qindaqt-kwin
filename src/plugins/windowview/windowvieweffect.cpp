@@ -21,8 +21,8 @@ using namespace std::chrono_literals;
 namespace KWin
 {
 
-static const QString s_dbusServiceName = QStringLiteral("org.kde.KWin.Effect.WindowView1");
-static const QString s_dbusObjectPath = QStringLiteral("/org/kde/KWin/Effect/WindowView1");
+static const QString s_dbusServiceName = QStringLiteral("org.qindaqt.KWin.Effect.WindowView1");
+static const QString s_dbusObjectPath = QStringLiteral("/org/qindaqt/KWin/Effect/WindowView1");
 
 WindowViewEffect::WindowViewEffect()
     : m_shutdownTimer(new QTimer(this))
@@ -31,7 +31,7 @@ WindowViewEffect::WindowViewEffect()
     , m_exposeClassAction(new QAction(this))
     , m_exposeClassCurrentDesktopAction(new QAction(this))
 {
-    qmlRegisterUncreatableType<WindowViewEffect>("org.kde.KWin.Effect.WindowView", 1, 0, "WindowView", QStringLiteral("WindowView cannot be created in QML"));
+    qmlRegisterUncreatableType<WindowViewEffect>("org.qindaqt.KWin.Effect.WindowView", 1, 0, "WindowView", QStringLiteral("WindowView cannot be created in QML"));
     WindowViewConfig::instance(effects->config());
     new WindowView1Adaptor(this);
 

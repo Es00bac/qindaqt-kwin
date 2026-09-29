@@ -34,8 +34,8 @@ namespace KWin
  * \code
  * DBusCall {
  *     id: dbus
- *     service: "org.kde.KWin"
- *     path: "/KWin"
+ *     service: "org.qindaqt.KWin"
+ *     path: "/org/qindaqt/KWin"
  *     method: "nextDesktop"
  *     Component.onCompleted: dbus.call()
  * }
@@ -45,8 +45,8 @@ namespace KWin
  * \code
  * DBusCall {
  *     id: dbus
- *     service: "org.kde.KWin"
- *     path: "/KWin"
+ *     service: "org.qindaqt.KWin"
+ *     path: "/org/qindaqt/KWin"
  *     method: "setCurrentDesktop"
  *     arguments: [1]
  *     Component.onCompleted: dbus.call()
@@ -57,8 +57,8 @@ namespace KWin
  * \code
  * DBusCall {
  *      id: dbus
- *      service: "org.kde.KWin"
- *      path: "/KWin"
+ *      service: "org.qindaqt.KWin"
+ *      path: "/org/qindaqt/KWin"
  *      method: "currentDesktop"
  *      onFinished: console.log(returnValue[0])
  *  }

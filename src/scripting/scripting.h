@@ -309,7 +309,7 @@ private:
 class KWIN_EXPORT Scripting : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.Scripting")
+    Q_CLASSINFO("D-Bus Interface", "org.qindaqt.KWin.Scripting")
 private:
     explicit Scripting(QObject *parent);
     QStringList scriptList;

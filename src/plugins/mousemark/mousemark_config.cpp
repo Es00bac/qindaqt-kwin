@@ -77,8 +77,8 @@ void MouseMarkEffectConfig::save()
     m_actionCollection->writeSettings();
     m_ui.editor->save(); // undo() will restore to this state from now on
 
-    OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
-                                         QStringLiteral("/Effects"),
+    OrgKdeKwinEffectsInterface interface(QStringLiteral("org.qindaqt.KWin"),
+                                         QStringLiteral("/org/qindaqt/KWin/Effects"),
                                          QDBusConnection::sessionBus());
     interface.reconfigureEffect(QStringLiteral("mousemark"));
 }

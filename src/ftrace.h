@@ -24,13 +24,13 @@ namespace KWin
  *
  * Usage: Either:
  *  Set the KWIN_PERF_FTRACE environment variable before starting the application
- *  Calling on DBus /FTrace org.kde.kwin.FTrace.setEnabled true
+ *  Calling on DBus /FTrace org.qindaqt.KWin.FTrace.setEnabled true
  * After having created the ftrace mount
  */
 class KWIN_EXPORT FTraceLogger : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.FTrace");
+    Q_CLASSINFO("D-Bus Interface", "org.qindaqt.KWin.FTrace");
     Q_PROPERTY(bool isEnabled READ isEnabled NOTIFY enabledChanged)
 
 public:

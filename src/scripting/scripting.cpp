@@ -109,7 +109,7 @@ KWin::AbstractScript::AbstractScript(int id, QString scriptName, QString pluginN
     }
 
     new ScriptAdaptor(this);
-    QDBusConnection::sessionBus().registerObject(QStringLiteral("/Scripting/Script") + QString::number(scriptId()), this, QDBusConnection::ExportAdaptors);
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/qindaqt/KWin/Scripting/Script") + QString::number(scriptId()), this, QDBusConnection::ExportAdaptors);
 }
 
 KWin::AbstractScript::~AbstractScript()
@@ -203,7 +203,7 @@ void KWin::Script::slotScriptLoadedFromFile()
         watcher->deleteLater();
 
         if (m_invocationContext.type() == QDBusMessage::MethodCallMessage) {
-            auto reply = m_invocationContext.createErrorReply("org.kde.kwin.Scripting.FileError", QString("Could not open %1").arg(fileName()));
+            auto reply = m_invocationContext.createErrorReply("org.qindaqt.KWin.Scripting.FileError", QString("Could not open %1").arg(fileName()));
             QDBusConnection::sessionBus().send(reply);
             m_invocationContext = QDBusMessage();
         }
@@ -679,7 +679,7 @@ KWin::Scripting::Scripting(QObject *parent)
     m_qmlEngine->setProperty("_kirigamiTheme", QStringLiteral("KirigamiPlasmaStyle"));
     m_qmlEngine->rootContext()->setContextObject(new KLocalizedQmlContext(m_qmlEngine));
     init();
-    QDBusConnection::sessionBus().registerObject(QStringLiteral("/Scripting"), this, QDBusConnection::ExportScriptableContents | QDBusConnection::ExportScriptableInvokables);
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/qindaqt/KWin/Scripting"), this, QDBusConnection::ExportScriptableContents | QDBusConnection::ExportScriptableInvokables);
     connect(Workspace::self(), &Workspace::configChanged, this, &Scripting::start);
     connect(Workspace::self(), &Workspace::workspaceInitialized, this, &Scripting::start);
 }
@@ -754,7 +754,7 @@ LoadScriptList KWin::Scripting::queryScriptsToLoad()
     }
     QMap<QString, QString> pluginStates = KConfigGroup(_config, QStringLiteral("Plugins")).entryMap();
 
-    // QindaQt: upstream also scans the legacy kwin/scripts root; the identity
+    // QindaQt: upstream also scans the legacy qindaqt-kwin/scripts root; the identity
     // rename maps both roots to qindaqt-kwin/scripts, so scan it once.
     const QStringList scriptFolders{
         QStringLiteral("qindaqt-kwin/scripts/"),
@@ -887,7 +887,7 @@ int KWin::Scripting::loadDeclarativeScript(const QString &filePath, const QStrin
 
 KWin::Scripting::~Scripting()
 {
-    QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/Scripting"));
+    QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/org/qindaqt/KWin/Scripting"));
     s_self = nullptr;
 }
 

@@ -68,8 +68,8 @@ HideCursorEffectConfig::HideCursorEffectConfig(QObject *parent, const KPluginMet
 void HideCursorEffectConfig::save()
 {
     KCModule::save();
-    OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
-                                         QStringLiteral("/Effects"),
+    OrgKdeKwinEffectsInterface interface(QStringLiteral("org.qindaqt.KWin"),
+                                         QStringLiteral("/org/qindaqt/KWin/Effects"),
                                          QDBusConnection::sessionBus());
     interface.reconfigureEffect(QStringLiteral("hidecursor"));
 }

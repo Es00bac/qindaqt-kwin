@@ -204,7 +204,7 @@ KWin.TabBoxSwitcher {
                     anchors.centerIn: parent
                     width: parent.width - Kirigami.Units.largeSpacing * 2
                     icon.source: "edit-none"
-                    text: i18ndc("kwin", "@info:placeholder no entries in the task switcher", "No open windows")
+                    text: i18ndc("qindaqt-kwin", "@info:placeholder no entries in the task switcher", "No open windows")
                     visible: thumbnailGridView.count === 0
                 }
 

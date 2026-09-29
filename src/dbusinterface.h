@@ -23,7 +23,7 @@ class PluginManager;
 class VirtualDesktopManager;
 
 /**
- * @brief This class is a wrapper for the org.kde.KWin D-Bus interface.
+ * @brief This class is a wrapper for the org.qindaqt.KWin D-Bus interface.
  *
  * The main purpose of this class is to be exported on the D-Bus as object /KWin.
  * It is a pure wrapper to provide the deprecated D-Bus methods which have been
@@ -39,7 +39,7 @@ class VirtualDesktopManager;
 class DBusInterface : public QObject, protected QDBusContext
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.kde.KWin")
+    Q_CLASSINFO("D-Bus Interface", "org.qindaqt.KWin")
 public:
     explicit DBusInterface(QObject *parent);
     ~DBusInterface() override;
@@ -101,7 +101,7 @@ private:
 class CompositorDBusInterface : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.Compositing")
+    Q_CLASSINFO("D-Bus Interface", "org.qindaqt.KWin.Compositing")
 
     /**
      * @brief Whether the Compositor is active. That is a Scene is present and the Compositor is
@@ -177,7 +177,7 @@ private:
 class VirtualDesktopManagerDBusInterface : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.kde.KWin.VirtualDesktopManager")
+    Q_CLASSINFO("D-Bus Interface", "org.qindaqt.KWin.VirtualDesktopManager")
 
     /**
      * The number of virtual desktops currently available.
@@ -248,7 +248,7 @@ private:
 class PluginManagerDBusInterface : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.kde.KWin.Plugins")
+    Q_CLASSINFO("D-Bus Interface", "org.qindaqt.KWin.Plugins")
 
     Q_PROPERTY(QStringList LoadedPlugins READ loadedPlugins)
     Q_PROPERTY(QStringList AvailablePlugins READ availablePlugins)

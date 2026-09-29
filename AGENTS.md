@@ -25,6 +25,9 @@ Read [`qindaqt/README.md`](qindaqt/README.md) before changing anything.
 - Never rewrite upstream history. Upstream fixes arrive only as a merge of an
   upstream release tag, recorded in [`qindaqt/UPSTREAM.md`](qindaqt/UPSTREAM.md)
   with the tag object and commit. Stay on the 6.6 line until a move is planned.
+- After every upstream merge run `qindaqt/tools/rename-identity`, review and
+  commit what it rewrites, and make sure `qindaqt/tools/rename-identity --check`
+  passes before handing off.
 
 ## Identity rules
 
@@ -32,6 +35,10 @@ Read [`qindaqt/README.md`](qindaqt/README.md) before changing anything.
   `kde-plasma/kwin-x11` or `kde-plasma/kdecoration` installs. A collision makes
   Portage refuse one of the two packages, which breaks the co-installation
   promise of ADR-0289.
+- Use the qindaqt-kwin names from `qindaqt/README.md` for every new file,
+  config file, D-Bus name, plugin namespace and QML URI. A stock name stays
+  only where the README lists it as a wire contract or a carve-out; such a
+  source line carries the comment marker `qindaqt-identity: keep`.
 - The C++ namespaces `KWin::` and `KDecoration3::` stay: the fork and stock
   libraries never load into one process, and keeping them keeps merges small.
 - Keep everything QindaQt adds that is not an edit of an upstream file under

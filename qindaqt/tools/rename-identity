@@ -22,7 +22,9 @@ if anything changes again; a non-idempotent rule would otherwise rename
 `qindaqt-kwin` into `qindaqt-qindaqt-kwin` on the next merge.
 AGENT-GUARD: names listed as wire contracts in qindaqt/README.md (Wayland
 protocol names, org.kde.kglobalaccel, org.freedesktop.*, the kglobalaccel
-component "kwin", the QPA plugin key) must never gain a rule here.
+component "kwin", the QPA plugin key) must never gain a rule here. A line that
+must keep a stock name despite a rule carries the comment marker
+`qindaqt-identity: keep` and says why.
 """
 
 import argparse
@@ -76,11 +78,41 @@ RULES = [
     Rule("QML type registrations", r"(qmlRegister\w*(?:<[^>]*>)?\(\s*)\"org\.kde\.kwin\"", r'\1"org.qindaqt.kwin"'),
     Rule("QML module URIs", r"\borg\.kde\.kwin(?=[./]" + QML_MODULE_SUFFIXES + r"\b)", "org.qindaqt.kwin"),
     Rule("QML module docs", r"(\\(?:in)?qmlmodule\s+)org\.kde\.kwin\b(?!\.)", r"\1org.qindaqt.kwin"),
+    # The program name. The internal QPA plugin only activates inside a binary
+    # with this name (src/plugins/qpa/main.cpp).
+    Rule("program name", r'(?<=")kwin_wayland(?=")', "qindaqt-kwin"),
     # The hung-window helper's desktop file id and logging category.
     Rule("killer helper id", r"\borg\.kde\.kwin\.killer\b", "org.qindaqt.kwin.killer"),
     # Installed headers: /usr/include/kwin -> /usr/include/qindaqt-kwin.
     Rule("header directory", r"(\$\{KDE_INSTALL_INCLUDEDIR\}/)kwin(?=[/\s>\")])", r"\1qindaqt-kwin",
          files=["*CMakeLists.txt", "*.cmake", "*.cmake.in"]),
+    # Config files in $XDG_CONFIG_HOME and $XDG_STATE_HOME. The QindaQt session
+    # imports each one once from the KDE file (container-wm ADR-0289).
+    Rule("config kwinrc", r"(?<=[\"'])kwinrc(?=[\"'])", "qindaqt-kwinrc"),
+    Rule("config kwinrulesrc", r"(?<=[\"'])kwinrulesrc(?=[\"'])", "qindaqt-kwinrulesrc"),
+    Rule("config kwinoutputconfig.json", r"(?<=[\"'/])kwinoutputconfig\.json(?=[\"'])", "qindaqt-kwinoutputconfig.json"),
+    Rule("config kcminputrc", r"(?<=[\"'])kcminputrc(?=[\"'])", "qindaqt-kwininputrc"),
+    Rule("config kxkbrc", r"(?<=[\"'])kxkbrc(?=[\"'])", "qindaqt-kwinxkbrc"),
+    Rule("state kwinstaterc", r"(?<=[\"'])kwinstaterc(?=[\"'])", "qindaqt-kwinstaterc"),
+    # D-Bus. Carve-outs keep their KDE names until PF21 because the KDE portal and
+    # Spectacle call them: ScreenShot2, EIS (remote desktop, input capture),
+    # TabletModeManager (/org/kde/KWin) and VirtualKeyboard (/VirtualKeyboard).
+    # Source file names of interface XML (*.xml) are not renamed; CMake renames
+    # the installed copies.
+    Rule("D-Bus service and interfaces", r"\borg\.kde\.KWin\b(?!\.(?:ScreenShot2|EIS|TabletModeManager)\b)(?![\w.]*\.xml\b)",
+         "org.qindaqt.KWin"),
+    Rule("D-Bus lower-case interfaces",
+         r"\borg\.kde\.kwin\.(Effects|Compositing|Scripting|Script|FTrace|ColorPicker|InputDevice)\b(?![\w.]*\.xml\b)",
+         r"org.qindaqt.KWin.\1"),
+    Rule("D-Bus object paths", r"(?<=[\"'])/org/kde/KWin(?=/(?!ScreenShot2\b|EIS/))", "/org/qindaqt/KWin"),
+    Rule("D-Bus main object path", r"(?<=[\"'])/KWin(?=[\"'])", "/org/qindaqt/KWin"),
+    Rule("D-Bus root object paths", r"(?<=[\"'])/(Compositor|VirtualDesktopManager|Plugins|Effects|FTrace|ColorPicker|Scripting)(?=[\"'/])",
+         r"/org/qindaqt/KWin/\1"),
+    # Translation domain. No catalogs ship yet, and stock kwin.mo is never used.
+    Rule("translation domain (build)", r'(TRANSLATION_DOMAIN=\\")kwin(?=\\")', r"\1qindaqt-kwin",
+         files=["*CMakeLists.txt", "*.cmake"]),
+    Rule("translation domain (code)", r'(setApplicationDomain\(QByteArrayLiteral\(")kwin(?="\))', r"\1qindaqt-kwin"),
+    Rule("translation domain (QML)", r'(\bi18nd[a-z]*\(\s*")kwin(?=")', r"\1qindaqt-kwin"),
 ]
 
 
@@ -94,13 +126,22 @@ def tracked_files(root):
         yield rel
 
 
+KEEP_MARKER = "qindaqt-identity: keep"
+
+
 def apply_rules(rel, text, counts):
-    for rule in RULES:
-        if rule.applies_to(rel):
-            text, n = rule.regex.subn(rule.replacement, text)
-            if counts is not None:
-                counts[rule.name] = counts.get(rule.name, 0) + n
-    return text
+    # Rules work line by line so a line carrying KEEP_MARKER (in any comment
+    # syntax) keeps a stock name on purpose, e.g. a D-Bus carve-out.
+    rules = [rule for rule in RULES if rule.applies_to(rel)]
+    out = []
+    for line in text.splitlines(keepends=True):
+        if KEEP_MARKER not in line:
+            for rule in rules:
+                line, n = rule.regex.subn(rule.replacement, line)
+                if counts is not None and n:
+                    counts[rule.name] = counts.get(rule.name, 0) + n
+        out.append(line)
+    return "".join(out)
 
 
 def main():

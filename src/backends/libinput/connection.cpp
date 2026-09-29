@@ -43,7 +43,7 @@ namespace LibInput
 class ConnectionAdaptor : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.kde.KWin.InputDeviceManager")
+    Q_CLASSINFO("D-Bus Interface", "org.qindaqt.KWin.InputDeviceManager")
     Q_PROPERTY(QStringList devicesSysNames READ devicesSysNames CONSTANT)
 
 private:
@@ -61,15 +61,15 @@ public:
             Q_EMIT deviceRemoved(inputDevice->sysName());
         });
 
-        QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/kde/KWin/InputDevice"),
-                                                     QStringLiteral("org.kde.KWin.InputDeviceManager"),
+        QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/qindaqt/KWin/InputDevice"),
+                                                     QStringLiteral("org.qindaqt.KWin.InputDeviceManager"),
                                                      this,
                                                      QDBusConnection::ExportAllProperties | QDBusConnection::ExportAllSignals | QDBusConnection::ExportScriptableContents);
     }
 
     ~ConnectionAdaptor() override
     {
-        QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/org/kde/KWin/InputDeviceManager"));
+        QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/org/qindaqt/KWin/InputDeviceManager"));
     }
 
     QStringList devicesSysNames()

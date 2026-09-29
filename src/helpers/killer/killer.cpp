@@ -118,7 +118,7 @@ bool hasPidAborted(pid_t pid)
 
 int main(int argc, char *argv[])
 {
-    KLocalizedString::setApplicationDomain(QByteArrayLiteral("kwin"));
+    KLocalizedString::setApplicationDomain(QByteArrayLiteral("qindaqt-kwin"));
     QApplication app(argc, argv);
     QApplication::setWindowIcon(QIcon::fromTheme(QStringLiteral("tools-report-bug")));
     QCoreApplication::setApplicationName(QStringLiteral("kwin_killer_helper"));

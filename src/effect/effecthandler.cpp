@@ -154,7 +154,7 @@ EffectsHandler::EffectsHandler(Compositor *compositor, WorkspaceScene *scene)
 
     new EffectsAdaptor(this);
     QDBusConnection dbus = QDBusConnection::sessionBus();
-    dbus.registerObject(QStringLiteral("/Effects"), this);
+    dbus.registerObject(QStringLiteral("/org/qindaqt/KWin/Effects"), this);
 
     connect(options, &Options::animationSpeedChanged, this, &EffectsHandler::reconfigureEffects);
 

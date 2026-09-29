@@ -11,10 +11,10 @@
 
 int main(int argc, char **argv)
 {
-    auto message = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/KWin"), QStringLiteral("org.kde.KWin"), QStringLiteral("queryWindowInfo"));
+    auto message = QDBusMessage::createMethodCall(QStringLiteral("org.qindaqt.KWin"), QStringLiteral("/org/qindaqt/KWin"), QStringLiteral("org.qindaqt.KWin"), QStringLiteral("queryWindowInfo"));
     const QDBusReply<QVariantMap> reply = QDBusConnection::sessionBus().call(message, QDBus::Block, INT_MAX);
     if (!reply.isValid()) {
-        if (reply.error().name() == QLatin1StringView("org.kde.KWin.Error.UserCancel")) {
+        if (reply.error().name() == QLatin1StringView("org.qindaqt.KWin.Error.UserCancel")) {
             return 0;
         }
         std::cerr << qPrintable(reply.error().name()) << ":" << qPrintable(reply.error().message()) << std::endl;

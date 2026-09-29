@@ -114,7 +114,7 @@ enum DataRole {
 class KWIN_EXPORT EffectsHandler : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.Effects")
+    Q_CLASSINFO("D-Bus Interface", "org.qindaqt.KWin.Effects")
 
     Q_PROPERTY(QStringList activeEffects READ activeEffects)
     Q_PROPERTY(QStringList loadedEffects READ loadedEffects)

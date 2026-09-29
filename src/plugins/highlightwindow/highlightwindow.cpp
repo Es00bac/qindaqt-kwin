@@ -27,16 +27,16 @@ HighlightWindowEffect::HighlightWindowEffect()
     connect(effects, &EffectsHandler::windowAdded, this, &HighlightWindowEffect::slotWindowAdded);
     connect(effects, &EffectsHandler::windowDeleted, this, &HighlightWindowEffect::slotWindowDeleted);
 
-    QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/kde/KWin/HighlightWindow"),
-                                                 QStringLiteral("org.kde.KWin.HighlightWindow"),
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/qindaqt/KWin/HighlightWindow"),
+                                                 QStringLiteral("org.qindaqt.KWin.HighlightWindow"),
                                                  this,
                                                  QDBusConnection::ExportScriptableContents);
-    QDBusConnection::sessionBus().registerService(QStringLiteral("org.kde.KWin.HighlightWindow"));
+    QDBusConnection::sessionBus().registerService(QStringLiteral("org.qindaqt.KWin.HighlightWindow"));
 }
 
 HighlightWindowEffect::~HighlightWindowEffect()
 {
-    QDBusConnection::sessionBus().unregisterService(QStringLiteral("org.kde.KWin.HighlightWindow"));
+    QDBusConnection::sessionBus().unregisterService(QStringLiteral("org.qindaqt.KWin.HighlightWindow"));
 }
 
 static bool isInitiallyHidden(EffectWindow *w)

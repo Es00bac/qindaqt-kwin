@@ -62,9 +62,9 @@ WaylandTestApplication::WaylandTestApplication(int &argc, char **argv, bool runO
     const QStringList configs{
         QStringLiteral("kaccessrc"),
         QStringLiteral("kglobalshortcutsrc"),
-        QStringLiteral("kcminputrc"),
-        QStringLiteral("kxkbrc"),
-        QStringLiteral("kwinoutputconfig.json"),
+        QStringLiteral("qindaqt-kwininputrc"),
+        QStringLiteral("qindaqt-kwinxkbrc"),
+        QStringLiteral("qindaqt-kwinoutputconfig.json"),
     };
     for (const QString &config : configs) {
         if (const QString &fileName = QStandardPaths::locate(QStandardPaths::ConfigLocation, config); !fileName.isEmpty()) {

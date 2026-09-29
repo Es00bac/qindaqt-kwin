@@ -27,7 +27,7 @@ set_target_properties(kwin PROPERTIES
 )
 
 target_compile_definitions(kwin PRIVATE
-    -DTRANSLATION_DOMAIN=\"kwin\"
+    -DTRANSLATION_DOMAIN=\"qindaqt-kwin\"
 )
 
 target_sources(kwin PRIVATE
@@ -412,7 +412,7 @@ if (KWIN_BUILD_X11)
     target_link_libraries(kwin_wayland KWinXwaylandServerModule)
 endif()
 target_compile_definitions(kwin_wayland PRIVATE
-    -DTRANSLATION_DOMAIN=\"kwin\"
+    -DTRANSLATION_DOMAIN=\"qindaqt-kwin\"
 )
 kcoreaddons_target_static_plugins(kwin_wayland NAMESPACE "qindaqt-kwin/effects/plugins")
 
@@ -436,20 +436,19 @@ add_custom_target(
 )
 
 if (KWIN_BUILD_NOTIFICATIONS)
-    install(FILES kwin.notifyrc DESTINATION ${KDE_INSTALL_KNOTIFYRCDIR})
+    # AGENT-CONTRACT: KNotification component "qindaqt-kwin" (compositor.cpp, sm.cpp).
+    install(FILES kwin.notifyrc DESTINATION ${KDE_INSTALL_KNOTIFYRCDIR} RENAME qindaqt-kwin.notifyrc)
 endif()
-install(
-    FILES
-        org.kde.KWin.VirtualDesktopManager.xml
-        org.kde.KWin.xml
-        org.kde.kwin.Compositing.xml
-        org.kde.kwin.Effects.xml
-        org.kde.KWin.Plugins.xml
-        ${CMAKE_CURRENT_BINARY_DIR}/org.kde.kwin.VirtualKeyboard.xml
-        ${CMAKE_CURRENT_BINARY_DIR}/org.kde.KWin.TabletModeManager.xml
-    DESTINATION
-        ${KDE_INSTALL_DBUSINTERFACEDIR}
-)
+# QindaQt: installed under qindaqt-kwin names (container-wm ADR-0289). The
+# VirtualKeyboard and TabletModeManager files still describe their org.kde.*
+# carve-out interfaces until PF21.
+install(FILES org.kde.KWin.VirtualDesktopManager.xml DESTINATION ${KDE_INSTALL_DBUSINTERFACEDIR} RENAME org.qindaqt.KWin.VirtualDesktopManager.xml)
+install(FILES org.kde.KWin.xml DESTINATION ${KDE_INSTALL_DBUSINTERFACEDIR} RENAME org.qindaqt.KWin.xml)
+install(FILES org.kde.kwin.Compositing.xml DESTINATION ${KDE_INSTALL_DBUSINTERFACEDIR} RENAME org.qindaqt.KWin.Compositing.xml)
+install(FILES org.kde.kwin.Effects.xml DESTINATION ${KDE_INSTALL_DBUSINTERFACEDIR} RENAME org.qindaqt.KWin.Effects.xml)
+install(FILES org.kde.KWin.Plugins.xml DESTINATION ${KDE_INSTALL_DBUSINTERFACEDIR} RENAME org.qindaqt.KWin.Plugins.xml)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/org.kde.kwin.VirtualKeyboard.xml DESTINATION ${KDE_INSTALL_DBUSINTERFACEDIR} RENAME org.qindaqt.KWin.VirtualKeyboard.xml)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/org.kde.KWin.TabletModeManager.xml DESTINATION ${KDE_INSTALL_DBUSINTERFACEDIR} RENAME org.qindaqt.KWin.TabletModeManager.xml)
 
 install(EXPORT KWinTargets DESTINATION "${KDE_INSTALL_CMAKEPACKAGEDIR}/QindaQtKWin" FILE QindaQtKWinTargets.cmake NAMESPACE QindaQtKWin:: )
 

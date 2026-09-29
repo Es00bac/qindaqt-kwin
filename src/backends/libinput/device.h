@@ -55,7 +55,7 @@ private:
 class KWIN_EXPORT Device : public InputDevice
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.kde.KWin.InputDevice")
+    Q_CLASSINFO("D-Bus Interface", "org.qindaqt.KWin.InputDevice")
     //
     // general
     Q_PROPERTY(bool keyboard READ isKeyboard CONSTANT)

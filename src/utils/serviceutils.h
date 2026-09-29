@@ -21,10 +21,16 @@
 namespace KWin
 {
 
-const static QString s_waylandInterfaceName = QStringLiteral("X-KDE-Wayland-Interfaces");
-const static QString s_dbusRestrictedInterfaceName = QStringLiteral("X-KDE-DBUS-Restricted-Interfaces");
+// QindaQt: a client's desktop file grants privileged Wayland globals and D-Bus
+// interfaces through qindaqt-kwin's own keys. AGENT-NOTE: the X-KDE-* keys are
+// honoured as well only until PF21 (container-wm ADR-0289); afterwards stock KDE
+// applications get no privileged access in a QindaQt session.
+const static QString s_waylandInterfaceName = QStringLiteral("X-QindaQt-KWin-Wayland-Interfaces");
+const static QString s_dbusRestrictedInterfaceName = QStringLiteral("X-QindaQt-KWin-DBus-Restricted-Interfaces");
+const static QString s_legacyWaylandInterfaceName = QStringLiteral("X-KDE-Wayland-Interfaces");
+const static QString s_legacyDbusRestrictedInterfaceName = QStringLiteral("X-KDE-DBUS-Restricted-Interfaces");
 
-static QStringList fetchProcessServiceField(const QString &executablePath, const QString &fieldName)
+static QStringList fetchProcessServiceField(const QString &executablePath, const QString &fieldName, const QString &legacyFieldName)
 {
     // needed to be able to use the logging category in a header static function
     static QLoggingCategory KWIN_UTILS("KWIN_UTILS", QtWarningMsg);
@@ -41,7 +47,8 @@ static QStringList fetchProcessServiceField(const QString &executablePath, const
         return {};
     }
 
-    const auto fieldValues = servicesFound.first()->property<QStringList>(fieldName);
+    const auto fieldValues = servicesFound.first()->property<QStringList>(fieldName)
+        + servicesFound.first()->property<QStringList>(legacyFieldName);
     if (KWIN_UTILS().isDebugEnabled()) {
         qCDebug(KWIN_UTILS) << "Interfaces found for" << executablePath << fieldName << ":" << fieldValues;
     }
@@ -54,12 +61,12 @@ static inline QStringList fetchRequestedInterfacesForDesktopId(const QString &de
     if (!service) {
         return {};
     }
-    return service->property<QStringList>(s_waylandInterfaceName);
+    return service->property<QStringList>(s_waylandInterfaceName) + service->property<QStringList>(s_legacyWaylandInterfaceName);
 }
 
 static inline QStringList fetchRequestedInterfaces(const QString &executablePath)
 {
-    return fetchProcessServiceField(executablePath, s_waylandInterfaceName);
+    return fetchProcessServiceField(executablePath, s_waylandInterfaceName, s_legacyWaylandInterfaceName);
 }
 
 static inline QStringList fetchRestrictedDBusInterfacesFromPid(const uint pid)
@@ -68,7 +75,7 @@ static inline QStringList fetchRestrictedDBusInterfacesFromPid(const uint pid)
     if (executablePath.isEmpty()) {
         return QStringList();
     }
-    return fetchProcessServiceField(executablePath, s_dbusRestrictedInterfaceName);
+    return fetchProcessServiceField(executablePath, s_dbusRestrictedInterfaceName, s_legacyDbusRestrictedInterfaceName);
 }
 
 } // namespace

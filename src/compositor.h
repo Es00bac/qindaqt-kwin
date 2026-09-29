@@ -56,7 +56,7 @@ public:
 
     /**
      * Re-initializes the Compositor completely.
-     * Connected to the D-Bus signal org.kde.KWin /KWin reinitCompositing
+     * Connected to the D-Bus signal org.qindaqt.KWin /KWin reinitCompositing
      */
     void reinitialize();
 

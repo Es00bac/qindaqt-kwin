@@ -50,7 +50,7 @@ void StickyKeysTest::initTestCase()
     kaccessConfig.sync();
 
     // Use a keyboard layout where right alt triggers Mod5/AltGr
-    KConfig kxkbrc("kxkbrc");
+    KConfig kxkbrc("qindaqt-kwinxkbrc");
     kxkbrc.group(QStringLiteral("Layout")).writeEntry("LayoutList", "us");
     kxkbrc.group(QStringLiteral("Layout")).writeEntry("VariantList", "altgr-intl");
     kxkbrc.sync();

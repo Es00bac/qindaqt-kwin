@@ -56,8 +56,8 @@ static QString outputName(const LogicalOutput *screen)
 OutputLocatorEffect::OutputLocatorEffect(QObject *parent)
     : Effect(parent)
 {
-    QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/kde/KWin/Effect/OutputLocator1"),
-                                                 QStringLiteral("org.kde.KWin.Effect.OutputLocator1"),
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/qindaqt/KWin/Effect/OutputLocator1"),
+                                                 QStringLiteral("org.qindaqt.KWin.Effect.OutputLocator1"),
                                                  this,
                                                  QDBusConnection::ExportAllSlots);
     connect(&m_showTimer, &QTimer::timeout, this, &OutputLocatorEffect::hide);

@@ -161,7 +161,7 @@ void OutputChangesTest::initTestCase()
 
     // delete the previous output config, to avoid previous runs messing with this one
     // TODO reset it per test function instead?
-    QFile(QStandardPaths::locate(QStandardPaths::ConfigLocation, QStringLiteral("kwinoutputconfig.json"))).remove();
+    QFile(QStandardPaths::locate(QStandardPaths::ConfigLocation, QStringLiteral("qindaqt-kwinoutputconfig.json"))).remove();
 
     kwinApp()->start();
     Test::setOutputConfig({
@@ -1562,7 +1562,7 @@ void OutputChangesTest::testGenerateConfigs()
     Test::setOutputConfig({outputInfo});
 
     // delete the previous config to avoid loading the config from workspace
-    QFile(QStandardPaths::locate(QStandardPaths::ConfigLocation, QStringLiteral("kwinoutputconfig.json"))).remove();
+    QFile(QStandardPaths::locate(QStandardPaths::ConfigLocation, QStringLiteral("qindaqt-kwinoutputconfig.json"))).remove();
 
     const auto outputs = kwinApp()->outputBackend()->outputs();
     OutputConfigurationStore configs;
@@ -1689,7 +1689,7 @@ void OutputChangesTest::testAutorotate_data()
 void OutputChangesTest::testAutorotate()
 {
     // delete the previous config to avoid clashes between test runs
-    QFile(QStandardPaths::locate(QStandardPaths::ConfigLocation, QStringLiteral("kwinoutputconfig.json"))).remove();
+    QFile(QStandardPaths::locate(QStandardPaths::ConfigLocation, QStringLiteral("qindaqt-kwinoutputconfig.json"))).remove();
 
     QFETCH(OutputTransform::Kind, panelOrientation);
     Test::setOutputConfig({Test::OutputInfo{

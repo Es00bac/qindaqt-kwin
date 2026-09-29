@@ -29,7 +29,7 @@ WindowsRunner::WindowsRunner()
     qDBusRegisterMetaType<RemoteActions>();
     qDBusRegisterMetaType<RemoteImage>();
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/WindowsRunner"), this);
-    QDBusConnection::sessionBus().registerService(QStringLiteral("org.kde.KWin"));
+    QDBusConnection::sessionBus().registerService(QStringLiteral("org.qindaqt.KWin"));
 }
 
 RemoteMatches WindowsRunner::Match(const QString &searchTerm)

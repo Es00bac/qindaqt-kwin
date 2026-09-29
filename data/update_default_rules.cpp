@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
         return 1;
     }
     KConfig src_cfg(file);
-    KConfig dest_cfg(QStringLiteral("kwinrulesrc"), KConfig::NoGlobals);
+    KConfig dest_cfg(QStringLiteral("qindaqt-kwinrulesrc"), KConfig::NoGlobals);
     KConfigGroup scg(&src_cfg, QStringLiteral("General"));
     KConfigGroup dcg(&dest_cfg, QStringLiteral("General"));
     int count = scg.readEntry("count", 0);
@@ -56,6 +56,6 @@ int main(int argc, char *argv[])
     dcg.sync();
     // Send signal to all kwin instances
     QDBusMessage message =
-        QDBusMessage::createSignal("/KWin", "org.kde.KWin", "reloadConfig");
+        QDBusMessage::createSignal("/org/qindaqt/KWin", "org.qindaqt.KWin", "reloadConfig");
     QDBusConnection::sessionBus().send(message);
 }

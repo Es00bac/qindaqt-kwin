@@ -107,7 +107,7 @@ bool InputDevice::isTouchpad() const
 
 ButtonRebindsFilter::ButtonRebindsFilter()
     : KWin::InputEventFilter(KWin::InputFilterOrder::ButtonRebind)
-    , m_configWatcher(KConfigWatcher::create(KSharedConfig::openConfig("kcminputrc")))
+    , m_configWatcher(KConfigWatcher::create(KSharedConfig::openConfig("qindaqt-kwininputrc")))
 {
     const QLatin1String groupName("ButtonRebinds");
     connect(m_configWatcher.get(), &KConfigWatcher::configChanged, this, [this, groupName](const KConfigGroup &group) {

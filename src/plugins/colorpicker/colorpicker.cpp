@@ -61,7 +61,7 @@ bool ColorPickerEffect::supported()
 ColorPickerEffect::ColorPickerEffect()
 {
     qDBusRegisterMetaType<QColor>();
-    QDBusConnection::sessionBus().registerObject(QStringLiteral("/ColorPicker"), this, QDBusConnection::ExportScriptableContents);
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/qindaqt/KWin/ColorPicker"), this, QDBusConnection::ExportScriptableContents);
 }
 
 ColorPickerEffect::~ColorPickerEffect()
@@ -87,7 +87,7 @@ QColor ColorPickerEffect::pick()
             hideInfoMessage();
             if (p == QPointF(-1, -1)) {
                 // error condition
-                QDBusConnection::sessionBus().send(m_replyMessage.createErrorReply(QStringLiteral("org.kde.kwin.ColorPicker.Error.Cancelled"), "Color picking got cancelled"));
+                QDBusConnection::sessionBus().send(m_replyMessage.createErrorReply(QStringLiteral("org.qindaqt.KWin.ColorPicker.Error.Cancelled"), "Color picking got cancelled"));
                 setPicking(false);
             } else {
                 const auto turnOffPicking = qScopeGuard([this] {

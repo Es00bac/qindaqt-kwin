@@ -27,7 +27,7 @@ class Window;
 class WindowsRunner : public Plugin, protected QDBusContext
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.kde.KWin.WindowsRunner")
+    Q_CLASSINFO("D-Bus Interface", "org.qindaqt.KWin.WindowsRunner")
 public:
     explicit WindowsRunner();
 

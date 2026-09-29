@@ -117,9 +117,9 @@ auto KeyboardLayoutTest::changeLayout(uint index)
 
 void KeyboardLayoutTest::callSession(const QString &method)
 {
-    QDBusMessage msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"),
+    QDBusMessage msg = QDBusMessage::createMethodCall(QStringLiteral("org.qindaqt.KWin"),
                                                       QStringLiteral("/Session"),
-                                                      QStringLiteral("org.kde.KWin.Session"),
+                                                      QStringLiteral("org.qindaqt.KWin.Session"),
                                                       method);
     msg << QLatin1String(); // session name
     QVERIFY(QDBusConnection::sessionBus().call(msg).type() != QDBusMessage::ErrorMessage);
@@ -130,7 +130,7 @@ void KeyboardLayoutTest::initTestCase()
     qRegisterMetaType<KWin::Window *>();
     QVERIFY(waylandServer()->init(s_socketName));
 
-    kwinApp()->setKxkbConfig(KSharedConfig::openConfig(QStringLiteral("kxkbrc"), KConfig::NoGlobals));
+    kwinApp()->setKxkbConfig(KSharedConfig::openConfig(QStringLiteral("qindaqt-kwinxkbrc"), KConfig::NoGlobals));
 
     layoutGroup = kwinApp()->kxkbConfig()->group(QStringLiteral("Layout"));
     layoutGroup.deleteGroup();
