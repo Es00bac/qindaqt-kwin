@@ -47,4 +47,7 @@ Read [`qindaqt/README.md`](qindaqt/README.md) before changing anything.
 ## Verification
 
 Build with the commands in `qindaqt/README.md`, run the focused autotests for
-what you changed, and report the commands and their results.
+what you changed, and report the commands and their results. A change that
+touches installation also stages an install and runs
+`qindaqt/tools/check-install-collisions <stage>`; it must report no collisions
+and no stock names.

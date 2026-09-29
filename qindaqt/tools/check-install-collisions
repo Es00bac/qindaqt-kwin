@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
+"""Prove that a staged qindaqt-kwin install can sit beside stock KWin.
+
+    qindaqt/tools/check-install-collisions <staged root> [--manifest FILE]...
+                                          [--package CATEGORY/NAME]...
+
+<staged root> is a DESTDIR (for example `DESTDIR=$PWD/stage cmake --install
+build`, or Portage's image directory). The check fails when
+
+1. a staged file or symlink has the same path as one that a stock package
+   installs (Portage would refuse one of the two packages), or
+2. a staged path still carries a stock identity token such as `kwin-wayland`,
+   `/kwin/`, `org.kde.KWin` or `libkdecorations3`; renamed headers under
+   /usr/include/qindaqt-kwin/ are exempt, because C++ include names such as
+   <KDecoration3/Decoration> stay on purpose.
+
+Stock manifests come from `qlist -e` for kde-plasma/kwin, kde-plasma/kwin-x11
+and kde-plasma/kdecoration unless --package or --manifest (one path per line)
+say otherwise. A package that is not installed makes the check fail rather
+than pass vacuously; pass a saved manifest instead.
+
+AGENT-GUARD: this is the co-installation proof of container-wm ADR-0289; do
+not weaken a token or skip a package to make a change pass. Rename the file.
+"""
+
+import argparse
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+DEFAULT_PACKAGES = ["kde-plasma/kwin", "kde-plasma/kwin-x11", "kde-plasma/kdecoration"]
+STOCK_TOKENS = re.compile(
+    r"kwin-wayland|kwin_wayland|kwin-x11|kwin_x11|(?<!/qindaqt)/kwin/|/libkwin\.|kwin_killer|"
+    r"org\.kde\.kwin|org\.kde\.KWin|org_kde_kwin|/KWin/|libkdecorations3|/KDecoration3/|org\.kde\.kdecoration3|"
+    r"kdecoration3_version\.h|/kwin\.(notifyrc|kcfg|upd)$|/kcm_kwin|plasma-kwin"
+)
+EXEMPT_PREFIXES = ("/usr/include/qindaqt-kwin/",)
+
+
+def staged_paths(root: Path):
+    for path in sorted(root.rglob("*")):
+        if path.is_symlink() or path.is_file():
+            yield "/" + path.relative_to(root).as_posix()
+
+
+def stock_paths(packages, manifests):
+    paths = set()
+    for manifest in manifests:
+        paths.update(line.strip() for line in Path(manifest).read_text().splitlines()
+                     if line.strip() and not line.startswith("#"))
+    for package in packages:
+        result = subprocess.run(["qlist", "-e", package], capture_output=True, text=True)
+        listed = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+        if result.returncode != 0 or not listed:
+            sys.exit(f"check-install-collisions: {package} is not installed; pass its manifest with --manifest")
+        print(f"compared with {package}: {len(listed)} paths")
+        paths.update(listed)
+    return paths
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("root", type=Path, help="staged install root (DESTDIR)")
+    parser.add_argument("--manifest", action="append", default=[], help="file listing stock paths, one per line")
+    parser.add_argument("--package", action="append", default=None, help="installed stock package to compare with")
+    args = parser.parse_args()
+    if not args.root.is_dir():
+        sys.exit(f"check-install-collisions: {args.root} is not a directory")
+    packages = args.package if args.package is not None else ([] if args.manifest else DEFAULT_PACKAGES)
+    stock = stock_paths(packages, args.manifest)
+    staged = list(staged_paths(args.root))
+    collisions = [path for path in staged if path in stock]
+    leftovers = [path for path in staged if STOCK_TOKENS.search(path) and not path.startswith(EXEMPT_PREFIXES)]
+    print(f"staged paths: {len(staged)}; stock paths: {len(stock)}")
+    for path in collisions:
+        print(f"collision: {path}")
+    for path in leftovers:
+        print(f"stock name: {path}")
+    if collisions or leftovers:
+        print(f"FAILED: {len(collisions)} collisions, {len(leftovers)} stock names")
+        return 1
+    print("OK: no collisions, no stock names")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -65,6 +65,10 @@ comment marker `qindaqt-identity: keep`.
 
 - `qindaqt/tools/rename-identity [--check]`: applies the string-level
   identity rules; idempotent; re-run after every upstream merge.
+- `qindaqt/tools/check-install-collisions <stage> [--manifest FILE]...`: fails
+  when a staged file has the same path as one from stock kde-plasma/kwin,
+  kwin-x11 or kdecoration (from `qlist -e`, or the saved 6.6.6 manifests in
+  `qindaqt/manifests/`), or when a staged path still carries a stock name.
 - `qindaqt/tools/smoke-test <stage> <out>`: starts a staged install with the
   virtual backend in an isolated `$HOME` and session bus, and lists the bus
   names, D-Bus answers and files it created.
