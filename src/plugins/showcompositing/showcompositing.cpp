@@ -26,7 +26,7 @@ void ShowCompositingEffect::prePaintScreen(ScreenPrePaintData &data, std::chrono
     effects->prePaintScreen(data, presentTime);
     if (!m_scene) {
         m_scene = std::make_unique<OffscreenQuickScene>();
-        m_scene->loadFromModule(QStringLiteral("org.kde.kwin.showcompositing"), QStringLiteral("Main"), {});
+        m_scene->loadFromModule(QStringLiteral("org.qindaqt.kwin.showcompositing"), QStringLiteral("Main"), {});
     }
 }
 

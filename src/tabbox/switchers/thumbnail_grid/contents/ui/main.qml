@@ -13,7 +13,7 @@ import QtQuick.Layouts
 import org.kde.plasma.core as PlasmaCore
 import org.kde.ksvg as KSvg
 import org.kde.plasma.components as PlasmaComponents3
-import org.kde.kwin as KWin
+import org.qindaqt.kwin as KWin
 import org.kde.kirigami as Kirigami
 
 KWin.TabBoxSwitcher {

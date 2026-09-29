@@ -16,7 +16,7 @@ class VirtualDesktop;
 
 /*!
  * \qmltype DesktopBackground
- * \inqmlmodule org.kde.kwin
+ * \inqmlmodule org.qindaqt.kwin
  * \brief The DesktopBackgroundItem type represents a desktop wallpaper window.
  *
  * The DesktopBackgroundItem type is a convenience helper that represents the desktop

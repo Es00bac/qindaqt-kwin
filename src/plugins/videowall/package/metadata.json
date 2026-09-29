@@ -1,5 +1,5 @@
 {
-    "KPackageStructure": "KWin/Script",
+    "KPackageStructure": "QindaQtKWin/Script",
     "KPlugin": {
         "Authors": [
             {
@@ -147,6 +147,6 @@
         "Name[zh_CN]": "视频墙",
         "Name[zh_TW]": "影片牆"
     },
-    "X-KDE-ConfigModule": "kwin/effects/configs/kcm_kwin4_genericscripted",
+    "X-KDE-ConfigModule": "qindaqt-kwin/effects/configs/kcm_kwin4_genericscripted",
     "X-Plasma-API": "javascript"
 }

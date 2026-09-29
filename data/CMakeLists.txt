@@ -3,4 +3,4 @@
 
 ########### install files ###############
 
-install(FILES org_kde_kwin.categories DESTINATION ${KDE_INSTALL_LOGGINGCATEGORIESDIR})
+install(FILES org_kde_kwin.categories DESTINATION ${KDE_INSTALL_LOGGINGCATEGORIESDIR} RENAME qindaqt-kwin.categories)

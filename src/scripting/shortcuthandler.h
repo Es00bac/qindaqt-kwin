@@ -18,7 +18,7 @@ namespace KWin
 
 /*!
  * \qmltype ShortcutHandler
- * \inqmlmodule org.kde.kwin
+ * \inqmlmodule org.qindaqt.kwin
  * \brief The ShortcutHandler type provides a way to register global key shortcuts.
  *
  * Example usage:

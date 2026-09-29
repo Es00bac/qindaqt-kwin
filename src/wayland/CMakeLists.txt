@@ -291,4 +291,4 @@ install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/wayland-single-pixel-buffer-v1-server-protocol.h
     ${CMAKE_CURRENT_BINARY_DIR}/wayland-xdg-toplevel-tag-v1-server-protocol.h
 
-    DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwin/wayland COMPONENT Devel)
+    DESTINATION ${KDE_INSTALL_INCLUDEDIR}/qindaqt-kwin/wayland COMPONENT Devel)

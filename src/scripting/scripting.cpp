@@ -690,33 +690,33 @@ void KWin::Scripting::init()
     qRegisterMetaType<QList<KWin::Window *>>();
     qRegisterMetaType<QList<KWin::VirtualDesktop *>>();
 
-    qmlRegisterType<DesktopBackgroundItem>("org.kde.kwin", 3, 0, "DesktopBackground");
-    qmlRegisterType<WindowThumbnailItem>("org.kde.kwin", 3, 0, "WindowThumbnail");
-    qmlRegisterType<DBusCall>("org.kde.kwin", 3, 0, "DBusCall");
-    qmlRegisterType<ScreenEdgeHandler>("org.kde.kwin", 3, 0, "ScreenEdgeHandler");
-    qmlRegisterType<ShortcutHandler>("org.kde.kwin", 3, 0, "ShortcutHandler");
-    qmlRegisterType<SwipeGestureHandler>("org.kde.kwin", 3, 0, "SwipeGestureHandler");
-    qmlRegisterType<PinchGestureHandler>("org.kde.kwin", 3, 0, "PinchGestureHandler");
-    qmlRegisterType<WindowModel>("org.kde.kwin", 3, 0, "WindowModel");
-    qmlRegisterType<WindowFilterModel>("org.kde.kwin", 3, 0, "WindowFilterModel");
-    qmlRegisterType<VirtualDesktopModel>("org.kde.kwin", 3, 0, "VirtualDesktopModel");
-    qmlRegisterUncreatableType<KWin::QuickSceneView>("org.kde.kwin", 3, 0, "SceneView", QStringLiteral("Can't instantiate an object of type SceneView"));
-    qmlRegisterType<ScriptedQuickSceneEffect>("org.kde.kwin", 3, 0, "SceneEffect");
+    qmlRegisterType<DesktopBackgroundItem>("org.qindaqt.kwin", 3, 0, "DesktopBackground");
+    qmlRegisterType<WindowThumbnailItem>("org.qindaqt.kwin", 3, 0, "WindowThumbnail");
+    qmlRegisterType<DBusCall>("org.qindaqt.kwin", 3, 0, "DBusCall");
+    qmlRegisterType<ScreenEdgeHandler>("org.qindaqt.kwin", 3, 0, "ScreenEdgeHandler");
+    qmlRegisterType<ShortcutHandler>("org.qindaqt.kwin", 3, 0, "ShortcutHandler");
+    qmlRegisterType<SwipeGestureHandler>("org.qindaqt.kwin", 3, 0, "SwipeGestureHandler");
+    qmlRegisterType<PinchGestureHandler>("org.qindaqt.kwin", 3, 0, "PinchGestureHandler");
+    qmlRegisterType<WindowModel>("org.qindaqt.kwin", 3, 0, "WindowModel");
+    qmlRegisterType<WindowFilterModel>("org.qindaqt.kwin", 3, 0, "WindowFilterModel");
+    qmlRegisterType<VirtualDesktopModel>("org.qindaqt.kwin", 3, 0, "VirtualDesktopModel");
+    qmlRegisterUncreatableType<KWin::QuickSceneView>("org.qindaqt.kwin", 3, 0, "SceneView", QStringLiteral("Can't instantiate an object of type SceneView"));
+    qmlRegisterType<ScriptedQuickSceneEffect>("org.qindaqt.kwin", 3, 0, "SceneEffect");
 
-    qmlRegisterSingletonType<DeclarativeScriptWorkspaceWrapper>("org.kde.kwin", 3, 0, "Workspace", [](QQmlEngine *qmlEngine, QJSEngine *jsEngine) {
+    qmlRegisterSingletonType<DeclarativeScriptWorkspaceWrapper>("org.qindaqt.kwin", 3, 0, "Workspace", [](QQmlEngine *qmlEngine, QJSEngine *jsEngine) {
         return new DeclarativeScriptWorkspaceWrapper();
     });
-    qmlRegisterSingletonInstance("org.kde.kwin", 3, 0, "Options", options);
+    qmlRegisterSingletonInstance("org.qindaqt.kwin", 3, 0, "Options", options);
 
-    qmlRegisterAnonymousType<KConfigPropertyMap>("org.kde.kwin", 3);
-    qmlRegisterAnonymousType<KWin::LogicalOutput>("org.kde.kwin", 3);
-    qmlRegisterAnonymousType<KWin::Window>("org.kde.kwin", 3);
-    qmlRegisterAnonymousType<KWin::VirtualDesktop>("org.kde.kwin", 3);
-    qmlRegisterAnonymousType<QAbstractItemModel>("org.kde.kwin", 3);
-    qmlRegisterAnonymousType<KWin::TileManager>("org.kde.kwin", 3);
+    qmlRegisterAnonymousType<KConfigPropertyMap>("org.qindaqt.kwin", 3);
+    qmlRegisterAnonymousType<KWin::LogicalOutput>("org.qindaqt.kwin", 3);
+    qmlRegisterAnonymousType<KWin::Window>("org.qindaqt.kwin", 3);
+    qmlRegisterAnonymousType<KWin::VirtualDesktop>("org.qindaqt.kwin", 3);
+    qmlRegisterAnonymousType<QAbstractItemModel>("org.qindaqt.kwin", 3);
+    qmlRegisterAnonymousType<KWin::TileManager>("org.qindaqt.kwin", 3);
     // TODO: call the qml types as the C++ types?
-    qmlRegisterUncreatableType<KWin::CustomTile>("org.kde.kwin", 3, 0, "CustomTile", QStringLiteral("Cannot create objects of type Tile"));
-    qmlRegisterUncreatableType<KWin::Tile>("org.kde.kwin", 3, 0, "Tile", QStringLiteral("Cannot create objects of type AbstractTile"));
+    qmlRegisterUncreatableType<KWin::CustomTile>("org.qindaqt.kwin", 3, 0, "CustomTile", QStringLiteral("Cannot create objects of type Tile"));
+    qmlRegisterUncreatableType<KWin::Tile>("org.qindaqt.kwin", 3, 0, "Tile", QStringLiteral("Cannot create objects of type AbstractTile"));
 }
 
 void KWin::Scripting::start()
@@ -754,14 +754,15 @@ LoadScriptList KWin::Scripting::queryScriptsToLoad()
     }
     QMap<QString, QString> pluginStates = KConfigGroup(_config, QStringLiteral("Plugins")).entryMap();
 
+    // QindaQt: upstream also scans the legacy kwin/scripts root; the identity
+    // rename maps both roots to qindaqt-kwin/scripts, so scan it once.
     const QStringList scriptFolders{
-        QStringLiteral("kwin-wayland/scripts/"),
-        QStringLiteral("kwin/scripts/"),
+        QStringLiteral("qindaqt-kwin/scripts/"),
     };
 
     LoadScriptList scriptsToLoad;
     for (const QString &scriptFolder : scriptFolders) {
-        const auto offers = KPackage::PackageLoader::self()->listPackages(QStringLiteral("KWin/Script"), scriptFolder);
+        const auto offers = KPackage::PackageLoader::self()->listPackages(QStringLiteral("QindaQtKWin/Script"), scriptFolder);
         for (const KPluginMetaData &service : offers) {
             const QString value = pluginStates.value(service.pluginId() + QLatin1String("Enabled"), QString());
             const bool enabled = value.isNull() ? service.isEnabledByDefault() : QVariant(value).toBool();

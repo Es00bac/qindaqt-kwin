@@ -69,7 +69,7 @@ LoadEffectFlags AbstractEffectLoader::readConfig(const QString &effectName, bool
     return LoadEffectFlags();
 }
 
-static const QString s_serviceType = QStringLiteral("KWin/Effect");
+static const QString s_serviceType = QStringLiteral("QindaQtKWin/Effect");
 
 ScriptedEffectLoader::ScriptedEffectLoader(QObject *parent)
     : AbstractEffectLoader(parent)
@@ -166,9 +166,9 @@ bool ScriptedEffectLoader::loadJavascriptEffect(const KPluginMetaData &effect)
 bool ScriptedEffectLoader::loadDeclarativeEffect(const KPluginMetaData &metadata)
 {
     const QString name = metadata.pluginId();
-    QString scriptFile = QStandardPaths::locate(QStandardPaths::GenericDataLocation, QLatin1String("kwin-wayland/effects/") + name + QLatin1String("/contents/ui/main.qml"));
+    QString scriptFile = QStandardPaths::locate(QStandardPaths::GenericDataLocation, QLatin1String("qindaqt-kwin/effects/") + name + QLatin1String("/contents/ui/main.qml"));
     if (scriptFile.isNull()) {
-        scriptFile = QStandardPaths::locate(QStandardPaths::GenericDataLocation, QLatin1String("kwin/effects/") + name + QLatin1String("/contents/ui/main.qml"));
+        scriptFile = QStandardPaths::locate(QStandardPaths::GenericDataLocation, QLatin1String("qindaqt-kwin/effects/") + name + QLatin1String("/contents/ui/main.qml"));
         if (scriptFile.isNull()) {
             qCWarning(KWIN_CORE) << "Could not locate the effect script";
             return false;
@@ -228,19 +228,20 @@ void ScriptedEffectLoader::queryAndLoadAll()
 
 QList<KPluginMetaData> ScriptedEffectLoader::findAllEffects() const
 {
-    return KPackage::PackageLoader::self()->listPackages(s_serviceType, QStringLiteral("kwin-wayland/effects"))
-        + KPackage::PackageLoader::self()->listPackages(s_serviceType, QStringLiteral("kwin/effects"));
+    // QindaQt: upstream also lists the legacy kwin/effects root; the identity
+    // rename maps both roots to qindaqt-kwin/effects, so list it once.
+    return KPackage::PackageLoader::self()->listPackages(s_serviceType, QStringLiteral("qindaqt-kwin/effects"));
 }
 
 KPluginMetaData ScriptedEffectLoader::findEffect(const QString &name) const
 {
-    auto plugins = KPackage::PackageLoader::self()->findPackages(s_serviceType, QStringLiteral("kwin-wayland/effects"), [name](const KPluginMetaData &metadata) {
+    auto plugins = KPackage::PackageLoader::self()->findPackages(s_serviceType, QStringLiteral("qindaqt-kwin/effects"), [name](const KPluginMetaData &metadata) {
         return metadata.pluginId().compare(name, Qt::CaseInsensitive) == 0;
     });
     if (!plugins.isEmpty()) {
         return plugins.first();
     }
-    plugins = KPackage::PackageLoader::self()->findPackages(s_serviceType, QStringLiteral("kwin/effects"), [name](const KPluginMetaData &metadata) {
+    plugins = KPackage::PackageLoader::self()->findPackages(s_serviceType, QStringLiteral("qindaqt-kwin/effects"), [name](const KPluginMetaData &metadata) {
         return metadata.pluginId().compare(name, Qt::CaseInsensitive) == 0;
     });
     if (!plugins.isEmpty()) {
@@ -258,7 +259,7 @@ void ScriptedEffectLoader::clear()
 
 PluginEffectLoader::PluginEffectLoader(QObject *parent)
     : AbstractEffectLoader(parent)
-    , m_pluginSubDirectory(QStringLiteral("kwin/effects/plugins"))
+    , m_pluginSubDirectory(QStringLiteral("qindaqt-kwin/effects/plugins"))
 {
 }
 

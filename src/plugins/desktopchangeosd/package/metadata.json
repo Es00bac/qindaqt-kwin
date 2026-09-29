@@ -1,5 +1,5 @@
 {
-    "KPackageStructure": "KWin/Script",
+    "KPackageStructure": "QindaQtKWin/Script",
     "KPlugin": {
         "Authors": [
             {

@@ -18,7 +18,7 @@
 namespace KWin
 {
 
-static const QString s_pluginDirectory = QStringLiteral("kwin/plugins");
+static const QString s_pluginDirectory = QStringLiteral("qindaqt-kwin/plugins");
 
 static QJsonValue readPluginInfo(const QJsonObject &metadata, const QString &key)
 {

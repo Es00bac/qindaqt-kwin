@@ -7,7 +7,7 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 import QtQuick
-import org.kde.kwin
+import org.qindaqt.kwin
 
 Loader {
     id: mainItemLoader

@@ -6,7 +6,7 @@
 */
 import QtQuick
 import QtQuick.Window
-import org.kde.kwin
+import org.qindaqt.kwin
 import org.kde.ksvg as KSvg
 import org.kde.kirigami as Kirigami
 

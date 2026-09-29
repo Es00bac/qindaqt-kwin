@@ -11,7 +11,7 @@ set(showcompositing_SOURCES
 kwin_add_builtin_effect(showcompositing ${showcompositing_SOURCES})
 
 ecm_add_qml_module(showcompositing
-    URI org.kde.kwin.showcompositing
+    URI org.qindaqt.kwin.showcompositing
     QML_FILES
           qml/Main.qml
     QT_NO_PLUGIN

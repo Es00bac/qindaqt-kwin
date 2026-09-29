@@ -16,7 +16,7 @@
 namespace KWin
 {
 
-#define PluginFactory_iid "org.kde.kwin.PluginFactoryInterface" KWIN_PLUGIN_VERSION_STRING
+#define PluginFactory_iid "org.qindaqt.kwin.PluginFactoryInterface" KWIN_PLUGIN_VERSION_STRING
 
 /**
  * The Plugin class is the baseclass for all binary compositor extensions.

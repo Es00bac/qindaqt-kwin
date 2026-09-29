@@ -19,7 +19,7 @@ kwin_add_builtin_effect(overview ${overview_SOURCES})
 
 qt6_add_qml_module(overview
     NO_PLUGIN
-    URI org.kde.kwin.overview
+    URI org.qindaqt.kwin.overview
     QML_FILES
         qml/DesktopBar.qml
         qml/DesktopView.qml

@@ -20,7 +20,7 @@ namespace KWin
 
 /*!
  * \qmltype SceneEffect
- * \inqmlmodule org.kde.kwin
+ * \inqmlmodule org.qindaqt.kwin
  *
  * \brief The SceneEffect type provides a way to implement effects that replace the default scene with
  * a custom one.

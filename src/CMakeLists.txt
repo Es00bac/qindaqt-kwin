@@ -1,4 +1,4 @@
-set(KWIN_KILLER_BIN ${CMAKE_INSTALL_FULL_LIBEXECDIR}/kwin_killer_helper)
+set(KWIN_KILLER_BIN ${CMAKE_INSTALL_FULL_LIBEXECDIR}/qindaqt-kwin/killer-helper)
 
 configure_file(config-kwin.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-kwin.h)
 
@@ -17,10 +17,13 @@ if (KWIN_BUILD_KCMS)
 endif()
 
 add_library(kwin SHARED)
-target_include_directories(kwin INTERFACE "$<INSTALL_INTERFACE:${KDE_INSTALL_INCLUDEDIR}/kwin>")
+target_include_directories(kwin INTERFACE "$<INSTALL_INTERFACE:${KDE_INSTALL_INCLUDEDIR}/qindaqt-kwin>")
+# QindaQt: libqindaqt-kwin.so.0. Its ABI changes with every fork release; the
+# exact CMake package version and the plugin interface id enforce rebuilds.
 set_target_properties(kwin PROPERTIES
-   VERSION ${PROJECT_VERSION}
-   SOVERSION 6
+   OUTPUT_NAME qindaqt-kwin
+   VERSION 0.${QINDAQT_KWIN_VERSION}
+   SOVERSION 0
 )
 
 target_compile_definitions(kwin PRIVATE
@@ -380,6 +383,13 @@ ecm_qt_declare_logging_category(kwin
 )
 
 add_executable(kwin_wayland main_wayland.cpp)
+# AGENT-CONTRACT: container-wm's session launcher starts /usr/bin/qindaqt-kwin.
+# AGENT-GUARD: in the build tree bin/qindaqt-kwin/ is the plugin namespace
+# directory, so the program links into program/ instead; a build-tree run needs
+# QT_PLUGIN_PATH=<build>/bin (qindaqt/README.md).
+set_target_properties(kwin_wayland PROPERTIES
+    OUTPUT_NAME qindaqt-kwin
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/program")
 
 if(TARGET PkgConfig::libsystemd)
     ecm_qt_declare_logging_category(kwin_wayland
@@ -404,7 +414,7 @@ endif()
 target_compile_definitions(kwin_wayland PRIVATE
     -DTRANSLATION_DOMAIN=\"kwin\"
 )
-kcoreaddons_target_static_plugins(kwin_wayland NAMESPACE "kwin/effects/plugins")
+kcoreaddons_target_static_plugins(kwin_wayland NAMESPACE "qindaqt-kwin/effects/plugins")
 
 install(TARGETS kwin_wayland ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
 
@@ -441,10 +451,10 @@ install(
         ${KDE_INSTALL_DBUSINTERFACEDIR}
 )
 
-install(EXPORT KWinTargets DESTINATION "${KDE_INSTALL_CMAKEPACKAGEDIR}/KWin" FILE KWinTargets.cmake NAMESPACE KWin:: )
+install(EXPORT KWinTargets DESTINATION "${KDE_INSTALL_CMAKEPACKAGEDIR}/QindaQtKWin" FILE QindaQtKWinTargets.cmake NAMESPACE QindaQtKWin:: )
 
 if (KWIN_BUILD_X11)
-    install(FILES atoms.h DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwin COMPONENT Devel)
+    install(FILES atoms.h DESTINATION ${KDE_INSTALL_INCLUDEDIR}/qindaqt-kwin COMPONENT Devel)
 endif()
 
 install(FILES
@@ -520,7 +530,7 @@ install(FILES
     xdgshellintegration.h
     xdgshellwindow.h
     xkb.h
-    DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwin COMPONENT Devel)
+    DESTINATION ${KDE_INSTALL_INCLUDEDIR}/qindaqt-kwin COMPONENT Devel)
 
 install(FILES
     core/backendoutput.h
@@ -555,7 +565,7 @@ install(FILES
     core/session_logind.h
     core/session_noop.h
     core/shmgraphicsbufferallocator.h
-    DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwin/core COMPONENT Devel)
+    DESTINATION ${KDE_INSTALL_INCLUDEDIR}/qindaqt-kwin/core COMPONENT Devel)
 
 install(FILES
     utils/c_ptr.h
@@ -581,7 +591,7 @@ install(FILES
     utils/version.h
     utils/vsyncmonitor.h
     utils/xcbutils.h
-    DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwin/utils COMPONENT Devel)
+    DESTINATION ${KDE_INSTALL_INCLUDEDIR}/qindaqt-kwin/utils COMPONENT Devel)
 
 install(FILES
     effect/animationeffect.h
@@ -595,7 +605,7 @@ install(FILES
     effect/quickeffect.h
     effect/timeline.h
     effect/xcb.h
-    DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwin/effect COMPONENT Devel)
+    DESTINATION ${KDE_INSTALL_INCLUDEDIR}/qindaqt-kwin/effect COMPONENT Devel)
 
 install(FILES
     opengl/abstract_opengl_context_attribute_builder.h
@@ -617,7 +627,7 @@ install(FILES
     opengl/gltexture_p.h
     opengl/glutils.h
     opengl/glvertexbuffer.h
-    DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwin/opengl COMPONENT Devel
+    DESTINATION ${KDE_INSTALL_INCLUDEDIR}/qindaqt-kwin/opengl COMPONENT Devel
 )
 
 install(FILES
@@ -642,7 +652,7 @@ install(FILES
     scene/surfaceitem_wayland.h
     scene/windowitem.h
     scene/workspacescene.h
-    DESTINATION ${KDE_INSTALL_INCLUDEDIR}/kwin/scene COMPONENT Devel
+    DESTINATION ${KDE_INSTALL_INCLUDEDIR}/qindaqt-kwin/scene COMPONENT Devel
 )
 
 ecm_generate_qdoc(kwin kwin.qdocconf)

@@ -10,8 +10,8 @@ import QtQuick
 import Qt5Compat.GraphicalEffects
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
-import org.kde.kwin as KWinComponents
-import org.kde.kwin.private.effects
+import org.qindaqt.kwin as KWinComponents
+import org.qindaqt.kwin.private.effects
 import org.kde.milou as Milou
 import org.kde.plasma.components as PC3
 import org.kde.plasma.extras as PlasmaExtras

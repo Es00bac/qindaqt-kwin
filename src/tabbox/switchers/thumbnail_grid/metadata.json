@@ -1,5 +1,5 @@
 {
-    "KPackageStructure": "KWin/WindowSwitcher",
+    "KPackageStructure": "QindaQtKWin/WindowSwitcher",
     "KPlugin": {
         "Authors": [
             {

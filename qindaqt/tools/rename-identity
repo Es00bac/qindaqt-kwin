@@ -1,0 +1,139 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
+"""Give the KWin tree qindaqt-kwin's identity.
+
+qindaqt-kwin installs and runs beside an unmodified KDE Plasma (container-wm
+ADR-0289), so every name that reaches the file system, the session bus, a
+plugin loader or a QML engine must differ from stock KWin's. This script owns
+the mechanical part of that rename: string-level names that upstream code
+keeps adding. Structural changes (target output names, install rules, dropped
+components) are ordinary labelled `qindaqt:` commits instead.
+
+Run it from anywhere inside the repository:
+
+    qindaqt/tools/rename-identity           rewrite the tree, print per-rule counts
+    qindaqt/tools/rename-identity --check   exit 1 if the tree still needs a rename
+
+Re-run it after every upstream merge and commit what it rewrites.
+
+AGENT-GUARD: every rule must be idempotent (its replacement must never match
+its own pattern). The script re-applies all rules to its own output and aborts
+if anything changes again; a non-idempotent rule would otherwise rename
+`qindaqt-kwin` into `qindaqt-qindaqt-kwin` on the next merge.
+AGENT-GUARD: names listed as wire contracts in qindaqt/README.md (Wayland
+protocol names, org.kde.kglobalaccel, org.freedesktop.*, the kglobalaccel
+component "kwin", the QPA plugin key) must never gain a rule here.
+"""
+
+import argparse
+import fnmatch
+import re
+import subprocess
+import sys
+from dataclasses import dataclass, field
+from pathlib import Path
+
+# Files the rules may touch. Upstream-only material (translations, handbook,
+# KCMs that are never built, migrations that are never installed) stays
+# byte-identical to upstream so merges there stay trivial.
+INCLUDE = ["CMakeLists.txt", "*.cmake.in", "cmake/*", "data/*", "src/*", "autotests/*", "tests/*"]
+EXCLUDE = ["po/*", "doc/*", "kconf_update/*", "LICENSES/*", "qindaqt/*", "src/kcms/*", "*.png", "*.svgz", "*.svg"]
+
+
+@dataclass
+class Rule:
+    name: str
+    pattern: str
+    replacement: str
+    files: list = field(default_factory=lambda: ["*"])
+    flags: int = re.MULTILINE
+
+    def __post_init__(self):
+        self.regex = re.compile(self.pattern, self.flags)
+
+    def applies_to(self, path):
+        return any(fnmatch.fnmatch(path, glob) for glob in self.files)
+
+
+QML_MODULE_SUFFIXES = r"(?:private\.effects|outputlocator|overview|showcompositing|showfps|tileseditor|windowview)"
+
+RULES = [
+    # Data directory: /usr/share/kwin-wayland -> /usr/share/qindaqt-kwin.
+    # Test socket names such as "kwin-wayland-server-..." are not paths.
+    Rule("data directory", r"(?<![\w-])kwin-wayland(?![\w-])", "qindaqt-kwin"),
+    # Legacy shared roots (/usr/share/kwin/effects, KPackage default roots) and
+    # the Qt plugin namespaces kwin/plugins, kwin/effects/plugins, kwin/effects/configs.
+    Rule("package roots and plugin namespaces",
+         r"(?<=[\"'(\s])kwin/(?=(?:effects|scripts|tabbox|decorations|plugins)\b)", "qindaqt-kwin/"),
+    # Plugin interface ids: stock plugins never load in the fork and back.
+    Rule("plugin interface ids", r"\borg\.kde\.kwin\.(PluginFactoryInterface|EffectPluginFactory)\b",
+         r"org.qindaqt.kwin.\1"),
+    # KPackage structure ids (metadata.json "KPackageStructure" and loaders).
+    Rule("package structure ids", r"(?<![\w/])KWin/(Effect|Script|WindowSwitcher|Decoration)\b", r"QindaQtKWin/\1"),
+    # QML: the scripting module registered in-process and the installed modules.
+    Rule("QML imports", r"^(\s*import\s+)org\.kde\.kwin(?=(?:\." + QML_MODULE_SUFFIXES + r")?(?:\s|;|$))",
+         r"\1org.qindaqt.kwin", files=["*.qml", "*.js"]),
+    Rule("QML type registrations", r"(qmlRegister\w*(?:<[^>]*>)?\(\s*)\"org\.kde\.kwin\"", r'\1"org.qindaqt.kwin"'),
+    Rule("QML module URIs", r"\borg\.kde\.kwin(?=[./]" + QML_MODULE_SUFFIXES + r"\b)", "org.qindaqt.kwin"),
+    Rule("QML module docs", r"(\\(?:in)?qmlmodule\s+)org\.kde\.kwin\b(?!\.)", r"\1org.qindaqt.kwin"),
+    # The hung-window helper's desktop file id and logging category.
+    Rule("killer helper id", r"\borg\.kde\.kwin\.killer\b", "org.qindaqt.kwin.killer"),
+    # Installed headers: /usr/include/kwin -> /usr/include/qindaqt-kwin.
+    Rule("header directory", r"(\$\{KDE_INSTALL_INCLUDEDIR\}/)kwin(?=[/\s>\")])", r"\1qindaqt-kwin",
+         files=["*CMakeLists.txt", "*.cmake", "*.cmake.in"]),
+]
+
+
+def tracked_files(root):
+    out = subprocess.run(["git", "-C", str(root), "ls-files", "-z"], check=True, capture_output=True).stdout
+    for rel in out.decode().split("\0"):
+        if not rel:
+            continue
+        if not any(fnmatch.fnmatch(rel, g) for g in INCLUDE) or any(fnmatch.fnmatch(rel, g) for g in EXCLUDE):
+            continue
+        yield rel
+
+
+def apply_rules(rel, text, counts):
+    for rule in RULES:
+        if rule.applies_to(rel):
+            text, n = rule.regex.subn(rule.replacement, text)
+            if counts is not None:
+                counts[rule.name] = counts.get(rule.name, 0) + n
+    return text
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--check", action="store_true", help="report files that still need the rename; change nothing")
+    args = parser.parse_args()
+    root = Path(subprocess.run(["git", "rev-parse", "--show-toplevel"], check=True, capture_output=True,
+                               text=True, cwd=Path(__file__).resolve().parent).stdout.strip())
+    counts, changed = {}, []
+    for rel in tracked_files(root):
+        path = root / rel
+        if path.is_symlink() or not path.is_file():
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        new = apply_rules(rel, text, counts)
+        if apply_rules(rel, new, None) != new:
+            sys.exit(f"rename-identity: a rule is not idempotent on {rel}; fix RULES before committing")
+        if new != text:
+            changed.append(rel)
+            if not args.check:
+                path.write_text(new, encoding="utf-8")
+    for rule in RULES:
+        print(f"{counts.get(rule.name, 0):6d}  {rule.name}")
+    if args.check:
+        for rel in changed:
+            print(f"needs rename: {rel}")
+        return 1 if changed else 0
+    print(f"{len(changed)} files rewritten")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

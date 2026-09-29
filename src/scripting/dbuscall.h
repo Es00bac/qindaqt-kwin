@@ -17,7 +17,7 @@ namespace KWin
 
 /*!
  * \qmltype DBusCall
- * \inqmlmodule org.kde.kwin
+ * \inqmlmodule org.qindaqt.kwin
  *
  * \brief Qml export for providing a wrapper for sending a message over the DBus
  * session bus.

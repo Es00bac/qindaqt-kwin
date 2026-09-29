@@ -10,7 +10,7 @@ set(showfps_SOURCES
 kwin_add_builtin_effect(showfps ${showfps_SOURCES})
 
 ecm_add_qml_module(showfps
-    URI "org.kde.kwin.showfps"
+    URI "org.qindaqt.kwin.showfps"
     QML_FILES
         qml/Main.qml
         qml/Fallback.qml

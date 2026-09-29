@@ -7,7 +7,7 @@ set(screenshot_SOURCES
 
 qt_add_dbus_adaptor(screenshot_SOURCES org.kde.KWin.ScreenShot2.xml screenshotdbusinterface2.h KWin::ScreenShotDBusInterface2)
 
-kcoreaddons_add_plugin(screenshot SOURCES ${screenshot_SOURCES} INSTALL_NAMESPACE "kwin/plugins")
+kcoreaddons_add_plugin(screenshot SOURCES ${screenshot_SOURCES} INSTALL_NAMESPACE "qindaqt-kwin/plugins")
 target_link_libraries(screenshot PRIVATE
     kwin
 

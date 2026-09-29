@@ -35,7 +35,7 @@ TilesEditorEffect::TilesEditorEffect()
     KGlobalAccel::self()->setShortcut(m_toggleAction.get(), {defaultToggleShortcut});
     m_toggleShortcut = KGlobalAccel::self()->shortcut(m_toggleAction.get());
 
-    loadFromModule(QStringLiteral("org.kde.kwin/tileseditor"), QStringLiteral("Main"));
+    loadFromModule(QStringLiteral("org.qindaqt.kwin/tileseditor"), QStringLiteral("Main"));
 }
 
 TilesEditorEffect::~TilesEditorEffect()

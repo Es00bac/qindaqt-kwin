@@ -18,7 +18,7 @@ namespace KWin
 
 /*!
  * \qmltype ScreenEdgeHandler
- * \inqmlmodule org.kde.kwin
+ * \inqmlmodule org.qindaqt.kwin
  *
  * \brief Qml export for reserving a Screen Edge.
  *

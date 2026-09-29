@@ -42,7 +42,7 @@ WindowViewEffect::WindowViewEffect()
     connect(m_shutdownTimer, &QTimer::timeout, this, &WindowViewEffect::realDeactivate);
     connect(effects, &EffectsHandler::screenAboutToLock, this, &WindowViewEffect::realDeactivate);
 
-    loadFromModule(QStringLiteral("org.kde.kwin.windowview"), QStringLiteral("Main"));
+    loadFromModule(QStringLiteral("org.qindaqt.kwin.windowview"), QStringLiteral("Main"));
 
     m_exposeAction->setObjectName(QStringLiteral("Expose"));
     m_exposeAction->setText(i18n("Toggle Present Windows (Current desktop)"));

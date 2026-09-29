@@ -3,6 +3,13 @@ cmake_minimum_required(VERSION 3.16)
 set(PROJECT_VERSION "6.6.6") # Handled by release scripts
 project(KWin VERSION ${PROJECT_VERSION})
 
+# QindaQt: qindaqt-kwin's own version is the upstream base plus a fork serial.
+# AGENT-CONTRACT: the serial matches the Gentoo package gui-wm/qindaqt-kwin-${PROJECT_VERSION}_p<serial>
+# (the ebuild checks it) and container-wm's find_package(QindaQtKWin <version> EXACT).
+# Bump it for every fork release; plugins built against another serial never load.
+set(QINDAQT_KWIN_SERIAL 1)
+set(QINDAQT_KWIN_VERSION "${PROJECT_VERSION}.${QINDAQT_KWIN_SERIAL}")
+
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -471,9 +478,12 @@ ecm_set_disabled_deprecation_versions(QT 5.15
 
 ecm_setup_version(${PROJECT_VERSION}
                   VARIABLE_PREFIX KWIN
-                  PACKAGE_VERSION_FILE "${CMAKE_CURRENT_BINARY_DIR}/KWinConfigVersion.cmake"
                   SOVERSION 6
 )
+# QindaQt: consumers pin the exact fork release (see QINDAQT_KWIN_SERIAL).
+write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/QindaQtKWinConfigVersion.cmake"
+    VERSION ${QINDAQT_KWIN_VERSION}
+    COMPATIBILITY ExactVersion)
 
 ecm_setup_qtplugin_macro_names(
     JSON_ARG2
@@ -509,32 +519,32 @@ kde_configure_git_pre_commit_hook(CHECKS CLANG_FORMAT)
 
 feature_summary(WHAT ALL FATAL_ON_MISSING_REQUIRED_PACKAGES)
 
-set(CMAKECONFIG_DBUS_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/KWinDBusInterface")
+set(CMAKECONFIG_DBUS_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/QindaQtKWinDBusInterface")
 configure_package_config_file(KWinDBusInterfaceConfig.cmake.in
-    "${CMAKE_CURRENT_BINARY_DIR}/KWinDBusInterfaceConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/QindaQtKWinDBusInterfaceConfig.cmake"
     PATH_VARS KDE_INSTALL_DBUSINTERFACEDIR
     INSTALL_DESTINATION ${CMAKECONFIG_DBUS_INSTALL_DIR})
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/KWinDBusInterfaceConfig.cmake
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/QindaQtKWinDBusInterfaceConfig.cmake
     DESTINATION ${CMAKECONFIG_DBUS_INSTALL_DIR})
 
-set(CMAKECONFIG_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/KWin")
+set(CMAKECONFIG_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/QindaQtKWin")
 
 configure_package_config_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/KWinConfig.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/KWinConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/QindaQtKWinConfig.cmake"
     INSTALL_DESTINATION ${CMAKECONFIG_INSTALL_DIR}
 )
 
 install(
     FILES
         cmake/modules/FindLibdrm.cmake
-        "${CMAKE_CURRENT_BINARY_DIR}/KWinConfig.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/KWinConfigVersion.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/QindaQtKWinConfig.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/QindaQtKWinConfigVersion.cmake"
     DESTINATION "${CMAKECONFIG_INSTALL_DIR}"
     COMPONENT Devel
 )
 
-install(EXPORT KWinTargets DESTINATION "${CMAKECONFIG_INSTALL_DIR}" FILE KWinTargets.cmake NAMESPACE KWin:: )
+install(EXPORT KWinTargets DESTINATION "${CMAKECONFIG_INSTALL_DIR}" FILE QindaQtKWinTargets.cmake NAMESPACE QindaQtKWin:: )
 
 # QindaQt: the QindaQt session supervisor starts the compositor; no systemd unit.
 

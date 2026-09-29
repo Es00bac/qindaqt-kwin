@@ -18,7 +18,7 @@ class SwipeGesture;
 
 /*!
  * \qmltype SwipeGestureHandler
- * \inqmlmodule org.kde.kwin
+ * \inqmlmodule org.qindaqt.kwin
  *
  * \brief The SwipeGestureHandler type provides a way to handle global swipe gestures.
  *
@@ -149,7 +149,7 @@ private:
 
 /*!
  * \qmltype PinchGestureHandler
- * \inqmlmodule org.kde.kwin
+ * \inqmlmodule org.qindaqt.kwin
  *
  * \brief The PinchGestureHandler type provides a way to handle global pinch gestures.
  *

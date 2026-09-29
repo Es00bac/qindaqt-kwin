@@ -60,7 +60,7 @@ class RenderView;
  *  The first parameter is the name of the library, this is the same as the id of the plugin.
  *  If our effect's source is in cooleffect.cpp, we'd use following:
  * @code
- *     kcoreaddons_add_plugin(cooleffect SOURCES cooleffect.cpp INSTALL_NAMESPACE "kwin/effects/plugins")
+ *     kcoreaddons_add_plugin(cooleffect SOURCES cooleffect.cpp INSTALL_NAMESPACE "qindaqt-kwin/effects/plugins")
  * @endcode
  *
  * @subsection creating-json-metadata Effect's .json file for embedded metadata
@@ -954,7 +954,7 @@ public:
     virtual KWin::Effect *createEffect() const = 0;
 };
 
-#define EffectPluginFactory_iid "org.kde.kwin.EffectPluginFactory" KWIN_PLUGIN_VERSION_STRING
+#define EffectPluginFactory_iid "org.qindaqt.kwin.EffectPluginFactory" KWIN_PLUGIN_VERSION_STRING
 #define KWIN_PLUGIN_FACTORY_NAME KPLUGINFACTORY_PLUGIN_CLASS_INTERNAL_NAME
 
 /**

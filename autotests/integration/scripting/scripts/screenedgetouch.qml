@@ -1,5 +1,5 @@
 import QtQuick
-import org.kde.kwin
+import org.qindaqt.kwin
 
 ScreenEdgeHandler {
     edge: ScreenEdgeHandler.LeftEdge

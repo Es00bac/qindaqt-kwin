@@ -1,7 +1,8 @@
 #pragma once
 #include <QLatin1String>
 
-#define KWIN_PLUGIN_VERSION_STRING "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
+// QindaQt: plugin interface ids carry the exact fork release, e.g. 6.6.6.1.
+#define KWIN_PLUGIN_VERSION_STRING "${QINDAQT_KWIN_VERSION}"
 #define PROJECT_VERSION_PATCH ${PROJECT_VERSION_PATCH}
 
 #cmakedefine01 KWIN_BUILD_DECORATIONS
