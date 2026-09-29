@@ -15,7 +15,9 @@
 #cmakedefine01 KWIN_BUILD_X11
 #cmakedefine01 KWIN_BUILD_QACCESSIBILITYCLIENT
 constexpr QLatin1String KWIN_CONFIG("qindaqt/kwinrc");
-constexpr QLatin1String KWIN_VERSION_STRING("${PROJECT_VERSION}");
+// QindaQt: report the exact fork release (e.g. 6.6.6.1) in --version and
+// supportInformation; container-wm's release contract checks it.
+constexpr QLatin1String KWIN_VERSION_STRING("${QINDAQT_KWIN_VERSION}");
 constexpr QLatin1String XCB_VERSION_STRING("${XCB_VERSION}");
 constexpr QLatin1String KWIN_KILLER_BIN("${KWIN_KILLER_BIN}");
 constexpr QLatin1String LIBEXEC_DIR("${CMAKE_INSTALL_FULL_LIBEXECDIR}");
