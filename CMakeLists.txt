@@ -47,13 +47,20 @@ include(ECMDeprecationSettings)
 include(ECMGenerateQDoc)
 
 option(KWIN_BUILD_DECORATIONS "Enable building of KWin decorations." ON)
-option(KWIN_BUILD_KCMS "Enable building of KWin configuration modules." ON)
+# QindaQt: KWin's KCMs and KRunner plugin install into Plasma's shared plugin
+# namespaces and would collide with stock KWin; QindaQt Settings replaces them.
+option(KWIN_BUILD_KCMS "Enable building of KWin configuration modules." OFF)
 option(KWIN_BUILD_NOTIFICATIONS "Enable building of KWin with knotifications support" ON)
 option(KWIN_BUILD_SCREENLOCKER "Enable building of KWin lockscreen functionality" ON)
 option(KWIN_BUILD_TABBOX "Enable building of KWin Tabbox functionality" ON)
 option(KWIN_BUILD_X11 "Enable building X11 common code and Xwayland support" ON)
 option(KWIN_BUILD_GLOBALSHORTCUTS "Enable building of KWin with global shortcuts support" ON)
-option(KWIN_BUILD_RUNNERS "Enable building of KWin with krunner support" ON)
+option(KWIN_BUILD_RUNNERS "Enable building of KWin with krunner support" OFF)
+# AGENT-GUARD: qindaqt-kwin must install beside an unmodified kde-plasma/kwin
+# (container-wm ADR-0289). Both switches install stock-named files.
+if (KWIN_BUILD_KCMS OR KWIN_BUILD_RUNNERS)
+    message(FATAL_ERROR "qindaqt-kwin does not build KWin's KCMs or KRunner plugin: their files collide with stock KWin")
+endif()
 
 find_package(Qt6 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
     Concurrent
@@ -480,13 +487,10 @@ ecm_setup_qtplugin_macro_names(
         PACKAGE_SETUP_KWINEFFECTS_AUTOMOC_VARIABLES
 )
 
-if (KF6DocTools_FOUND)
-    add_subdirectory(doc)
-    kdoctools_install(po)
-endif()
+# QindaQt: no handbook and no translation catalogs; both would install
+# stock-named files (container-wm ADR-0289).
 
 add_subdirectory(data)
-add_subdirectory(kconf_update)
 add_subdirectory(src)
 
 if (BUILD_TESTING)
@@ -532,8 +536,6 @@ install(
 
 install(EXPORT KWinTargets DESTINATION "${CMAKECONFIG_INSTALL_DIR}" FILE KWinTargets.cmake NAMESPACE KWin:: )
 
-ecm_install_configured_files(INPUT plasma-kwin_wayland.service.in @ONLY
-            DESTINATION ${KDE_INSTALL_SYSTEMDUSERUNITDIR})
+# QindaQt: the QindaQt session supervisor starts the compositor; no systemd unit.
 
 
-ki18n_install(po)

@@ -6,7 +6,6 @@ function(kwin_add_kpackage_structure dir file)
     target_link_libraries(kwin_${dir} KF6::Package)
 endfunction()
 
-kwin_add_kpackage_structure(aurorae aurorae/aurorae.cpp)
 kwin_add_kpackage_structure(decoration decoration/decoration.cpp)
 kwin_add_kpackage_structure(effect effect/effect.cpp)
 kwin_add_kpackage_structure(scripts scripts/scripts.cpp)

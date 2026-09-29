@@ -32,5 +32,4 @@ target_link_libraries(nightlight
     KF6::I18n
 )
 
-install(FILES nightlightsettings.kcfg DESTINATION ${KDE_INSTALL_KCFGDIR})
 install(FILES org.kde.KWin.NightLight.xml DESTINATION ${KDE_INSTALL_DBUSINTERFACEDIR})
