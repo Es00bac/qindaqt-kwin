@@ -18,6 +18,8 @@ EXPORT_FILE_NAME
 )
 
 add_library(KDecoration3::KDecorationPrivate ALIAS kdecorations3private)
+# QindaQt: the name qindaqt-kwin links, matching the exported target.
+add_library(KDecoration3::KDecoration3Private ALIAS kdecorations3private)
 
 target_link_libraries(kdecorations3private
     PUBLIC
@@ -25,10 +27,11 @@ target_link_libraries(kdecorations3private
         Qt::Gui
 )
 
-target_include_directories(kdecorations3private INTERFACE "$<INSTALL_INTERFACE:${KDECORATION3_INCLUDEDIR}>" )
+target_include_directories(kdecorations3private INTERFACE "$<INSTALL_INTERFACE:${KDECORATION3_INCLUDEDIR}>" "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>" )
 
-set_target_properties(kdecorations3private PROPERTIES VERSION   ${KDECORATION3_VERSION}
-                                                      SOVERSION 2
+set_target_properties(kdecorations3private PROPERTIES OUTPUT_NAME qindaqt-kwin-decorationsprivate
+                                                      VERSION   0.${QINDAQT_KWIN_VERSION}
+                                                      SOVERSION 0
                                                       EXPORT_NAME KDecoration3Private
 )
 

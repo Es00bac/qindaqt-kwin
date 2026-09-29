@@ -44,10 +44,13 @@ target_link_libraries(kdecorations3
         KF6::I18n
 )
 
-target_include_directories(kdecorations3 INTERFACE "$<INSTALL_INTERFACE:${KDECORATION3_INCLUDEDIR}>" )
+# QindaQt: the build-tree include directory serves qindaqt-kwin itself, which
+# builds against this library in the same tree.
+target_include_directories(kdecorations3 INTERFACE "$<INSTALL_INTERFACE:${KDECORATION3_INCLUDEDIR}>" "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>" )
 
-set_target_properties(kdecorations3 PROPERTIES VERSION   ${KDECORATION3_VERSION}
-                                               SOVERSION ${KDECORATION3_SOVERSION}
+set_target_properties(kdecorations3 PROPERTIES OUTPUT_NAME qindaqt-kwin-decorations
+                                               VERSION   0.${QINDAQT_KWIN_VERSION}
+                                               SOVERSION 0
                                                EXPORT_NAME KDecoration
 )
 

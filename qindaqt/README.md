@@ -24,6 +24,8 @@ upstream base is recorded in [UPSTREAM.md](UPSTREAM.md).
 | D-Bus | service `org.kde.KWin`, interfaces `org.kde.KWin*`, `org.kde.kwin.*`, paths `/KWin`, `/Effects`, `/org/kde/KWin/…` | service `org.qindaqt.KWin`, interfaces `org.qindaqt.KWin*`, paths under `/org/qindaqt/KWin`; installed XML `org.qindaqt.KWin*.xml` |
 | Notifications, logging | `kwin.notifyrc`, `org_kde_kwin.categories` | `qindaqt-kwin.notifyrc` (component `qindaqt-kwin`), `qindaqt-kwin.categories` |
 | Translation domain | `kwin` | `qindaqt-kwin` (no catalogs are installed) |
+| Decoration library | shared `kde-plasma/kdecoration` (`libkdecorations3.so.6`, `libkdecorations3private.so.2`, `/usr/include/KDecoration3`, `KDecoration3`) | vendored in `kdecoration/`: `libqindaqt-kwin-decorations.so.0` and `…private.so.0`, `/usr/include/qindaqt-kwin/decoration`, CMake `QindaQtKWinDecoration` (exact version) |
+| Decoration plugins | `qt6/plugins/org.kde.kdecoration3`, default `org.kde.breeze`, fallback Aurorae | `qt6/plugins/qindaqt-kwin/decorations` (`KDECORATION_PLUGIN_DIR`), default and fallback `org.qindaqt` (container-wm's decoration) |
 | Privileged-client keys | `X-KDE-Wayland-Interfaces`, `X-KDE-DBUS-Restricted-Interfaces` | `X-QindaQt-KWin-Wayland-Interfaces`, `X-QindaQt-KWin-DBus-Restricted-Interfaces` |
 
 Not built or installed: KCMs and the KRunner plugin (a configure error if
@@ -45,7 +47,10 @@ systemd unit, the hicolor `kwin` icons, the kcfg files, `kwindowprop`.
 - Shared configuration that is not KWin's: `kdeglobals`, `kaccessrc`,
   `klaunchrc`, `plasmarc`; `kglobalshortcutsrc`, `kscreenlockerrc` and
   `knighttimerc` leave with their services (M6, M2, M3).
-- The C++ namespaces `KWin::` and `KDecoration3::`.
+- The C++ namespaces `KWin::` and `KDecoration3::`, the in-tree CMake aliases
+  `KDecoration3::KDecoration` and `KDecoration3::KDecoration3Private`, the
+  decoration config group `[org.kde.kdecoration2]` and the plugin metadata key
+  `org.kde.kdecoration3`.
 - Carve-outs until PF21: the fork also owns `org.kde.KWin`, and ScreenShot2
   (`org.kde.KWin.ScreenShot2`), the EIS remote desktop and input capture
   objects, TabletModeManager (`/org/kde/KWin`) and VirtualKeyboard
@@ -88,3 +93,4 @@ In the build tree the program is `build/program/qindaqt-kwin`, because
 | Tablet proximity continues past the decoration | a pen entering range over a title bar reached no application | 0287 |
 | Build only what QindaQt ships | KCMs, KRunner, handbook, catalogs, migrations and the systemd unit would collide with stock KWin | 0289 |
 | Own program, library, plugin, data, config and D-Bus names | co-installation with stock KWin and Plasma | 0289 |
+| Vendored kdecoration, decorations only from the fork namespace | KWin links kdecoration's private library, whose ABI follows Plasma releases | 0289 |

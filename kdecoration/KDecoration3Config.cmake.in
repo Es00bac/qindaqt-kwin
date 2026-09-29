@@ -3,8 +3,10 @@
 include(CMakeFindDependencyMacro)
 find_dependency(Qt6Gui @QT_MIN_VERSION@)
 
-set(KDECORATION_PLUGIN_DIR "org.kde.kdecoration3")
-set(KDECORATION_KCM_PLUGIN_DIR "org.kde.kdecoration3.kcm")
+# AGENT-CONTRACT: qindaqt-kwin's DecorationBridge loads decoration plugins only
+# from this namespace (src/decorations/decorationbridge.cpp).
+set(KDECORATION_PLUGIN_DIR "qindaqt-kwin/decorations")
+set(KDECORATION_KCM_PLUGIN_DIR "qindaqt-kwin/decorations/kcm")
 
-include("${CMAKE_CURRENT_LIST_DIR}/KDecoration3Targets.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/QindaQtKWinDecorationTargets.cmake")
 

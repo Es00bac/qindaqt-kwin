@@ -184,7 +184,10 @@ set_package_properties(Plasma PROPERTIES
     TYPE RUNTIME
 )
 
-find_package(KDecoration3 ${PROJECT_DEP_VERSION} CONFIG REQUIRED)
+# QindaQt: kdecoration is vendored (kdecoration/, container-wm ADR-0289). KWin
+# links its private library, whose ABI moves with every Plasma release, so a
+# shared copy would tie the fork to stock Plasma's release cadence.
+add_subdirectory(kdecoration)
 
 if (KWIN_BUILD_DECORATIONS)
     find_package(Breeze ${PROJECT_DEP_VERSION} CONFIG)

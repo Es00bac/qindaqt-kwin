@@ -35,10 +35,18 @@ namespace KWin
 namespace Decoration
 {
 
+// Key of the decoration settings inside a plugin's metadata.
 static const QString s_pluginName = QStringLiteral("org.kde.kdecoration3");
+// QindaQt: decoration plugins load only from qindaqt-kwin's own namespace, so
+// stock Breeze and Aurorae never load here (container-wm ADR-0289).
+// AGENT-CONTRACT: the vendored QindaQtKWinDecoration package exports this
+// namespace as KDECORATION_PLUGIN_DIR.
+static const QString s_pluginNamespace = QStringLiteral("qindaqt-kwin/decorations");
 static const QString s_configKeyName = QStringLiteral("org.kde.kdecoration2");
-static const QString s_defaultPlugin = QStringLiteral("org.kde.breeze");
-static const QString s_fallbackPlugin = QStringLiteral("org.kde.kwin.aurorae");
+// AGENT-CONTRACT: container-wm installs QindaQt's decoration as plugin id
+// "org.qindaqt" in s_pluginNamespace; it is both the default and the fallback.
+static const QString s_defaultPlugin = QStringLiteral("org.qindaqt");
+static const QString s_fallbackPlugin = QStringLiteral("org.qindaqt");
 
 static void migrateAuroraeTheme()
 {
@@ -120,7 +128,7 @@ void DecorationBridge::init()
 
 bool DecorationBridge::initPlugin(const QString &pluginId)
 {
-    const KPluginMetaData metaData = KPluginMetaData::findPluginById(s_pluginName, pluginId);
+    const KPluginMetaData metaData = KPluginMetaData::findPluginById(s_pluginNamespace, pluginId);
     if (!metaData.isValid()) {
         qCWarning(KWIN_DECORATIONS) << "Could not locate decoration plugin" << pluginId;
         return false;
