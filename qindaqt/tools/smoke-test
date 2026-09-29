@@ -17,6 +17,8 @@ dbus-run-session -- bash -c '
   echo "## names"; busctl --user list --no-pager 2>/dev/null | awk "{print \$1}" | grep -E "KWin|kglobalaccel|keyboard" | sort
   echo "## new object"; busctl --user call org.qindaqt.KWin /org/qindaqt/KWin org.qindaqt.KWin currentDesktop 2>&1 | head -2
   echo "## supportInformation head"; busctl --user call org.qindaqt.KWin /org/qindaqt/KWin org.qindaqt.KWin supportInformation 2>&1 | head -c 120; echo
+  busctl --user --json=short call org.qindaqt.KWin /org/qindaqt/KWin org.qindaqt.KWin supportInformation 2>/dev/null \
+    | python3 -c "import json,sys; print(json.load(sys.stdin)[\"data\"][0])" > "$1/support-information.txt" 2>/dev/null
   echo "## old main object gone"; busctl --user call org.kde.KWin /KWin org.kde.KWin currentDesktop 2>&1 | head -1
   echo "## carve-out tablet mode"; busctl --user get-property org.kde.KWin /org/kde/KWin org.kde.KWin.TabletModeManager tabletMode 2>&1 | head -1
   echo "## carve-out virtual keyboard"; busctl --user get-property org.kde.KWin /VirtualKeyboard org.kde.kwin.VirtualKeyboard available 2>&1 | head -1

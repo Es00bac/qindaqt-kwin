@@ -174,6 +174,11 @@ QObject *TabBoxHandlerPrivate::createSwitcherItem()
             qCWarning(KWIN_TABBOX) << "Could not load window switcher package" << config.layoutName() << ". Falling back to default";
             path = QStandardPaths::locate(QStandardPaths::GenericDataLocation, QLatin1String("qindaqt-kwin/tabbox/") + TabBoxConfig::defaultLayoutName(), QStandardPaths::LocateDirectory);
         }
+        if (path.isEmpty()) {
+            // QindaQt: the default switcher comes from container-wm; keep the
+            // fork's bundled one when QindaQt's is not installed.
+            path = QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("qindaqt-kwin/tabbox/thumbnail_grid"), QStandardPaths::LocateDirectory);
+        }
 
         KPackage::Package pkg = KPackage::PackageLoader::self()->loadPackage(QStringLiteral("QindaQtKWin/WindowSwitcher"));
         pkg.setPath(path);

@@ -5,11 +5,12 @@
     http://www.kde.org/standards/kcfg/1.0/kcfg.xsd" >
     <kcfgfile arg="true"/>
     <group name="Effect-blur">
+        <!-- QindaQt: Theming v2 materials (container-wm ADR-0206, ADR-0289). -->
         <entry name="BlurStrength" type="Int">
-            <default>15</default>
+            <default>8</default>
         </entry>
         <entry name="NoiseStrength" type="Int">
-            <default>5</default>
+            <default>2</default>
         </entry>
         <entry name="Saturation" type="Int">
             <default>150</default>

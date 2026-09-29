@@ -672,7 +672,9 @@ void Options::loadConfig()
     setCommandWindowWheel(mouseCommand(config.readEntry("CommandWindowWheel", "Scroll"), false));
     setCommandAll1(mouseCommand(config.readEntry("CommandAll1", "Move"), false));
     setCommandAll2(mouseCommand(config.readEntry("CommandAll2", "Toggle raise and lower"), false));
-    setCommandAll3(mouseCommand(config.readEntry("CommandAll3", "Resize"), false));
+    // QindaQt: nothing by default, so Meta+right-click reaches the shell's live
+    // customization chord (container-wm ADR-0289; matches src/kwin.kcfg).
+    setCommandAll3(mouseCommand(config.readEntry("CommandAll3", "Nothing"), false));
 
     // Compositing
     config = KConfigGroup(m_settings->config(), QStringLiteral("Compositing"));

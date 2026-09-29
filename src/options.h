@@ -757,7 +757,7 @@ public:
     }
     static MouseCommand defaultCommandAll3()
     {
-        return MouseUnrestrictedResize;
+        return MouseNothing; // QindaQt: see Options::loadConfig
     }
     static MouseWheelCommand defaultCommandTitlebarWheel()
     {

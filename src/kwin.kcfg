@@ -51,8 +51,10 @@
         <entry name="CommandAll2" type="String">
             <default>Toggle raise and lower</default>
         </entry>
+        <!-- QindaQt: Meta+right-click reaches the pointer-focused surface, where the
+             shell's live customization chord lives (container-wm ADR-0289). -->
         <entry name="CommandAll3" type="String">
-            <default>Resize</default>
+            <default>Nothing</default>
         </entry>
         <entry name="DoubleClickBorderToMaximize" type="Bool">
             <default>true</default>
@@ -176,14 +178,16 @@
         <entry name="ElectricBorderPushbackPixels" type="Int">
             <default>1</default>
         </entry>
+        <!-- QindaQt: an ordinary drag stays a floating move; QindaQt's Meta+Shift
+             drag owns edge and corner docking (container-wm ADR-0289). -->
         <entry name="ElectricBorderMaximize" type="Bool">
-            <default>true</default>
+            <default>false</default>
         </entry>
         <entry name="ElectricBorderAllScreenCorner" type="Bool">
             <default>true</default>
         </entry>
         <entry name="ElectricBorderTiling" type="Bool">
-            <default>true</default>
+            <default>false</default>
         </entry>
         <entry name="ElectricBorderCornerRatio" type="Double">
             <default>0.25</default>
