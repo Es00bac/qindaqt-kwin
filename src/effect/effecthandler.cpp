@@ -443,7 +443,9 @@ void EffectsHandler::startPaint()
     m_activeEffects.clear();
     m_activeEffects.reserve(loaded_effects.count());
     for (QList<KWin::EffectPair>::const_iterator it = loaded_effects.constBegin(); it != loaded_effects.constEnd(); ++it) {
-        if (it->second->isActive()) {
+        // AGENT-GUARD: cached ordinary scene effects cannot repaint over the
+        // lock fence, including the black fallback after greeter loss.
+        if (!waylandServer()->isScreenLocked() && it->second->isActive()) {
             m_activeEffects << it->second;
         }
     }

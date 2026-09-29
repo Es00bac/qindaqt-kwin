@@ -218,7 +218,7 @@ Window *KeyboardInputRedirection::pickFocus() const
                     // a deleted window doesn't get mouse events
                     continue;
                 }
-                if (!t->isLockScreen()) {
+                if (!waylandServer()->isLockScreenInputSurface(t->surface())) {
                     continue;
                 }
                 if (!t->readyForPainting()) {

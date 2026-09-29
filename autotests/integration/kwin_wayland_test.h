@@ -1043,6 +1043,9 @@ private:
 struct Connection
 {
     static std::unique_ptr<Connection> setup(AdditionalWaylandInterfaces interfaces = AdditionalWaylandInterfaces());
+    // Transfers the private compositor-created client fd immediately.
+    // ConnectionThread closes it on both setup failure and normal destruction.
+    static std::unique_ptr<Connection> setupFromSocket(int ownedFd, AdditionalWaylandInterfaces interfaces = {});
     ~Connection();
 
     bool sync();
@@ -1265,18 +1268,6 @@ Window *renderAndWaitForShown(KWayland::Client::ShmPool *shm, KWayland::Client::
  * Waits for the @p window to be destroyed.
  */
 bool waitForWindowClosed(Window *window);
-
-/**
- * Locks the screen and waits till the screen is locked.
- * @returns @c true if the screen could be locked, @c false otherwise
- */
-bool lockScreen();
-
-/**
- * Unlocks the screen and waits till the screen is unlocked.
- * @returns @c true if the screen could be unlocked, @c false otherwise
- */
-bool unlockScreen();
 
 /**
  * Returns @c true if the system has at least one render node; otherwise returns @c false.

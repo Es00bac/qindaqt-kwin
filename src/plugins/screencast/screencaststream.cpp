@@ -24,6 +24,7 @@
 #include "screencastbuffer.h"
 #include "screencastsource.h"
 #include "utils/drm_format_helper.h"
+#include "wayland_server.h"
 
 #include <KLocalizedString>
 
@@ -569,6 +570,9 @@ pw_buffer *ScreenCastStream::dequeueBuffer()
 
 void ScreenCastStream::record(Contents contents)
 {
+    if (m_closed || waylandServer()->isScreenLocked()) {
+        return;
+    }
     EglBackend *backend = qobject_cast<EglBackend *>(Compositor::self()->backend());
     if (!backend) {
         return;

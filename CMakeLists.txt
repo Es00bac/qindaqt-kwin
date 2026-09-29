@@ -58,7 +58,10 @@ option(KWIN_BUILD_DECORATIONS "Enable building of KWin decorations." ON)
 # namespaces and would collide with stock KWin; QindaQt Settings replaces them.
 option(KWIN_BUILD_KCMS "Enable building of KWin configuration modules." OFF)
 option(KWIN_BUILD_NOTIFICATIONS "Enable building of KWin with knotifications support" ON)
-option(KWIN_BUILD_SCREENLOCKER "Enable building of KWin lockscreen functionality" ON)
+option(KWIN_BUILD_SCREENLOCKER "Enable native session-lock enforcement (required)" ON)
+if(NOT KWIN_BUILD_SCREENLOCKER)
+    message(FATAL_ERROR "qindaqt-kwin requires native session-lock enforcement")
+endif()
 option(KWIN_BUILD_TABBOX "Enable building of KWin Tabbox functionality" ON)
 option(KWIN_BUILD_X11 "Enable building X11 common code and Xwayland support" ON)
 option(KWIN_BUILD_GLOBALSHORTCUTS "Enable building of KWin with global shortcuts support" ON)
@@ -397,13 +400,6 @@ if (KWIN_BUILD_NOTIFICATIONS)
     find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS Notifications)
 endif()
 
-if (KWIN_BUILD_SCREENLOCKER)
-    find_package(KScreenLocker CONFIG)
-    set_package_properties(KScreenLocker PROPERTIES
-        TYPE REQUIRED
-        PURPOSE "For screenlocker integration in kwin_wayland"
-    )
-endif()
 
 pkg_check_modules(libevdev IMPORTED_TARGET libevdev)
 add_feature_info(libevdev libevdev_FOUND "Required for game controller support")

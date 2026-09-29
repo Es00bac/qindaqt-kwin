@@ -15,6 +15,7 @@
 #include "utils/serviceutils.h"
 #include "window.h"
 #include "workspace.h"
+#include "wayland_server.h"
 
 #include <KLocalizedString>
 
@@ -244,6 +245,10 @@ std::optional<pid_t> ScreenShotDBusInterface2::determineCallerPid() const
 
 bool ScreenShotDBusInterface2::checkPermissions(std::optional<pid_t> pid) const
 {
+    if (waylandServer()->isScreenLocked()) {
+        sendErrorReply(s_errorNotAuthorized, QStringLiteral("Session is locked"));
+        return false;
+    }
     static bool permissionCheckDisabled = qEnvironmentVariableIntValue("KWIN_SCREENSHOT_NO_PERMISSION_CHECKS") == 1;
     if (permissionCheckDisabled) {
         return true;

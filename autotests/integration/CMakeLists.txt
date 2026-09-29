@@ -69,13 +69,9 @@ if(TARGET KF6GlobalAccelKWinPlugin)
     target_link_libraries(KWinIntegrationTestFramework PUBLIC KF6GlobalAccelKWinPlugin)
 endif()
 
-if(TARGET PW::KScreenLocker)
-    target_link_libraries(KWinIntegrationTestFramework PUBLIC PW::KScreenLocker)
-endif()
-
 function(integrationTest)
     set(optionArgs BUILTIN_EFFECTS)
-    set(oneValueArgs NAME)
+    set(oneValueArgs NAME RUNNER)
     set(multiValueArgs SRCS LIBS OPTIONAL_LIBS)
     cmake_parse_arguments(ARGS "${optionArgs}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -89,15 +85,18 @@ function(integrationTest)
     if(${ARGS_BUILTIN_EFFECTS})
         kcoreaddons_target_static_plugins(${ARGS_NAME} NAMESPACE "qindaqt-kwin/effects/plugins")
     endif()
-    add_test(NAME kwin-${ARGS_NAME} COMMAND dbus-run-session ${CMAKE_BINARY_DIR}/bin/${ARGS_NAME})
+    if(ARGS_RUNNER)
+        add_test(NAME kwin-${ARGS_NAME} COMMAND ${ARGS_RUNNER} ${CMAKE_BINARY_DIR}/bin/${ARGS_NAME})
+    else()
+        add_test(NAME kwin-${ARGS_NAME} COMMAND dbus-run-session ${CMAKE_BINARY_DIR}/bin/${ARGS_NAME})
+    endif()
 endfunction()
 
 if(KWIN_BUILD_X11)
     integrationTest(NAME testDontCrashGlxgears SRCS dont_crash_glxgears.cpp LIBS KF6::I18n KDecoration3::KDecoration)
 endif()
-if (KWIN_BUILD_SCREENLOCKER)
-    integrationTest(NAME testLockScreen SRCS lockscreen.cpp LIBS KF6::GlobalAccel)
-endif()
+# The upstream KSldApp-only lockscreen fixture is superseded by the native
+# non-installable protocol/input/topology/capture matrix below.
 integrationTest(NAME testBounceKeys SRCS bounce_keys_test.cpp)
 integrationTest(NAME testButtonRebind SRCS buttonrebind_test.cpp)
 if (KWIN_BUILD_GAMECONTROLLER)
@@ -216,7 +215,33 @@ add_subdirectory(effects)
 add_subdirectory(fakes)
 
 if(QINDAQT_SESSION_LOCK_TEST_AUTHORIZATION)
-    integrationTest(NAME testNativeSessionLock SRCS ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_session_lock_test.cpp)
+    integrationTest(NAME testNativeSessionLock
+        RUNNER ${PROJECT_SOURCE_DIR}/qindaqt/tools/run-native-lock
+        SRCS
+            ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_session_lock_test.cpp
+            ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_session_lock_test.h
+            ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_lock_protocol_test.cpp
+            ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_lock_input_test.cpp
+            ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_lock_topology_test.cpp)
     target_include_directories(testNativeSessionLock PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/qindaqt/session-lock ${CMAKE_CURRENT_BINARY_DIR})
     qt6_generate_wayland_protocol_client_sources(testNativeSessionLock PRIVATE_CODE FILES ${WaylandProtocols_DATADIR}/staging/ext-session-lock/ext-session-lock-v1.xml)
+
+    set(native_lock_capture_sources
+        ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_lock_capture_test.cpp
+        ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_lock_capture_requests_test.cpp
+        ${PROJECT_SOURCE_DIR}/src/plugins/screenshot/screenshot.cpp
+        ${PROJECT_SOURCE_DIR}/src/plugins/screenshot/screenshotdbusinterface2.cpp
+        ${PROJECT_SOURCE_DIR}/src/plugins/screenshot/screenshotlayer.cpp
+        ${PROJECT_SOURCE_DIR}/src/plugins/screencast/screencastsource.cpp
+        ${PROJECT_SOURCE_DIR}/src/plugins/screencast/windowscreencastsource.cpp
+        ${PROJECT_SOURCE_DIR}/src/plugins/screencast/outputscreencastsource.cpp
+        ${PROJECT_SOURCE_DIR}/src/plugins/screencast/regionscreencastsource.cpp
+        ${PROJECT_SOURCE_DIR}/src/plugins/screencast/filteredsceneview.cpp
+        ${PROJECT_SOURCE_DIR}/src/plugins/screencast/screencastlayer.cpp)
+    qt_add_dbus_adaptor(native_lock_capture_sources ${PROJECT_SOURCE_DIR}/src/plugins/screenshot/org.kde.KWin.ScreenShot2.xml ${PROJECT_SOURCE_DIR}/src/plugins/screenshot/screenshotdbusinterface2.h KWin::ScreenShotDBusInterface2)
+    target_sources(testNativeSessionLock PRIVATE ${native_lock_capture_sources})
+    add_dependencies(testNativeSessionLock screenshot screencast)
+    target_include_directories(testNativeSessionLock PRIVATE ${PROJECT_SOURCE_DIR}/src/plugins/screenshot ${PROJECT_SOURCE_DIR}/src/plugins/screencast)
+    target_link_libraries(testNativeSessionLock KF6::Service KF6::I18n)
+    ecm_qt_declare_logging_category(testNativeSessionLock HEADER screenshotlogging.h IDENTIFIER KWIN_SCREENSHOT CATEGORY_NAME kwin_screenshot DEFAULT_SEVERITY Warning)
 endif()

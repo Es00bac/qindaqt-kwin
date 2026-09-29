@@ -52,6 +52,10 @@ void ScreencastManager::streamWindow(ScreencastStreamV1Interface *waylandStream,
                                      const QString &winid,
                                      ScreencastV1Interface::CursorMode mode)
 {
+    if (waylandServer()->isScreenLocked()) {
+        waylandStream->sendFailed(i18n("Session is locked"));
+        return;
+    }
     if (!isSupportedCompositingType()) {
         waylandStream->sendFailed(i18n("Unsupported compositing type"));
         return;
@@ -77,6 +81,10 @@ void ScreencastManager::streamVirtualOutput(ScreencastStreamV1Interface *stream,
                                             double scale,
                                             ScreencastV1Interface::CursorMode mode)
 {
+    if (waylandServer()->isScreenLocked()) {
+        stream->sendFailed(i18n("Session is locked"));
+        return;
+    }
     if (!isSupportedCompositingType()) {
         stream->sendFailed(i18n("Unsupported compositing type"));
         return;
@@ -93,6 +101,10 @@ void ScreencastManager::streamWaylandOutput(ScreencastStreamV1Interface *wayland
                                             OutputInterface *output,
                                             ScreencastV1Interface::CursorMode mode)
 {
+    if (waylandServer()->isScreenLocked()) {
+        waylandStream->sendFailed(i18n("Session is locked"));
+        return;
+    }
     if (!isSupportedCompositingType()) {
         waylandStream->sendFailed(i18n("Unsupported compositing type"));
         return;
@@ -114,6 +126,10 @@ void ScreencastManager::streamOutput(ScreencastStreamV1Interface *waylandStream,
                                      LogicalOutput *streamOutput,
                                      ScreencastV1Interface::CursorMode mode)
 {
+    if (waylandServer()->isScreenLocked()) {
+        waylandStream->sendFailed(i18n("Session is locked"));
+        return;
+    }
     if (!streamOutput) {
         waylandStream->sendFailed(i18n("Could not find output"));
         return;
@@ -147,6 +163,10 @@ static qreal devicePixelRatioForRegion(const Rect &region)
 
 void ScreencastManager::streamRegion(ScreencastStreamV1Interface *waylandStream, const Rect &geometry, qreal scale, ScreencastV1Interface::CursorMode mode)
 {
+    if (waylandServer()->isScreenLocked()) {
+        waylandStream->sendFailed(i18n("Session is locked"));
+        return;
+    }
     if (!isSupportedCompositingType()) {
         waylandStream->sendFailed(i18n("Unsupported compositing type"));
         return;
@@ -171,6 +191,8 @@ void ScreencastManager::streamRegion(ScreencastStreamV1Interface *waylandStream,
 
 void ScreencastManager::integrateStreams(ScreencastStreamV1Interface *waylandStream, ScreenCastStream *stream)
 {
+    // Revoke existing streams synchronously before any lock frame is painted.
+    connect(waylandServer(), &WaylandServer::screenAboutToLock, stream, &ScreenCastStream::close);
     connect(waylandStream, &ScreencastStreamV1Interface::finished, stream, &ScreenCastStream::close);
     connect(stream, &ScreenCastStream::closed, waylandStream, [stream, waylandStream] {
         waylandStream->sendClosed();

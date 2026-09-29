@@ -91,7 +91,7 @@ bool SessionLockController::isTrustedLocker(ClientConnection *client) const
     if (stat(procImage.constData(), &peer) || peer.st_dev != image.st_dev || peer.st_ino != image.st_ino) {
         return false;
     }
-    QString parent = QFileInfo(trusted).absolutePath();
+    QString parent = QFileInfo(QFileInfo(trusted).canonicalFilePath()).absolutePath();
     for (;;) {
         struct stat directory{};
         if (stat(parent.toLocal8Bit().constData(), &directory) || directory.st_uid != 0
@@ -122,7 +122,7 @@ ClientConnection *SessionLockController::client() const
 }
 bool SessionLockController::isLockSurface(SurfaceInterface *surface) const
 {
-    if (!m_locked || !m_lock || !surface || surface->client() != client()) {
+    if (!m_locked || !m_lock || !m_lockAcknowledged || !surface || surface->client() != client()) {
         return false;
     }
     for (const auto &window : m_windows) {
@@ -145,6 +145,7 @@ void SessionLockController::acquire(SessionLockV1Interface *lock)
         Q_EMIT lockStateChanged();
     }
     m_lock = lock;
+    m_lockAcknowledged = false;
     connect(lock, &SessionLockV1Interface::aboutToBeDestroyed, this, [this, lock]() {
         if (m_lock == lock) {
             lostLocker();
@@ -155,6 +156,7 @@ void SessionLockController::acquire(SessionLockV1Interface *lock)
             return;
         }
         m_lock = nullptr;
+        m_lockAcknowledged = false;
         ++m_generation;
         clearWindows();
         m_locked = false;
@@ -188,6 +190,7 @@ void SessionLockController::lostLocker()
     // AGENT-GUARD: destroying the authenticated locker removes only its
     // graphics; the lock fence survives until a valid replacement unlocks.
     m_lock = nullptr;
+    m_lockAcknowledged = false;
     Q_EMIT lockStateChanged();
     clearWindows();
     requirePresentation();
@@ -199,6 +202,7 @@ void SessionLockController::lockWithoutClient()
     }
     m_locked = true;
     Q_EMIT aboutToLock();
+    waylandServer()->seat()->cancelDrag();
     Q_EMIT lockStateChanged();
     requirePresentation();
 }
@@ -231,8 +235,12 @@ void SessionLockController::framePresented(BackendOutput *output, quint64 genera
 }
 void SessionLockController::acknowledge()
 {
-    if (m_locked && m_lock && m_pendingOutputs.empty()) {
+    if (m_locked && m_lock && !m_lockAcknowledged && m_pendingOutputs.empty()) {
+        m_lockAcknowledged = true;
         m_lock->sendLocked();
+        // Lock graphics/input become eligible only after black presentation
+        // established the protocol locked boundary on every physical output.
+        Q_EMIT lockStateChanged();
     }
 }
 }

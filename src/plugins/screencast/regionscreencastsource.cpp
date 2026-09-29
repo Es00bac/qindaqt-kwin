@@ -72,6 +72,7 @@ void RegionScreenCastSource::setRenderCursor(bool enable)
 
 Region RegionScreenCastSource::render(GLFramebuffer *target, const Region &bufferRepair)
 {
+    if (renderLockFallback(target)) { return Rect(QPoint(), target->size()); }
     m_last = std::chrono::steady_clock::now().time_since_epoch();
     m_layer->setFramebuffer(target, bufferRepair & Rect(QPoint(), target->size()));
     if (!m_layer->preparePresentationTest()) {
@@ -95,6 +96,7 @@ Region RegionScreenCastSource::render(GLFramebuffer *target, const Region &buffe
 
 Region RegionScreenCastSource::render(QImage *target, const Region &bufferRepair)
 {
+    if (renderLockFallback(target)) { return Rect(QPoint(), target->size()); }
     auto texture = GLTexture::allocate(GL_RGBA8, target->size());
     if (!texture) {
         return Region{};

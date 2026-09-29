@@ -55,6 +55,7 @@ private:
     friend class SessionLockPresentationFeedback;
     QPointer<SessionLockV1Interface> m_lock;
     bool m_locked = false;
+    bool m_lockAcknowledged = false;
     quint64 m_generation = 0;
     QSet<BackendOutput *> m_pendingOutputs;
     QHash<SessionLockSurfaceV1Interface *, QPointer<SessionLockWindow>> m_windows;

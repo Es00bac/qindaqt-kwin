@@ -226,6 +226,9 @@ WaylandServer::WaylandServer(QObject *parent)
 
 WaylandServer::~WaylandServer()
 {
+    // Stop native callbacks before Display tears down client resources. The
+    // compositor/workspace may already be gone during application shutdown.
+    delete std::exchange(m_sessionLock, nullptr);
     s_self = nullptr;
 }
 

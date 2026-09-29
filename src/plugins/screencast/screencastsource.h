@@ -44,6 +44,12 @@ public:
     virtual QPointF mapFromGlobal(const QPointF &point) const = 0;
     virtual RectF mapFromGlobal(const RectF &rect) const = 0;
 
+protected:
+    // A direct source read also fails closed; callers must not retain a stale
+    // ordinary-client framebuffer when the capture stream is revoked.
+    bool renderLockFallback(QImage *target) const;
+    bool renderLockFallback(GLFramebuffer *target) const;
+
 Q_SIGNALS:
     void frame();
     void closed();

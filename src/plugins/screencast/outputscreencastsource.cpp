@@ -71,6 +71,7 @@ void OutputScreenCastSource::setRenderCursor(bool enable)
 
 Region OutputScreenCastSource::render(QImage *target, const Region &bufferRepair)
 {
+    if (renderLockFallback(target)) { return Rect(QPoint(), target->size()); }
     auto texture = GLTexture::allocate(GL_RGBA8, target->size());
     if (!texture) {
         return Region{};
@@ -83,6 +84,7 @@ Region OutputScreenCastSource::render(QImage *target, const Region &bufferRepair
 
 Region OutputScreenCastSource::render(GLFramebuffer *target, const Region &bufferRepair)
 {
+    if (renderLockFallback(target)) { return Rect(QPoint(), target->size()); }
     m_layer->setFramebuffer(target, bufferRepair & Rect(QPoint(), target->size()));
     if (!m_layer->preparePresentationTest()) {
         return Region{};

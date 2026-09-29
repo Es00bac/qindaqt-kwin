@@ -30,6 +30,7 @@
 #include "screenshotlayer.h"
 #include "window.h"
 #include "workspace.h"
+#include "wayland_server.h"
 
 #include <QPainter>
 
@@ -85,6 +86,11 @@ ScreenShotManager::~ScreenShotManager()
 
 std::optional<QImage> ScreenShotManager::takeScreenShot(LogicalOutput *screen, ScreenShotFlags flags, std::optional<pid_t> pidToHide)
 {
+    // AGENT-GUARD: privileged capture cannot read ordinary windows or the
+    // authenticator while native session-lock fencing is active.
+    if (waylandServer()->isScreenLocked()) {
+        return std::nullopt;
+    }
     const auto eglBackend = dynamic_cast<EglBackend *>(Compositor::self()->backend());
     if (!eglBackend) {
         return std::nullopt;
@@ -152,6 +158,11 @@ std::optional<QImage> ScreenShotManager::takeScreenShot(LogicalOutput *screen, S
 
 std::optional<QImage> ScreenShotManager::takeScreenShot(const Rect &area, ScreenShotFlags flags, std::optional<pid_t> pidToHide)
 {
+    // AGENT-GUARD: privileged capture cannot read ordinary windows or the
+    // authenticator while native session-lock fencing is active.
+    if (waylandServer()->isScreenLocked()) {
+        return std::nullopt;
+    }
     const auto eglBackend = dynamic_cast<EglBackend *>(Compositor::self()->backend());
     if (!eglBackend) {
         return std::nullopt;
@@ -222,6 +233,11 @@ std::optional<QImage> ScreenShotManager::takeScreenShot(const Rect &area, Screen
 
 std::optional<QImage> ScreenShotManager::takeScreenShot(Window *window, ScreenShotFlags flags)
 {
+    // AGENT-GUARD: privileged capture cannot read ordinary windows or the
+    // authenticator while native session-lock fencing is active.
+    if (waylandServer()->isScreenLocked()) {
+        return std::nullopt;
+    }
     const auto eglBackend = dynamic_cast<EglBackend *>(Compositor::self()->backend());
     if (!eglBackend) {
         return std::nullopt;

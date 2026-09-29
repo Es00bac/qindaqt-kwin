@@ -47,9 +47,6 @@
 #include <KWayland/Client/textinput.h>
 
 // screenlocker
-#if KWIN_BUILD_SCREENLOCKER
-#include <KScreenLocker/KsldApp>
-#endif
 
 #include <QFutureWatcher>
 #include <QMimeDatabase>
@@ -377,6 +374,12 @@ std::unique_ptr<Connection> Connection::setup(AdditionalWaylandInterfaces flags)
         return nullptr;
     }
     KWin::waylandServer()->display()->createClient(sx[0]);
+    return setupFromSocket(sx[1], flags);
+}
+
+std::unique_ptr<Connection> Connection::setupFromSocket(int ownedFd, AdditionalWaylandInterfaces flags)
+{
+    if (ownedFd < 0) { return nullptr; }
     // setup connection
     auto connection = std::make_unique<Connection>();
     connection->connection = new KWayland::Client::ConnectionThread;
@@ -384,7 +387,7 @@ std::unique_ptr<Connection> Connection::setup(AdditionalWaylandInterfaces flags)
     if (!connectedSpy.isValid()) {
         return nullptr;
     }
-    connection->connection->setSocketFd(sx[1]);
+    connection->connection->setSocketFd(ownedFd);
 
     connection->thread = new QThread(kwinApp());
     connection->connection->moveToThread(connection->thread);
@@ -1013,7 +1016,7 @@ void render(KWayland::Client::ShmPool *shm, KWayland::Client::Surface *surface, 
 {
     QImage img(size, format);
     img.fill(color);
-    render(surface, img);
+    render(shm, surface, img);
 }
 
 void render(KWayland::Client::Surface *surface, const QImage &img)
@@ -1342,68 +1345,7 @@ bool waitForWindowClosed(Window *window)
     return closedSpy.wait();
 }
 
-#if KWIN_BUILD_SCREENLOCKER
-bool lockScreen()
-{
-    if (waylandServer()->isScreenLocked()) {
-        return false;
-    }
-    QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged);
-    if (!lockStateChangedSpy.isValid()) {
-        return false;
-    }
-    ScreenLocker::KSldApp::self()->lock(ScreenLocker::EstablishLock::Immediate);
-    if (lockStateChangedSpy.count() != 1) {
-        return false;
-    }
-    if (!waylandServer()->isScreenLocked()) {
-        return false;
-    }
-    if (ScreenLocker::KSldApp::self()->lockState() != ScreenLocker::KSldApp::Locked) {
-        QSignalSpy lockedSpy(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::locked);
-        if (!lockedSpy.isValid()) {
-            return false;
-        }
-        if (!lockedSpy.wait()) {
-            return false;
-        }
-    }
-    return true;
-}
 
-bool unlockScreen()
-{
-    QSignalSpy lockStateChangedSpy(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::lockStateChanged);
-    if (!lockStateChangedSpy.isValid()) {
-        return false;
-    }
-    using namespace ScreenLocker;
-    const auto children = KSldApp::self()->children();
-    for (auto it = children.begin(); it != children.end(); ++it) {
-        if (qstrcmp((*it)->metaObject()->className(), "LogindIntegration") != 0) {
-            continue;
-        }
-        QMetaObject::invokeMethod(*it, "requestUnlock");
-        break;
-    }
-    if (waylandServer()->isScreenLocked()) {
-        lockStateChangedSpy.wait();
-    }
-    if (waylandServer()->isScreenLocked()) {
-        return true;
-    }
-    if (ScreenLocker::KSldApp::self()->lockState() == ScreenLocker::KSldApp::Locked) {
-        QSignalSpy lockedSpy(ScreenLocker::KSldApp::self(), &ScreenLocker::KSldApp::unlocked);
-        if (!lockedSpy.isValid()) {
-            return false;
-        }
-        if (!lockedSpy.wait()) {
-            return false;
-        }
-    }
-    return true;
-}
-#endif // KWIN_BUILD_LOCKSCREEN
 
 static bool haveDrmNode(int type)
 {

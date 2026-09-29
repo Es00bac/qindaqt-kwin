@@ -329,7 +329,7 @@ set_source_files_properties(net.hadess.SensorProxy.xml PROPERTIES
 qt_add_dbus_interface(kwin_dbus_SRCS net.hadess.SensorProxy.xml sensorproxy_interface)
 
 if (KWIN_BUILD_SCREENLOCKER)
-    qt_add_dbus_interface(kwin_dbus_SRCS ${KSCREENLOCKER_DBUS_INTERFACES_DIR}/kf6_org.freedesktop.ScreenSaver.xml screenlocker_interface)
+    qt_add_dbus_interface(kwin_dbus_SRCS ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/org.freedesktop.ScreenSaver.xml screenlocker_interface)
 endif()
 
 qt_add_dbus_interface(kwin_dbus_SRCS org.kde.kappmenu.xml appmenu_interface)
@@ -353,9 +353,6 @@ if (KWIN_BUILD_ACTIVITIES)
     target_link_libraries(kwin PRIVATE Plasma::Activities)
 endif()
 
-if (KWIN_BUILD_SCREENLOCKER)
-    target_link_libraries(kwin PRIVATE PW::KScreenLocker)
-endif()
 
 if (KWIN_BUILD_TABBOX)
     target_sources(kwin PRIVATE

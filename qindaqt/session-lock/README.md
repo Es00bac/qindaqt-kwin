@@ -45,7 +45,32 @@ no authorization injection. The runner supplies disposable HOME/XDG roots,
 a private D-Bus session and virtual outputs, and reaps only its process group.
 Never run fixtures in the physical session or install their compositor.
 
-PF5 evidence covers global authorization, presentation delay, crash/replacement
-and explicit native roles. PF6 adds the input/protocol/topology failure matrix
-before removal of the KScreenLocker build dependency. Passing this server proof
-does not qualify greeter/PAM/service integration or a live rollout.
+PF6's focused CTest runs 23 QtTest checks (including setup/cleanup), with no
+skips. It covers denial of ordinary clients despite the debug bypass, delayed
+physical presentation and pre-acknowledgement role isolation, greeter crash and
+replacement, explicit roles, ten fatal protocol-error cases, ordinary/lock
+keyboard-pointer-touch delivery and post-unlock recovery, a real compositor-owned
+input-method socket, mirrored presentation, locked hotplug, actual screenshot
+and five screencast IPC requests, direct QImage/GL capture blackening, presented
+black pixels after crash/hotplug, and effects input grabs.
+
+Screenshot requests reject a locked session before the legacy permission bypass.
+Screencast acquisition rejects window/output/region/virtual requests, existing
+streams close synchronously on lock acquisition, recording stops, and direct
+source renders produce black pixels for both CPU and GL targets. The effects
+paint chain is suppressed while locked so cached ordinary-window textures cannot
+overpaint fallback. Scene chrome and hardware overlays remain fenced.
+
+A separate production build uses `BUILD_TESTING=OFF`,
+`QINDAQT_SESSION_LOCK_TEST_AUTHORIZATION=OFF` and
+`CMAKE_DISABLE_FIND_PACKAGE_KScreenLocker=ON`. The compositor, screenshot and
+screencast targets build without KScreenLocker; the production library contains
+no test authorization entry point. The historical `KWIN_BUILD_SCREENLOCKER`
+option remains an always-required native enforcement compatibility switch; OFF
+is rejected. Vendored public ScreenSaver XML preserves the later PF8 service
+boundary, and the superseded upstream lockscreen test remains source history.
+
+This server proof does not authenticate PAM, exercise an installed native locker,
+qualify physical DRM, or prove a real PipeWire consumer pipeline across revocation.
+PF7 greeter/PAM, PF8 service integration and physical/nested end-to-end delivery
+remain separate gates. No package dependency revision or live rollout is implied.

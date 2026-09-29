@@ -110,6 +110,7 @@ void WindowScreenCastSource::setRenderCursor(bool enable)
 
 Region WindowScreenCastSource::render(QImage *target, const Region &bufferDamage)
 {
+    if (renderLockFallback(target)) { return Rect(QPoint(), target->size()); }
     const auto offscreenTexture = GLTexture::allocate(GL_RGBA8, target->size());
     if (!offscreenTexture) {
         return Region{};
@@ -124,6 +125,7 @@ Region WindowScreenCastSource::render(QImage *target, const Region &bufferDamage
 
 Region WindowScreenCastSource::render(GLFramebuffer *target, const Region &bufferDamage)
 {
+    if (renderLockFallback(target)) { return Rect(QPoint(), target->size()); }
     RenderTarget renderTarget(target);
     RenderViewport viewport(boundingRect(), devicePixelRatio(), renderTarget, QPoint());
 
