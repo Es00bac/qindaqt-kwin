@@ -18,6 +18,7 @@ namespace KWin
 {
 
 class SessionLockController;
+class LockerLauncher;
 class SessionLockWindow;
 class AppMenuManagerInterface;
 class ClientConnection;
@@ -187,6 +188,7 @@ public:
      */
     bool isScreenLocked() const;
     SessionLockController *sessionLock() const;
+    LockerLauncher *lockerLauncher() const;
     bool isLockScreenInputSurface(SurfaceInterface *surface) const;
     void registerSessionLockWindow(SessionLockWindow *window);
 
@@ -276,6 +278,7 @@ private:
     InputMethodV1Interface *m_inputMethod = nullptr;
     QPointer<ClientConnection> m_inputMethodServerConnection;
     SessionLockController *m_sessionLock = nullptr;
+    LockerLauncher *m_lockerLauncher = nullptr;
     XdgForeignV2Interface *m_XdgForeign = nullptr;
     XdgActivationV1Integration *m_xdgActivationIntegration = nullptr;
 #if KWIN_BUILD_X11

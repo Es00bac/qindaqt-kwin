@@ -12,13 +12,20 @@ SessionLockWindow owns output-sized role presentation. Loss of any protocol
 resource removes its graphics and never resets the fence. The current lock
 client can be replaced after disconnect, but cannot be displaced while alive.
 
-The fixed `${KDE_INSTALL_FULL_BINDIR}/qindaqt-lock` executable must be regular,
-root-owned and not group/world writable, through a root-owned non-writable
-parent hierarchy. Peer UID must equal compositor UID, peer `/proc/PID/exe`
-inode/device must match, and a desktop entry for that executable must request
-`ext_session_lock_manager_v1` through the public Wayland interface permission
-mechanism. Sandboxed app IDs, same-process clients and the general debug
-permission bypass cannot grant this global. Unlock rechecks the peer identity.
+The compositor launches the fixed `${KDE_INSTALL_FULL_BINDIR}/qindaqt-lock`
+with its sole private socketpair connection and a whitelist environment. Only
+that exact connection can bind the global or unlock; independently launching
+the same executable, including through LD_PRELOAD, grants no authority. The
+executable and fixed `org.qindaqt.Lock.desktop` entry must be root-owned and
+non-writable, including parent hierarchies. The desktop entry requests the
+standard interface through the public permission field and supplies no shell
+command override. Native binding has no client app-ID or debug bypass.
+
+The launcher requires Yama ptrace_scope1–3, and the compositor/native children
+disable core dumps and dumpability. execve resets dumpability, so Yama protects
+the owned child before its early native protection runs. No kernel setting is
+changed. Root/CAP_SYS_PTRACE and trusted launcher ancestors are excluded from
+ordinary-client isolation; see consumer ADR-0299.
 
 The compositor does not authenticate PAM. The trusted executable must submit
 `unlock_and_destroy` only after successful PAM authentication and account
@@ -74,3 +81,19 @@ This server proof does not authenticate PAM, exercise an installed native locker
 qualify physical DRM, or prove a real PipeWire consumer pipeline across revocation.
 PF7 greeter/PAM, PF8 service integration and physical/nested end-to-end delivery
 remain separate gates. No package dependency revision or live rollout is implied.
+
+## Native private-launch slice (PF7)
+
+The backend exports `org.qindaqt.KWin.NativeLock1` at
+`/org/qindaqt/KWin/NativeLock`: `RequestLock` admits lock/recovery, `Locked`
+reports the native fence, and `Protected` reports current-generation actual
+physical presentation even without a locker. Property-change signals carry no
+authentication authority. There is no D-Bus unlock or PAM-result method.
+
+The matrix adds root-file/alias, environment and real child trust rows. A harmless
+preload constructor actually loads in the independent hostile child, whose global
+is denied; the owned child strips injection and reports dumpability0. Even its
+parent cannot ptrace that disposable protected child. Actual private D-Bus proves
+clientless black fallback becomes Protected only after physical feedback. These
+fixtures are compile-time confined to the existing non-installable test build.
+The native Qt greeter/PAM process and service integration remain later slices.

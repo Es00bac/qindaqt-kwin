@@ -10,6 +10,7 @@ namespace KWin
 {
 class ClientConnection;
 class Display;
+class LockerLauncher;
 class LogicalOutput;
 class BackendOutput;
 class OutputFrame;
@@ -24,15 +25,21 @@ class KWIN_EXPORT SessionLockController : public QObject
 {
     Q_OBJECT
 public:
-    explicit SessionLockController(Display *display, QObject *parent = nullptr);
+    explicit SessionLockController(Display *display, LockerLauncher *launcher, QObject *parent = nullptr);
     bool isLocked() const
     {
         return m_locked;
+    }
+    bool isPresentationProtected() const
+    {
+        return m_presentationProtected;
     }
     ClientConnection *client() const;
     bool isTrustedLocker(ClientConnection *client) const;
     bool isLockSurface(SurfaceInterface *surface) const;
     void lockWithoutClient();
+    // Request/recovery may fence and launch, but confers no unlock authority.
+    bool requestNativeLock();
     // AGENT-CONTRACT: Compositor passes only frames composed AFTER the fence
     // became active; actual presentation, never a timeout, acknowledges locking.
     void trackFrame(BackendOutput *output, const std::shared_ptr<OutputFrame> &frame);
@@ -43,6 +50,7 @@ public:
 Q_SIGNALS:
     void aboutToLock();
     void lockStateChanged();
+    void presentationProtectionChanged(bool protectedPresentation);
 
 private:
     void acquire(SessionLockV1Interface *lock);
@@ -51,11 +59,14 @@ private:
     void requirePresentation();
     void framePresented(BackendOutput *output, quint64 generation);
     void acknowledge();
+    void setPresentationProtected(bool value);
     void watchOutput(BackendOutput *output);
     friend class SessionLockPresentationFeedback;
+    LockerLauncher *m_launcher; // Borrowed compositor-owned launch authority.
     QPointer<SessionLockV1Interface> m_lock;
     bool m_locked = false;
     bool m_lockAcknowledged = false;
+    bool m_presentationProtected = false;
     quint64 m_generation = 0;
     QSet<BackendOutput *> m_pendingOutputs;
     QHash<SessionLockSurfaceV1Interface *, QPointer<SessionLockWindow>> m_windows;

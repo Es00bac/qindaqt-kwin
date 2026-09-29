@@ -54,9 +54,11 @@ void NativeSessionLockTest::presentationFenceAndCrashRecovery()
     QVERIFY(!waylandServer()->isLockScreenInputSurface(window->surface()));
     QTest::qWait(1200);
     const bool premature = lock->locked;
+    QVERIFY(!waylandServer()->sessionLock()->isPresentationProtected());
     loop->uninhibit();
     QVERIFY(!premature);
     QTRY_VERIFY(lock->locked);
+    QVERIFY(waylandServer()->sessionLock()->isPresentationProtected());
     auto contender = NativeClient::create(true);
     QVERIFY(contender && contender->manager);
     NativeLock rejected(contender->manager->lock());
@@ -68,12 +70,14 @@ void NativeSessionLockTest::presentationFenceAndCrashRecovery()
     client.reset();
     QTRY_VERIFY(!waylandServer()->sessionLock()->client());
     QVERIFY(waylandServer()->isScreenLocked());
+    QTRY_VERIFY(waylandServer()->sessionLock()->isPresentationProtected());
     auto replacement = NativeClient::create(true);
     QVERIFY(replacement && replacement->manager);
     NativeLock recovered(replacement->manager->lock());
     QTRY_VERIFY(recovered.locked);
     recovered.unlock();
     QTRY_VERIFY(!waylandServer()->isScreenLocked());
+    QVERIFY(!waylandServer()->sessionLock()->isPresentationProtected());
 }
 void NativeSessionLockTest::explicitSurfaceRole()
 {

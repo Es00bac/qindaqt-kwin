@@ -22,5 +22,9 @@ private Q_SLOTS:
     void captureIsolation();
     void blackFallbackPixels();
     void effectsGrabIsolation();
+    void launcherPolicy();
+    void launcherEnvironment();
+    void launcherConnectionIsolation();
+    void nativeLockBackendProtection();
 };
 }

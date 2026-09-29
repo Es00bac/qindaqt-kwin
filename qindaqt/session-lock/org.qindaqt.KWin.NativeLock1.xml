@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<node name="/org/qindaqt/KWin/NativeLock">
+  <interface name="org.qindaqt.KWin.NativeLock1">
+    <property name="Locked" type="b" access="read"/>
+    <property name="Protected" type="b" access="read"/>
+    <method name="RequestLock"><arg name="admitted" type="b" direction="out"/></method>
+    <signal name="lockedChanged"><arg name="locked" type="b"/></signal>
+    <signal name="protectedChanged"><arg name="protected" type="b"/></signal>
+  </interface>
+</node>
