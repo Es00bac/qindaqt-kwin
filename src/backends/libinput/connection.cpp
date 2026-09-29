@@ -69,7 +69,7 @@ public:
 
     ~ConnectionAdaptor() override
     {
-        QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/org/qindaqt/KWin/InputDeviceManager"));
+        QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/org/qindaqt/KWin/InputDevice"));
     }
 
     QStringList devicesSysNames()

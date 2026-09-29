@@ -1,31 +1,45 @@
 #!/bin/bash
-# Smoke-test a staged qindaqt-kwin in an isolated HOME and session bus
-# (qindaqt/README.md). It must never touch the real session or $HOME.
-# usage: qindaqt/tools/smoke-test <stage dir> <result dir>
-set -u
-STAGE=$1; OUT=$2
-rm -rf "$OUT"; mkdir -p "$OUT"/{home,config,state,cache,data,run}; chmod 700 "$OUT/run"
-export HOME=$OUT/home XDG_CONFIG_HOME=$OUT/config XDG_STATE_HOME=$OUT/state XDG_CACHE_HOME=$OUT/cache \
-       XDG_DATA_HOME=$OUT/data XDG_RUNTIME_DIR=$OUT/run
-export LD_LIBRARY_PATH=$STAGE/usr/lib64 QT_PLUGIN_PATH=$STAGE/usr/lib64/qt6/plugins \
-       QML2_IMPORT_PATH=$STAGE/usr/lib64/qt6/qml XDG_DATA_DIRS=$STAGE/usr/share:/usr/share
+# AGENT-GUARD: qualification uses only a disposable HOME, runtime and session bus.
+set -euo pipefail
+STAGE=$(realpath "$1"); OUT=$(realpath -m "$2")
+case "$OUT" in /|"$HOME"|"$STAGE") echo "Refusing unsafe evidence directory" >&2; exit 2;; esac
+mkdir -p "$OUT"/{home,config,state,cache,data,run}; chmod 700 "$OUT/run"
+export HOME=$OUT/home XDG_CONFIG_HOME=$OUT/config XDG_STATE_HOME=$OUT/state XDG_CACHE_HOME=$OUT/cache XDG_DATA_HOME=$OUT/data XDG_RUNTIME_DIR=$OUT/run
+export LD_LIBRARY_PATH=$STAGE/usr/lib64 QT_PLUGIN_PATH=$STAGE/usr/lib64/qt6/plugins QML2_IMPORT_PATH=$STAGE/usr/lib64/qt6/qml XDG_DATA_DIRS=$STAGE/usr/share:/usr/share
 unset WAYLAND_DISPLAY DISPLAY DBUS_SESSION_BUS_ADDRESS
-dbus-run-session -- bash -c '
-  "$0/usr/bin/qindaqt-kwin" --virtual --no-lockscreen --socket wayland-qkwin-smoke > "$1/kwin.log" 2>&1 &
-  KPID=$!
-  for i in $(seq 1 40); do busctl --user status org.qindaqt.KWin >/dev/null 2>&1 && break; sleep 0.25; done
-  echo "## names"; busctl --user list --no-pager 2>/dev/null | awk "{print \$1}" | grep -E "KWin|kglobalaccel|keyboard" | sort
-  echo "## new object"; busctl --user call org.qindaqt.KWin /org/qindaqt/KWin org.qindaqt.KWin currentDesktop 2>&1 | head -2
-  echo "## supportInformation head"; busctl --user call org.qindaqt.KWin /org/qindaqt/KWin org.qindaqt.KWin supportInformation 2>&1 | head -c 120; echo
-  busctl --user --json=short call org.qindaqt.KWin /org/qindaqt/KWin org.qindaqt.KWin supportInformation 2>/dev/null \
-    | python3 -c "import json,sys; print(json.load(sys.stdin)[\"data\"][0])" > "$1/support-information.txt" 2>/dev/null
-  echo "## old main object gone"; busctl --user call org.kde.KWin /KWin org.kde.KWin currentDesktop 2>&1 | head -1
-  echo "## carve-out tablet mode"; busctl --user get-property org.kde.KWin /org/kde/KWin org.kde.KWin.TabletModeManager tabletMode 2>&1 | head -1
-  echo "## carve-out virtual keyboard"; busctl --user get-property org.kde.KWin /VirtualKeyboard org.kde.kwin.VirtualKeyboard available 2>&1 | head -1
-  echo "## effects"; busctl --user call org.qindaqt.KWin /org/qindaqt/KWin/Effects org.qindaqt.KWin.Effects isEffectSupported s blur 2>&1 | head -1
-  echo "## scripting"; busctl --user introspect org.qindaqt.KWin /org/qindaqt/KWin/Scripting 2>&1 | grep -c "org.qindaqt.KWin.Scripting"
-  echo "## input devices"; busctl --user introspect org.qindaqt.KWin /org/qindaqt/KWin/InputDevice 2>&1 | grep -m1 -o "org.qindaqt.KWin.InputDeviceManager"
-  kill $KPID; wait $KPID 2>/dev/null
-' "$STAGE" "$OUT"
-echo "## files created"; (cd "$OUT" && find config state data cache -type f | sort)
-echo "## log warnings"; grep -i -E "could not|failed|error" "$OUT/kwin.log" | grep -v -i "drm\|egl\|opengl" | head -8
+dbus-run-session -- bash -euo pipefail -c '
+  "$1/usr/bin/qindaqt-kwin" --virtual --no-lockscreen --socket wayland-qkwin-smoke > "$2/kwin.log" 2>&1 &
+  compositor=$!
+  trap "kill $compositor 2>/dev/null || true; wait $compositor 2>/dev/null || true" EXIT
+  ready=false
+  for i in $(seq 1 80); do
+    kill -0 "$compositor" 2>/dev/null || { cat "$2/kwin.log"; exit 1; }
+    if busctl --user status org.qindaqt.KWin >/dev/null 2>&1; then ready=true; break; fi
+    sleep 0.25
+  done
+  "$ready" || { echo "Compositor bus readiness timed out"; exit 1; }
+  busctl --user list --no-pager > "$2/bus-names.txt"
+  busctl --user call org.qindaqt.KWin /org/qindaqt/KWin org.qindaqt.KWin currentDesktop > "$2/current-desktop.txt"
+  busctl --user --json=short call org.qindaqt.KWin /org/qindaqt/KWin org.qindaqt.KWin supportInformation > "$2/support-information.json"
+  if busctl --user call org.kde.KWin /KWin org.kde.KWin currentDesktop > "$2/legacy-main.txt" 2>&1; then
+    echo "Legacy main object unexpectedly callable"; exit 1
+  fi
+  busctl --user get-property org.kde.KWin /org/kde/KWin org.kde.KWin.TabletModeManager tabletMode > "$2/legacy-tablet.txt"
+  busctl --user get-property org.kde.KWin /VirtualKeyboard org.kde.kwin.VirtualKeyboard available > "$2/legacy-keyboard.txt"
+  busctl --user introspect org.qindaqt.KWin /org/qindaqt/KWin/Scripting > "$2/scripting.txt"
+  grep -q org.qindaqt.KWin.Scripting "$2/scripting.txt"
+  # Virtual backends have no libinput connection or physical input inventory.
+' _ "$STAGE" "$OUT"
+python3 - "$OUT" <<'PY'
+import json,sys
+from pathlib import Path
+root=Path(sys.argv[1])
+support=json.loads((root/"support-information.json").read_text())["data"][0]
+assert "6.6.6.1" in support, "Unexpected fork version"
+(root/"support-information.txt").write_text(support)
+for name in ("kwinrc","kcminputrc","kxkbrc","kwinrulesrc","kwinoutputconfig.json"):
+    assert not (root/"config"/name).exists(), f"Stock config created: {name}"
+assert not (root/"state"/"kwinstaterc").exists(), "Stock state created"
+assert (root/"config"/"qindaqt"/"kwinrc").is_file(), "Fork config missing"
+print("PASS: isolated fork identity, native bus/scripting, compatibility carve-outs and config separation")
+PY

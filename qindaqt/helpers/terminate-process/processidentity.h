@@ -14,7 +14,7 @@
 //
 // AGENT-NOTE: this is the core of terminate-process, the root helper that
 // qindaqt-kwin's hung-window prompt runs through pkexec when the frozen window
-// belongs to root or another user (container-wm ADR-0289). It replaces KWin's
+// belongs to root or another user (container-wm ADR-0291). It replaces KWin's
 // KAuth call into ksysguard's process helper. It must stay free of Qt and any
 // other library that reads the environment or loads plugins, because it runs
 // as root; pkexec gives it a clean environment and nothing else.

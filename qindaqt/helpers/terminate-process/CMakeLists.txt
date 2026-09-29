@@ -2,7 +2,7 @@
 #
 # AGENT-NOTE: native replacement for KWin's KAuth call into ksysguard's process
 # helper, which ended a hung window's process when it belonged to root or
-# another user (container-wm ADR-0289; Plasma-free plan, owner decision 4).
+# another user (container-wm ADR-0291; Plasma-free plan, owner decision 4).
 # killer-helper runs terminate-process through pkexec, and polkit asks for an
 # administrator with the org.qindaqt.kwin.terminate-process action.
 

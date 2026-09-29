@@ -3,7 +3,7 @@
 """Give the KWin tree qindaqt-kwin's identity.
 
 qindaqt-kwin installs and runs beside an unmodified KDE Plasma (container-wm
-ADR-0289), so every name that reaches the file system, the session bus, a
+ADR-0291), so every name that reaches the file system, the session bus, a
 plugin loader or a QML engine must differ from stock KWin's. This script owns
 the mechanical part of that rename: string-level names that upstream code
 keeps adding. Structural changes (target output names, install rules, dropped
@@ -88,7 +88,7 @@ RULES = [
          files=["*CMakeLists.txt", "*.cmake", "*.cmake.in"]),
     # Config and state live in QindaQt's own folders, $XDG_CONFIG_HOME/qindaqt
     # and $XDG_STATE_HOME/qindaqt; the QindaQt session imports each file once
-    # from its KDE counterpart (container-wm ADR-0289).
+    # from its KDE counterpart (container-wm ADR-0291).
     Rule("config kwinrc", r"(?<=[\"'])kwinrc(?=[\"'])", "qindaqt/kwinrc"),
     Rule("config kwinrulesrc", r"(?<=[\"'])kwinrulesrc(?=[\"'])", "qindaqt/kwinrulesrc"),
     Rule("config kwinoutputconfig.json", r"(?<=[\"'])kwinoutputconfig\.json(?=[\"'])", "qindaqt/kwinoutputconfig.json"),

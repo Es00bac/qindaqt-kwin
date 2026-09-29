@@ -3,7 +3,7 @@
 This repository is **qindaqt-kwin**, QindaQt's compositor: a fork of KDE's KWin
 6.6 that is renamed from top to bottom so it installs and runs beside an
 unmodified KDE Plasma, and an unmodified Plasma never reads its files. The
-decision and its consequences are container-wm ADR-0289; the program of work is
+decision and its consequences are container-wm ADR-0291; the program of work is
 container-wm `docs/plans/2026-09-28-plasma-free-qindaqt.md`. The QindaQt
 compositor plugin, window decoration, tabbox and session stay in container-wm.
 
@@ -34,7 +34,7 @@ Read [`qindaqt/README.md`](qindaqt/README.md) before changing anything.
 - AGENT-GUARD: no installed path may equal one that stock `kde-plasma/kwin`,
   `kde-plasma/kwin-x11` or `kde-plasma/kdecoration` installs. A collision makes
   Portage refuse one of the two packages, which breaks the co-installation
-  promise of ADR-0289.
+  promise of ADR-0291.
 - Use the qindaqt-kwin names from `qindaqt/README.md` for every new file,
   config file, D-Bus name, plugin namespace and QML URI. A stock name stays
   only where the README lists it as a wire contract or a carve-out; such a

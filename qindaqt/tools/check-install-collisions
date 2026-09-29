@@ -20,7 +20,7 @@ and kde-plasma/kdecoration unless --package or --manifest (one path per line)
 say otherwise. A package that is not installed makes the check fail rather
 than pass vacuously; pass a saved manifest instead.
 
-AGENT-GUARD: this is the co-installation proof of container-wm ADR-0289; do
+AGENT-GUARD: this is the co-installation proof of container-wm ADR-0291; do
 not weaken a token or skip a package to make a change pass. Rename the file.
 """
 

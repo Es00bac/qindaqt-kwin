@@ -4,7 +4,7 @@
  "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
 <!-- qindaqt-kwin: end a hung application that belongs to root or another user
-     (container-wm ADR-0289). Always asks for an administrator; no kept
+     (container-wm ADR-0291). Always asks for an administrator; no kept
      authorization, so another process of the session cannot reuse it. -->
 <policyconfig>
   <vendor>QindaQt</vendor>

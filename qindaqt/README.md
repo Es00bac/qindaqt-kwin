@@ -2,7 +2,7 @@
 
 QindaQt's compositor: KWin 6.6.6 plus QindaQt's own changes, with an identity
 of its own so it installs and runs beside an unmodified KDE Plasma
-(container-wm ADR-0289). This file maps what QindaQt changed and why. The
+(container-wm ADR-0291). This file maps what QindaQt changed and why. The
 upstream base is recorded in [UPSTREAM.md](UPSTREAM.md).
 
 ## Identity
@@ -65,7 +65,7 @@ comment marker `qindaqt-identity: keep`.
 ## QindaQt defaults
 
 The fork's compiled-in defaults are QindaQt's, so a fresh QindaQt session needs
-no seeding for them (container-wm ADR-0289):
+no seeding for them (container-wm ADR-0291):
 
 | Setting | KWin default | qindaqt-kwin default | Why |
 |---|---|---|---|
