@@ -111,3 +111,33 @@ matrix without that external consumer remains a separate 27-check gate; PF7
 qualification requires the Qt rows too. Production builds contain no fixture
 path or authorization. Qt's initial shell construction commit is suppressed
 until configure acknowledgement; server security validation is unchanged.
+
+
+## Native QtQuick and owned PAM fixture
+
+Set the non-installable test cache FILEPATH `QINDAQT_PRIVATE_QT_LOCK_GREETER`
+to the consumer's built `qindaqt-private-lock-greeter`. Its private input pipe
+supplies synthetic UI actions only; there is no success/result/unlock command.
+The actual native controller consumes a real disposable private-confdir PAM
+worker's authenticate + account approval and sends standard unlock, then waits
+for server sync before quitting. Production has no fixture input/path methods.
+
+The combined matrix with both Qt fixtures contains 32 checks. The QtQuick
+rows cover wrong-password, cancellation and late response, account denial,
+Patrol/Reef public scenes, pure OSK model to QML credential sink, current-worker
+unlock, and greeter crash while PAM blocks outside callbacks. Parent death kills
+the owned worker within150ms and the server remains locked/protected black.
+Fatal Qt warnings stay enabled in the greeter fixture; Reef uses the exact
+uninstalled prerequisite module that removes its Qt6.11 palette-name collision.
+
+Scale qualification sets OutputChangeSet.scaleSetting (the user preference),
+not only the derived effective scale. Both external Qt rows assert actual
+backend scale; the QtQuick fixture also proves Qt DPR1.50. The earlier named
+150% row's derived-scale-only assignment did not prove physical scale and is
+superseded. The correct full CTest selector is
+`^kwin-testNativeSessionLock$`, always with `--no-tests=error`.
+
+Installed root-owned binding, physical DRM, real owner password/service-stack
+and coherent Portage delivery remain held qualification boundaries. Consumer
+gathered icon/shade scene qualification is separate from this server-only
+matrix and requires the exact matching hybrid plugin build.

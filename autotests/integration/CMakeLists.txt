@@ -225,6 +225,14 @@ if(QINDAQT_SESSION_LOCK_TEST_AUTHORIZATION)
             ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_lock_input_test.cpp
             ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_lock_topology_test.cpp
             ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_lock_launcher_test.cpp)
+    set(QINDAQT_PRIVATE_QT_LOCK_GREETER "" CACHE FILEPATH "Non-installed native QtQuick PAM greeter")
+    if(QINDAQT_PRIVATE_QT_LOCK_GREETER)
+        if(NOT EXISTS "${QINDAQT_PRIVATE_QT_LOCK_GREETER}")
+            message(FATAL_ERROR "Native QtQuick PAM fixture is unavailable")
+        endif()
+        target_sources(testNativeSessionLock PRIVATE ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_lock_greeter_test.cpp)
+        target_compile_definitions(testNativeSessionLock PRIVATE QINDAQT_PRIVATE_QT_LOCK_GREETER="${QINDAQT_PRIVATE_QT_LOCK_GREETER}")
+    endif()
     target_include_directories(testNativeSessionLock PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/qindaqt/session-lock ${CMAKE_CURRENT_BINARY_DIR})
     qt6_generate_wayland_protocol_client_sources(testNativeSessionLock PRIVATE_CODE FILES ${WaylandProtocols_DATADIR}/staging/ext-session-lock/ext-session-lock-v1.xml)
 

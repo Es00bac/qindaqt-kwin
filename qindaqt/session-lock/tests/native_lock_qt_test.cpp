@@ -23,8 +23,9 @@ void NativeSessionLockTest::nativeQtSurfaces()
     QFETCH(double, scale);
     Test::setOutputConfig({Rect(0, 0, 1280, 1024), Rect(1280, 0, 1280, 1024)});
     OutputConfiguration configuration;
-    for (auto *output : kwinApp()->outputBackend()->outputs()) configuration.changeSet(output)->scale = scale;
+    for (auto *output : kwinApp()->outputBackend()->outputs()) configuration.changeSet(output)->scaleSetting = scale;
     QCOMPARE(workspace()->applyOutputConfiguration(configuration), OutputConfigurationError::None);
+    for (auto *output : kwinApp()->outputBackend()->outputs()) QCOMPARE(output->scale(), scale);
     auto *launcher = waylandServer()->lockerLauncher();
     launcher->setTestProgram(QStringLiteral(QINDAQT_PRIVATE_QT_LOCK_PROBE));
     Cursors::self()->hideCursor();

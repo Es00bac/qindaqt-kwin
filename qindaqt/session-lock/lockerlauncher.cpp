@@ -127,9 +127,14 @@ QByteArray LockerLauncher::readTestOutput()
 {
     return m_process.readAllStandardOutput() + m_process.readAllStandardError();
 }
+qint64 LockerLauncher::writeTestInput(const QByteArray &input)
+{
+    return m_process.write(input);
+}
 void LockerLauncher::stopTestFixture()
 {
     m_process.kill();
+    m_process.waitForFinished(1000);
 }
 #endif
 

@@ -30,5 +30,10 @@ private Q_SLOTS:
     void nativeQtSurfaces_data();
     void nativeQtSurfaces();
 #endif
+#if defined(QINDAQT_PRIVATE_QT_LOCK_GREETER)
+    void nativeQtAuthentication_data();
+    void nativeQtAuthentication();
+    void nativeQtCrashPendingWorker();
+#endif
 };
 }

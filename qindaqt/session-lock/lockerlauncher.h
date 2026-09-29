@@ -24,6 +24,7 @@ public:
     // the production binary has neither this method nor path override storage.
     void setTestProgram(const QString &program);
     QByteArray readTestOutput();
+    qint64 writeTestInput(const QByteArray &input);
     void stopTestFixture();
     qint64 testProcessId() const
     {
