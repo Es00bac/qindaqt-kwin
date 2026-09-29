@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- qindaqt-kwin: end a hung application that belongs to root or another user
+     (container-wm ADR-0289). Always asks for an administrator; no kept
+     authorization, so another process of the session cannot reuse it. -->
+<policyconfig>
+  <vendor>QindaQt</vendor>
+  <action id="org.qindaqt.kwin.terminate-process">
+    <description>Close an application that is not responding</description>
+    <message>Authentication is required to close an application that is not responding and belongs to another user</message>
+    <icon_name>tools-report-bug</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">@QINDAQT_KWIN_TERMINATE_PROCESS_BIN@</annotate>
+  </action>
+</policyconfig>

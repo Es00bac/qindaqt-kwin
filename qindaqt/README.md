@@ -18,7 +18,7 @@ upstream base is recorded in [UPSTREAM.md](UPSTREAM.md).
 | Package structures | `KWin/Effect`, `/Script`, `/WindowSwitcher`, `/Decoration`, `/Aurorae` | `QindaQtKWin/Effect`, `/Script`, `/WindowSwitcher`, `/Decoration`; no Aurorae structure |
 | QML modules | `org.kde.kwin*` | `org.qindaqt.kwin*` (and `org.qindaqt.KWin.Effect.WindowView`) |
 | Data | `/usr/share/kwin-wayland` and the legacy `kwin/` roots | `/usr/share/qindaqt-kwin` only |
-| Hung-window helper | `/usr/libexec/kwin_killer_helper`, `org.kde.kwin.killer` | `/usr/libexec/qindaqt-kwin/killer-helper`, `org.qindaqt.kwin.killer` |
+| Hung-window helper | `/usr/libexec/kwin_killer_helper`, `org.kde.kwin.killer`; KAuth and ksysguard's helper for processes of root or another user | `/usr/libexec/qindaqt-kwin/killer-helper`, `org.qindaqt.kwin.killer`; for processes of root or another user, pkexec runs `/usr/libexec/qindaqt-kwin/terminate-process` under the polkit action `org.qindaqt.kwin.terminate-process` (always `auth_admin`); no KAuth |
 | Config (`$XDG_CONFIG_HOME`) | `kwinrc`, `kwinrulesrc`, `kwinoutputconfig.json`, `kcminputrc`, `kxkbrc` | `qindaqt-kwinrc`, `qindaqt-kwinrulesrc`, `qindaqt-kwinoutputconfig.json`, `qindaqt-kwininputrc`, `qindaqt-kwinxkbrc` |
 | State (`$XDG_STATE_HOME`) | `kwinstaterc` | `qindaqt-kwinstaterc` |
 | D-Bus | service `org.kde.KWin`, interfaces `org.kde.KWin*`, `org.kde.kwin.*`, paths `/KWin`, `/Effects`, `/org/kde/KWin/…` | service `org.qindaqt.KWin`, interfaces `org.qindaqt.KWin*`, paths under `/org/qindaqt/KWin`; installed XML `org.qindaqt.KWin*.xml` |
@@ -69,6 +69,12 @@ comment marker `qindaqt-identity: keep`.
   virtual backend in an isolated `$HOME` and session bus, and lists the bus
   names, D-Bus answers and files it created.
 
+## Helper tests
+
+`-DQINDAQT_KWIN_BUILD_TESTS=ON` builds the tests of qindaqt-kwin's own helpers
+without KWin's autotests; run them with
+`ctest --test-dir build/qindaqt/helpers/terminate-process/tests`.
+
 ## Building
 
 ```sh
@@ -94,3 +100,4 @@ In the build tree the program is `build/program/qindaqt-kwin`, because
 | Build only what QindaQt ships | KCMs, KRunner, handbook, catalogs, migrations and the systemd unit would collide with stock KWin | 0289 |
 | Own program, library, plugin, data, config and D-Bus names | co-installation with stock KWin and Plasma | 0289 |
 | Vendored kdecoration, decorations only from the fork namespace | KWin links kdecoration's private library, whose ABI follows Plasma releases | 0289 |
+| Native termination of hung processes of root or another user (`qindaqt/helpers/terminate-process`) | KAuth needed polkit-kde and ksysguard's helper; the root helper pins the process with a pidfd and checks its start time, so a reused PID is never signalled | 0289 |

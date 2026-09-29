@@ -10,8 +10,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include <KAuth/Action>
-#include <KAuth/ExecuteJob>
 #include <KIconUtils>
 #include <KLocalizedString>
 #include <KMessageBox>
@@ -40,6 +38,7 @@
 #include <memory>
 
 #include "debug.h"
+#include "processidentity.h"
 
 using namespace std::chrono_literals;
 
@@ -95,6 +94,23 @@ void writeApplicationNotResponding(pid_t pid)
     // No content for now, simply close it once created
 }
 #endif // Q_OS_LINUX
+
+// QindaQt: the process belongs to root or another user. polkit asks for an
+// administrator, and terminate-process ends exactly the process this prompt
+// was opened for (it compares the start time captured below). This replaces
+// KWin's KAuth call into ksysguard's process helper (container-wm ADR-0289).
+void terminateAsAdministrator(pid_t pid, const std::optional<QindaQt::TerminateProcess::ProcessStat> &stat)
+{
+    if (!stat) {
+        qCWarning(KWIN_KILLER) << "Not asking for an administrator: pid" << pid << "had no /proc entry when the prompt opened";
+        return;
+    }
+    const QStringList arguments{QStringLiteral(QINDAQT_KWIN_TERMINATE_PROCESS_BIN), QString::number(pid), QString::number(stat->startTime)};
+    const int status = QProcess::execute(QStringLiteral(QINDAQT_KWIN_PKEXEC), arguments);
+    if (status != 0) {
+        qCWarning(KWIN_KILLER) << "terminate-process through pkexec ended with" << status << "for pid" << pid;
+    }
+}
 
 bool hasPidAborted(pid_t pid)
 {
@@ -172,6 +188,9 @@ int main(int argc, char *argv[])
         parser.showHelp(1);
     }
     bool isLocal = hostname == QLatin1StringView("localhost");
+    // QindaQt: identify the process now; the prompt may stay open for a long
+    // time, and its PID could name another process by the time it is answered.
+    const auto targetStat = isLocal ? QindaQt::TerminateProcess::readProcStat(pid) : std::nullopt;
 
     const auto service = KService::serviceByDesktopName(appname);
     if (service) {
@@ -235,7 +254,7 @@ int main(int argc, char *argv[])
 
     KWindowSystem::setMainWindow(dialog->windowHandle(), windowHandle);
 
-    QObject::connect(dialog, &QDialog::finished, &app, [pid, hostname, isLocal](int result) {
+    QObject::connect(dialog, &QDialog::finished, &app, [pid, hostname, isLocal, targetStat](int result) {
         if (result == KMessageBox::PrimaryAction) {
 #if defined(Q_OS_LINUX)
             writeApplicationNotResponding(pid);
@@ -253,19 +272,7 @@ int main(int argc, char *argv[])
 
                 // If that did not work send a kill. Kill cannot be ignored and always terminates.
                 if (::kill(pid, SIGKILL) && errno == EPERM) {
-                    // If killing failed on permissions try again with the polkit helper.
-                    KAuth::Action killer(QStringLiteral("org.kde.ksysguard.processlisthelper.sendsignal"));
-                    killer.setHelperId(QStringLiteral("org.kde.ksysguard.processlisthelper"));
-                    killer.addArgument(QStringLiteral("pid0"), pid);
-                    killer.addArgument(QStringLiteral("pidcount"), 1);
-                    killer.addArgument(QStringLiteral("signal"), SIGKILL);
-                    if (killer.isValid()) {
-                        qDebug() << "Using KAuth to kill pid: " << pid;
-                        auto *job = killer.execute();
-                        job->exec();
-                    } else {
-                        qDebug() << "KWin process killer action not valid";
-                    }
+                    terminateAsAdministrator(pid, targetStat);
                 }
             }
         }

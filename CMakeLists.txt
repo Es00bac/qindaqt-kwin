@@ -105,7 +105,6 @@ endif()
 
 # required frameworks by Core
 find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS
-    Auth
     ColorScheme
     Config
     CoreAddons
@@ -504,6 +503,13 @@ ecm_setup_qtplugin_macro_names(
 # stock-named files (container-wm ADR-0289).
 
 add_subdirectory(data)
+# QindaQt: native helpers that are not edits of upstream files (qindaqt/).
+# AGENT-CONTRACT: killer-helper (src/helpers/killer) runs terminate-process
+# through pkexec; the polkit action names the same path.
+set(QINDAQT_KWIN_TERMINATE_PROCESS_BIN "${KDE_INSTALL_FULL_LIBEXECDIR}/qindaqt-kwin/terminate-process")
+set(QINDAQT_KWIN_PKEXEC "/usr/bin/pkexec" CACHE FILEPATH "pkexec, which runs qindaqt-kwin's privileged terminate-process helper")
+option(QINDAQT_KWIN_BUILD_TESTS "Build the tests of qindaqt-kwin's own helpers without KWin's autotests" OFF)
+add_subdirectory(qindaqt)
 add_subdirectory(src)
 
 if (BUILD_TESTING)
