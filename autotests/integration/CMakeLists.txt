@@ -215,6 +215,7 @@ add_subdirectory(effects)
 add_subdirectory(fakes)
 
 if(QINDAQT_SESSION_LOCK_TEST_AUTHORIZATION)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/probe ${CMAKE_CURRENT_BINARY_DIR}/native-lock-probe)
     integrationTest(NAME testNativeSessionLock
         RUNNER ${PROJECT_SOURCE_DIR}/qindaqt/tools/run-native-lock
         SRCS
@@ -222,7 +223,24 @@ if(QINDAQT_SESSION_LOCK_TEST_AUTHORIZATION)
             ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_session_lock_test.h
             ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_lock_protocol_test.cpp
             ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_lock_input_test.cpp
-            ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_lock_topology_test.cpp)
+            ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_lock_topology_test.cpp
+            ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_lock_launcher_test.cpp)
+    set(QINDAQT_PRIVATE_QT_LOCK_GREETER "" CACHE FILEPATH "Non-installed native QtQuick PAM greeter")
+    if(QINDAQT_PRIVATE_QT_LOCK_GREETER)
+        if(NOT EXISTS "${QINDAQT_PRIVATE_QT_LOCK_GREETER}")
+            message(FATAL_ERROR "Native QtQuick PAM fixture is unavailable")
+        endif()
+        target_sources(testNativeSessionLock PRIVATE ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_lock_greeter_test.cpp)
+        target_compile_definitions(testNativeSessionLock PRIVATE QINDAQT_PRIVATE_QT_LOCK_GREETER="${QINDAQT_PRIVATE_QT_LOCK_GREETER}")
+    endif()
+    set(QINDAQT_PRIVATE_GATHERED_PLUGIN "" CACHE FILEPATH "Exact consumer KWin plugin for private gathered lock fence")
+    if(QINDAQT_PRIVATE_GATHERED_PLUGIN)
+        if(NOT QINDAQT_PRIVATE_QT_LOCK_GREETER OR NOT EXISTS "${QINDAQT_PRIVATE_GATHERED_PLUGIN}")
+            message(FATAL_ERROR "Gathered fence requires the owned Qt greeter and exact consumer plugin")
+        endif()
+        target_sources(testNativeSessionLock PRIVATE ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_lock_gathered_test.cpp)
+        target_compile_definitions(testNativeSessionLock PRIVATE QINDAQT_PRIVATE_GATHERED_PLUGIN="${QINDAQT_PRIVATE_GATHERED_PLUGIN}")
+    endif()
     target_include_directories(testNativeSessionLock PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/qindaqt/session-lock ${CMAKE_CURRENT_BINARY_DIR})
     qt6_generate_wayland_protocol_client_sources(testNativeSessionLock PRIVATE_CODE FILES ${WaylandProtocols_DATADIR}/staging/ext-session-lock/ext-session-lock-v1.xml)
 
@@ -240,7 +258,20 @@ if(QINDAQT_SESSION_LOCK_TEST_AUTHORIZATION)
         ${PROJECT_SOURCE_DIR}/src/plugins/screencast/screencastlayer.cpp)
     qt_add_dbus_adaptor(native_lock_capture_sources ${PROJECT_SOURCE_DIR}/src/plugins/screenshot/org.kde.KWin.ScreenShot2.xml ${PROJECT_SOURCE_DIR}/src/plugins/screenshot/screenshotdbusinterface2.h KWin::ScreenShotDBusInterface2)
     target_sources(testNativeSessionLock PRIVATE ${native_lock_capture_sources})
-    add_dependencies(testNativeSessionLock screenshot screencast)
+    add_dependencies(testNativeSessionLock screenshot screencast qindaqt-lock-probe qindaqt-lock-loader-witness)
+    target_compile_definitions(testNativeSessionLock PRIVATE
+        QINDAQT_LOCK_PROBE_PATH="$<TARGET_FILE:qindaqt-lock-probe>"
+        QINDAQT_LOCK_INJECTION_PATH="$<TARGET_FILE:qindaqt-lock-loader-witness>")
+    # External consumer interoperability is explicit, private and non-installable.
+    # PF7 acceptance sets this to the built Qt fixture; baseline server gates do not.
+    set(QINDAQT_PRIVATE_QT_LOCK_PROBE "" CACHE FILEPATH "Non-installed native Qt lock interoperability probe")
+    if(QINDAQT_PRIVATE_QT_LOCK_PROBE)
+        if(NOT EXISTS "${QINDAQT_PRIVATE_QT_LOCK_PROBE}")
+            message(FATAL_ERROR "Native Qt lock fixture is unavailable")
+        endif()
+        target_sources(testNativeSessionLock PRIVATE ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_lock_qt_test.cpp)
+        target_compile_definitions(testNativeSessionLock PRIVATE QINDAQT_PRIVATE_QT_LOCK_PROBE="${QINDAQT_PRIVATE_QT_LOCK_PROBE}")
+    endif()
     target_include_directories(testNativeSessionLock PRIVATE ${PROJECT_SOURCE_DIR}/src/plugins/screenshot ${PROJECT_SOURCE_DIR}/src/plugins/screencast)
     target_link_libraries(testNativeSessionLock KF6::Service KF6::I18n)
     ecm_qt_declare_logging_category(testNativeSessionLock HEADER screenshotlogging.h IDENTIFIER KWIN_SCREENSHOT CATEGORY_NAME kwin_screenshot DEFAULT_SEVERITY Warning)

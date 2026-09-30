@@ -5,19 +5,17 @@
 #include "core/output.h"
 #include "core/outputbackend.h"
 #include "core/renderbackend.h"
+#include "lockerlauncher.h"
 #include "main.h"
 #include "scene/workspacescene.h"
 #include "sessionlock_v1.h"
 #include "sessionlockwindow.h"
-#include "utils/serviceutils.h"
 #include "wayland/clientconnection.h"
 #include "wayland/output.h"
 #include "wayland/seat.h"
 #include "wayland/surface.h"
 #include "wayland_server.h"
 #include "workspace.h"
-#include <QFileInfo>
-#include <sys/stat.h>
 #include <unistd.h>
 namespace KWin
 {
@@ -40,8 +38,9 @@ public:
     QPointer<BackendOutput> output;
     quint64 generation;
 };
-SessionLockController::SessionLockController(Display *display, QObject *parent)
+SessionLockController::SessionLockController(Display *display, LockerLauncher *launcher, QObject *parent)
     : QObject(parent)
+    , m_launcher(launcher)
 {
     auto manager = new SessionLockManagerV1Interface(display, this);
     connect(manager, &SessionLockManagerV1Interface::lockRequested, this, &SessionLockController::acquire);
@@ -62,6 +61,7 @@ void SessionLockController::watchOutput(BackendOutput *output)
         }
         if (output->isEnabled() && !output->isNonDesktop()) {
             m_pendingOutputs.insert(output);
+            setPresentationProtected(false);
             Compositor::self()->scene()->addRepaintFull();
         } else {
             m_pendingOutputs.remove(output);
@@ -78,34 +78,11 @@ bool SessionLockController::isTrustedLocker(ClientConnection *client) const
         return true;
     }
 #endif
-    if (!client || client->userId() != geteuid() || !client->securityContextAppId().isEmpty()) {
-        return false;
-    }
-    const QString trusted = QStringLiteral(QINDAQT_SESSION_LOCK_EXECUTABLE);
-    struct stat image{}, peer{};
-    if (stat(trusted.toLocal8Bit().constData(), &image) || image.st_uid != 0
-        || !S_ISREG(image.st_mode) || (image.st_mode & (S_IWGRP | S_IWOTH))) {
-        return false;
-    }
-    const QByteArray procImage = QByteArrayLiteral("/proc/") + QByteArray::number(client->processId()) + QByteArrayLiteral("/exe");
-    if (stat(procImage.constData(), &peer) || peer.st_dev != image.st_dev || peer.st_ino != image.st_ino) {
-        return false;
-    }
-    QString parent = QFileInfo(QFileInfo(trusted).canonicalFilePath()).absolutePath();
-    for (;;) {
-        struct stat directory{};
-        if (stat(parent.toLocal8Bit().constData(), &directory) || directory.st_uid != 0
-            || !S_ISDIR(directory.st_mode) || (directory.st_mode & (S_IWGRP | S_IWOTH))) {
-            return false;
-        }
-        if (parent == QStringLiteral("/")) {
-            break;
-        }
-        parent = QFileInfo(parent).absolutePath();
-    }
-    // AGENT-GUARD: neither security-context app IDs nor the global debug
-    // permission-bypass variable can grant this protocol.
-    return fetchRequestedInterfaces(trusted).contains(QStringLiteral("ext_session_lock_manager_v1"));
+    // AGENT-GUARD: a self-launched copy of the same root-owned executable is
+    // untrusted. Only the compositor's exact private socketpair can bind or
+    // unlock; environment/app IDs and the public display cannot confer trust.
+    return m_launcher && m_launcher->ownsConnection(client) && client->userId() == geteuid()
+        && client->securityContextAppId().isEmpty();
 }
 #if defined(QINDAQT_SESSION_LOCK_TEST_AUTHORIZATION)
 void SessionLockController::authorizeTestClient(ClientConnection *client)
@@ -160,6 +137,7 @@ void SessionLockController::acquire(SessionLockV1Interface *lock)
         ++m_generation;
         clearWindows();
         m_locked = false;
+        setPresentationProtected(false);
         Q_EMIT lockStateChanged();
         Compositor::self()->scene()->addRepaintFull();
     });
@@ -191,9 +169,15 @@ void SessionLockController::lostLocker()
     // graphics; the lock fence survives until a valid replacement unlocks.
     m_lock = nullptr;
     m_lockAcknowledged = false;
+    setPresentationProtected(false);
     Q_EMIT lockStateChanged();
     clearWindows();
     requirePresentation();
+}
+bool SessionLockController::requestNativeLock()
+{
+    lockWithoutClient();
+    return m_launcher && m_launcher->start();
 }
 void SessionLockController::lockWithoutClient()
 {
@@ -208,6 +192,7 @@ void SessionLockController::lockWithoutClient()
 }
 void SessionLockController::requirePresentation()
 {
+    setPresentationProtected(false);
     ++m_generation;
     m_pendingOutputs.clear();
     for (auto output : kwinApp()->outputBackend()->outputs()) {
@@ -233,8 +218,18 @@ void SessionLockController::framePresented(BackendOutput *output, quint64 genera
     m_pendingOutputs.remove(output);
     acknowledge();
 }
+void SessionLockController::setPresentationProtected(bool value)
+{
+    if (m_presentationProtected != value) {
+        m_presentationProtected = value;
+        Q_EMIT presentationProtectionChanged(value);
+    }
+}
 void SessionLockController::acknowledge()
 {
+    // PF8 needs the actual current-generation fence even without a greeter,
+    // including black fallback after crash; protocol locked is a separate ack.
+    setPresentationProtected(m_locked && m_pendingOutputs.empty());
     if (m_locked && m_lock && !m_lockAcknowledged && m_pendingOutputs.empty()) {
         m_lockAcknowledged = true;
         m_lock->sendLocked();

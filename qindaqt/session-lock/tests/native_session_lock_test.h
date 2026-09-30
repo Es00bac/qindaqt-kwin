@@ -22,5 +22,21 @@ private Q_SLOTS:
     void captureIsolation();
     void blackFallbackPixels();
     void effectsGrabIsolation();
+    void launcherPolicy();
+    void launcherEnvironment();
+    void launcherConnectionIsolation();
+    void nativeLockBackendProtection();
+#if defined(QINDAQT_PRIVATE_QT_LOCK_PROBE)
+    void nativeQtSurfaces_data();
+    void nativeQtSurfaces();
+#endif
+#if defined(QINDAQT_PRIVATE_QT_LOCK_GREETER)
+    void nativeQtAuthentication_data();
+    void nativeQtAuthentication();
+    void nativeQtCrashPendingWorker();
+#if defined(QINDAQT_PRIVATE_GATHERED_PLUGIN)
+    void nativeGatheredFence();
+#endif
+#endif
 };
 }

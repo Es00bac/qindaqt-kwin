@@ -8,6 +8,8 @@
 */
 #include "wayland_server.h"
 #include "../qindaqt/session-lock/sessionlockcontroller.h"
+#include "../qindaqt/session-lock/lockerlauncher.h"
+#include "../qindaqt/session-lock/nativelockdbusinterface.h"
 #include "../qindaqt/session-lock/sessionlockwindow.h"
 
 #include "config-kwin.h"
@@ -229,6 +231,7 @@ WaylandServer::~WaylandServer()
     // Stop native callbacks before Display tears down client resources. The
     // compositor/workspace may already be gone during application shutdown.
     delete std::exchange(m_sessionLock, nullptr);
+    delete std::exchange(m_lockerLauncher, nullptr);
     s_self = nullptr;
 }
 
@@ -658,10 +661,12 @@ void WaylandServer::initWorkspace()
 
 void WaylandServer::initScreenLocker()
 {
-    m_sessionLock = new SessionLockController(m_display, this);
+    m_lockerLauncher = new LockerLauncher(m_display, this);
+    m_sessionLock = new SessionLockController(m_display, m_lockerLauncher, this);
+    new NativeLockDBusInterface(m_sessionLock);
     connect(m_sessionLock, &SessionLockController::aboutToLock, this, &WaylandServer::screenAboutToLock);
     connect(m_sessionLock, &SessionLockController::lockStateChanged, this, &WaylandServer::lockStateChanged);
-    if (kwinApp()->initiallyLocked()) { m_sessionLock->lockWithoutClient(); }
+    if (kwinApp()->initiallyLocked()) { m_sessionLock->requestNativeLock(); }
 }
 
 WaylandServer::SocketPairConnection WaylandServer::createConnection()
@@ -766,6 +771,10 @@ XdgSurfaceWindow *WaylandServer::findXdgSurfaceWindow(SurfaceInterface *surface)
 bool WaylandServer::isScreenLocked() const
 {
     return m_sessionLock && m_sessionLock->isLocked();
+}
+LockerLauncher *WaylandServer::lockerLauncher() const
+{
+    return m_lockerLauncher;
 }
 SessionLockController *WaylandServer::sessionLock() const { return m_sessionLock; }
 void WaylandServer::registerSessionLockWindow(SessionLockWindow *window) { registerWindow(window); }

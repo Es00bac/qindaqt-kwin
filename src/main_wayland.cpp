@@ -33,6 +33,7 @@
 
 // KDE
 #include <KCrash>
+#include "../qindaqt/session-lock/lockerlaunchpolicy.h"
 #include <KDesktopFile>
 #include <KLocalizedString>
 #include <KShell>
@@ -321,6 +322,12 @@ int main(int argc, char *argv[])
     KWin::Application::createAboutData();
 
     KCrash::initialize();
+    // AGENT-GUARD: ordinary session clients must not ptrace the compositor to
+    // steal its private locker transport or fabricate authentication results.
+    if (!KWin::protectLockAuthorityProcess()) {
+        std::cerr << "Cannot protect native lock authority from ptrace/core dumps" << std::endl;
+        return 1;
+    }
 
 #if KWIN_BUILD_X11
     QCommandLineOption xwaylandOption(QStringLiteral("xwayland"),

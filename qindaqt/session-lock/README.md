@@ -12,13 +12,20 @@ SessionLockWindow owns output-sized role presentation. Loss of any protocol
 resource removes its graphics and never resets the fence. The current lock
 client can be replaced after disconnect, but cannot be displaced while alive.
 
-The fixed `${KDE_INSTALL_FULL_BINDIR}/qindaqt-lock` executable must be regular,
-root-owned and not group/world writable, through a root-owned non-writable
-parent hierarchy. Peer UID must equal compositor UID, peer `/proc/PID/exe`
-inode/device must match, and a desktop entry for that executable must request
-`ext_session_lock_manager_v1` through the public Wayland interface permission
-mechanism. Sandboxed app IDs, same-process clients and the general debug
-permission bypass cannot grant this global. Unlock rechecks the peer identity.
+The compositor launches the fixed `${KDE_INSTALL_FULL_BINDIR}/qindaqt-lock`
+with its sole private socketpair connection and a whitelist environment. Only
+that exact connection can bind the global or unlock; independently launching
+the same executable, including through LD_PRELOAD, grants no authority. The
+executable and fixed `org.qindaqt.Lock.desktop` entry must be root-owned and
+non-writable, including parent hierarchies. The desktop entry requests the
+standard interface through the public permission field and supplies no shell
+command override. Native binding has no client app-ID or debug bypass.
+
+The launcher requires Yama ptrace_scope1–3, and the compositor/native children
+disable core dumps and dumpability. execve resets dumpability, so Yama protects
+the owned child before its early native protection runs. No kernel setting is
+changed. Root/CAP_SYS_PTRACE and trusted launcher ancestors are excluded from
+ordinary-client isolation; see consumer ADR-0299.
 
 The compositor does not authenticate PAM. The trusted executable must submit
 `unlock_and_destroy` only after successful PAM authentication and account
@@ -74,3 +81,72 @@ This server proof does not authenticate PAM, exercise an installed native locker
 qualify physical DRM, or prove a real PipeWire consumer pipeline across revocation.
 PF7 greeter/PAM, PF8 service integration and physical/nested end-to-end delivery
 remain separate gates. No package dependency revision or live rollout is implied.
+
+## Native private-launch slice (PF7)
+
+The backend exports `org.qindaqt.KWin.NativeLock1` at
+`/org/qindaqt/KWin/NativeLock`: `RequestLock` admits lock/recovery, `Locked`
+reports the native fence, and `Protected` reports current-generation actual
+physical presentation even without a locker. Property-change signals carry no
+authentication authority. There is no D-Bus unlock or PAM-result method.
+
+The matrix adds root-file/alias, environment and real child trust rows. A harmless
+preload constructor actually loads in the independent hostile child, whose global
+is denied; the owned child strips injection and reports dumpability0. Even its
+parent cannot ptrace that disposable protected child. Actual private D-Bus proves
+clientless black fallback becomes Protected only after physical feedback. These
+fixtures are compile-time confined to the existing non-installable test build.
+The native Qt greeter/PAM process and service integration remain later slices.
+
+## Native Qt interoperability fixture
+
+The consumer builds the non-installed `qindaqt-private-lock-window`, using its
+real `qindaqt-session-lock` Qt shell integration. Set the explicit test-build
+CMake FILEPATH `QINDAQT_PRIVATE_QT_LOCK_PROBE` to that built executable, then run
+the full private matrix. The added `nativeQtSurfaces` rows require actual mapped
+roles, native input eligibility and physical framebuffer pixels on both outputs
+at normal and 150% scale, incremental hotplug/removal and crash-black protection.
+No PAM-success/unlock method is exposed by this fixture. The baseline server
+matrix without that external consumer remains a separate 27-check gate; PF7
+qualification requires the Qt rows too. Production builds contain no fixture
+path or authorization. Qt's initial shell construction commit is suppressed
+until configure acknowledgement; server security validation is unchanged.
+
+
+## Native QtQuick and owned PAM fixture
+
+Set the non-installable test cache FILEPATH `QINDAQT_PRIVATE_QT_LOCK_GREETER`
+to the consumer's built `qindaqt-private-lock-greeter`. Its private input pipe
+supplies synthetic UI actions only; there is no success/result/unlock command.
+The actual native controller consumes a real disposable private-confdir PAM
+worker's authenticate + account approval and sends standard unlock, then waits
+for server sync before quitting. Production has no fixture input/path methods.
+
+The matrix with both Qt fixtures contains 32 checks. The QtQuick
+rows cover wrong-password, cancellation and late response, account denial,
+Patrol/Reef public scenes, pure OSK model to QML credential sink, current-worker
+unlock, and greeter crash while PAM blocks outside callbacks. Parent death kills
+the owned worker within150ms and the server remains locked/protected black.
+Fatal Qt warnings stay enabled in the greeter fixture; Reef uses the exact
+uninstalled prerequisite module that removes its Qt6.11 palette-name collision.
+
+Scale qualification sets OutputChangeSet.scaleSetting (the user preference),
+not only the derived effective scale. Both external Qt rows assert actual
+backend scale; the QtQuick fixture also proves Qt DPR1.50. The earlier named
+150% row's derived-scale-only assignment did not prove physical scale and is
+superseded. The correct full CTest selector is
+`^kwin-testNativeSessionLock$`, always with `--no-tests=error`.
+
+Installed root-owned binding, physical DRM, real owner password/service-stack
+and coherent Portage delivery remain held qualification boundaries. The optional non-installable cache FILEPATH `QINDAQT_PRIVATE_GATHERED_PLUGIN`
+loads one exact consumer plugin through its public PluginFactory and adds the
+33rd matrix check. The private row creates a real Hybrid group with Meta+Shift
+drag, iconifies another client with Meta+wheel, and selects roll-up through the
+public QWidget popup UI (the compositor test QPA is offscreen). It proves actual
+chip and shaded-strip pixels before lock; the owned Qt greeter covers both
+regions, screenshot requests reject, and CPU/GL Window/Output/Region capture
+sources return black. Actual greeter crash leaves the whole output black; a
+replacement owned greeter's native PAM/OSK unlock restores both gathered ink
+regions. Cached geometry inventory is not treated as visibility evidence.
+Use the exact consumer artifact and rerun after consumer integration; never
+substitute a stale development plugin root or grant a production test bypass.
