@@ -1,6 +1,6 @@
 /*
     SPDX-FileCopyrightText: 2016 Martin Graesslin <mgraesslin@kde.org>
-    SPDX-License-Identifier: GPL-2.0-or-later
+    SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
 */
 
 import QtQuick
@@ -11,8 +11,12 @@ import org.kde.kirigami as Kirigami
 Window {
     id: window
 
-    visible: osd.visible
+    // AGENT-GUARD: KWin renders this as an InternalWindow. Keep input
+    // transparency and focus refusal: Plasma Dialog's outputOnly OSD role
+    // had the same passive interaction contract.
     flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
+           | Qt.WindowTransparentForInput | Qt.WindowDoesNotAcceptFocus
+    visible: osd.visible
     color: "transparent"
     width: content.implicitWidth + Kirigami.Units.largeSpacing * 2
     height: content.implicitHeight + Kirigami.Units.largeSpacing * 2
