@@ -16,9 +16,9 @@ find_dependency(Wayland REQUIRED Server)
 find_dependency(epoxy)
 find_dependency(Libdrm)
 
-# Consumers compile optional Activities adapters only when this exact fork was
-# configured with the corresponding public API and dependency.
-set(QINDAQT_KWIN_BUILD_ACTIVITIES "@KWIN_BUILD_ACTIVITIES@")
+# PF11 removes the Activities dependency; retain a false compatibility value
+# for consumer code compiled against the public config package.
+set(QINDAQT_KWIN_BUILD_ACTIVITIES FALSE)
 
 @PACKAGE_SETUP_KWIN_AUTOMOC_VARIABLES@
 include("${CMAKE_CURRENT_LIST_DIR}/QindaQtKWinTargets.cmake")

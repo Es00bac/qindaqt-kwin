@@ -166,13 +166,6 @@ set_package_properties(KWayland PROPERTIES
 )
 
 # optional frameworks
-find_package(PlasmaActivities ${PROJECT_DEP_VERSION} CONFIG)
-set_package_properties(PlasmaActivities PROPERTIES
-    PURPOSE "Optional KWin support. QindaQt disables Activities by default"
-    TYPE OPTIONAL
-)
-add_feature_info("PlasmaActivities" PlasmaActivities_FOUND "Optional KWin Activities support")
-
 find_package(KF6DocTools ${KF6_MIN_VERSION} CONFIG)
 set_package_properties(KF6DocTools PROPERTIES
     PURPOSE "Enable building documentation"
@@ -186,31 +179,15 @@ set_package_properties(KF6Kirigami PROPERTIES
     PURPOSE "Required at runtime for several QML effects"
     TYPE RUNTIME
 )
-find_package(Plasma ${PROJECT_DEP_VERSION} CONFIG)
-set_package_properties(Plasma PROPERTIES
-    DESCRIPTION "A QtQuick based components set"
-    PURPOSE "Required at runtime for several QML effects"
-    TYPE RUNTIME
-)
 
 # QindaQt: kdecoration is vendored (kdecoration/, container-wm ADR-0289). KWin
 # links its private library, whose ABI moves with every Plasma release, so a
 # shared copy would tie the fork to stock Plasma's release cadence.
 add_subdirectory(kdecoration)
 
-if (KWIN_BUILD_DECORATIONS)
-    find_package(Breeze ${PROJECT_DEP_VERSION} CONFIG)
-    set_package_properties(Breeze PROPERTIES
-        TYPE RUNTIME
-        PURPOSE "For setting the default window decoration plugin"
-    )
-
-    find_package(Aurorae ${PROJECT_DEP_VERSION} CONFIG)
-    set_package_properties(Aurorae PROPERTIES
-        TYPE RUNTIME
-        PURPOSE "Provides support for decorations downloaded from the internet"
-    )
-endif()
+# QindaQt has its own decoration plugin and no classic Breeze/Aurorae backend.
+# KWIN_BUILD_DECORATIONS remains enabled because it also controls the compiled
+# placement default; it does not enable third-party decoration backends.
 
 find_package(EGL)
 set_package_properties(EGL PROPERTIES
@@ -409,10 +386,8 @@ ecm_find_qmlmodule(QtQuick.Controls 2.15)
 ecm_find_qmlmodule(QtQuick.Layouts 1.3)
 ecm_find_qmlmodule(QtQuick.Window 2.1)
 ecm_find_qmlmodule(org.kde.kquickcontrolsaddons 2.0)
-ecm_find_qmlmodule(org.kde.plasma.core 2.0)
-ecm_find_qmlmodule(org.kde.plasma.components 2.0)
 
-cmake_dependent_option(KWIN_BUILD_ACTIVITIES "Enable building of KWin with kactivities support" OFF "PlasmaActivities_FOUND" OFF)
+set(KWIN_BUILD_ACTIVITIES OFF)
 cmake_dependent_option(KWIN_BUILD_EIS "Enable building KWin with libeis support" ON "Libeis-1.0_FOUND" OFF)
 cmake_dependent_option(KWIN_BUILD_QACCESSIBILITYCLIENT "Enable building KWin with libqaccessibilitysupport" ON "QAccessibilityClient6_FOUND" OFF)
 cmake_dependent_option(KWIN_BUILD_GAMECONTROLLER "Enable building of KWin Game Controller functionality" ON "libevdev_FOUND" OFF)

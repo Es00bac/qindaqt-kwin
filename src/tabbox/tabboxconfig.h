@@ -277,9 +277,8 @@ public:
     {
         return true;
     }
-    // AGENT-CONTRACT: "qindaqt" is QindaQt's window switcher, installed by
-    // container-wm into qindaqt-kwin/tabbox/ (container-wm ADR-0289);
-    // tabboxhandler.cpp falls back to the bundled thumbnail_grid without it.
+    // AGENT-CONTRACT: "qindaqt" is the required QindaQt switcher installed
+    // by container-wm into qindaqt-kwin/tabbox/ (container-wm ADR-0289).
     static QString defaultLayoutName()
     {
         return QStringLiteral("qindaqt");

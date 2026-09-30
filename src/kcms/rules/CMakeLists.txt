@@ -37,9 +37,6 @@ set(kcm_libs
     KF6::ColorScheme
 )
 
-if (KWIN_BUILD_ACTIVITIES)
-    set(kcm_libs ${kcm_libs} Plasma::Activities)
-endif()
 target_link_libraries(KWinRulesObjects ${kcm_libs} ${kwin_kcm_rules_XCB_LIBS})
 
 kcmutils_add_qml_kcm(kcm_kwinrules SOURCES kcmrules.cpp)

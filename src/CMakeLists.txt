@@ -348,10 +348,6 @@ if (KWIN_BUILD_X11)
     add_subdirectory(xwayland)
 endif()
 
-if (KWIN_BUILD_ACTIVITIES)
-    target_sources(kwin PRIVATE activities.cpp)
-    target_link_libraries(kwin PRIVATE Plasma::Activities)
-endif()
 
 
 if (KWIN_BUILD_TABBOX)
@@ -363,7 +359,6 @@ if (KWIN_BUILD_TABBOX)
         tabbox/tabboxconfig.cpp
         tabbox/tabboxhandler.cpp
     )
-    add_subdirectory(tabbox/switchers)
 endif()
 
 qt_generate_dbus_interface(virtualkeyboard_dbus.h org.kde.kwin.VirtualKeyboard.xml OPTIONS -A)
