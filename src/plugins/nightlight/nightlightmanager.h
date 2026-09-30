@@ -13,21 +13,21 @@
 #include "constants.h"
 #include "plugin.h"
 
-#include <KConfigWatcher>
 
 #include <QDateTime>
 #include <QObject>
 #include <QPair>
+#include <QStringList>
+#include <QVariantMap>
 
-class KDarkLightScheduleProvider;
 class KSystemClockSkewNotifier;
-class NightLightState;
 class QTimer;
 
 namespace KWin
 {
 
 class NightLightDBusInterface;
+class NightLightScheduleClient;
 
 typedef QPair<QDateTime, QDateTime> DateTimes;
 
@@ -225,7 +225,7 @@ Q_SIGNALS:
     void scheduledTransitionTimingsChanged();
 
 private:
-    void readConfig();
+    void applyScheduleFrame(const QVariantMap &values);
     void hardReset();
     void slowUpdate(int targetTemperature);
     void resetAllTimers();
@@ -254,8 +254,9 @@ private:
     NightLightDBusInterface *m_iface;
     KSystemClockSkewNotifier *m_skewNotifier;
 
-    std::unique_ptr<NightLightState> m_stateConfig;
-    std::unique_ptr<KDarkLightScheduleProvider> m_darkLightScheduler;
+    NightLightScheduleClient *m_scheduleClient = nullptr;
+    QStringList m_disabledOutputs;
+    bool m_scheduleAvailable = false;
 
     // Specifies whether Night Light is enabled.
     bool m_active = false;
@@ -286,7 +287,6 @@ private:
     int m_nightTargetTemperature = DEFAULT_NIGHT_TEMPERATURE;
 
     int m_inhibitReferenceCount = 0;
-    KConfigWatcher::Ptr m_configWatcher;
 };
 
 } // namespace KWin

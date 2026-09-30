@@ -15,10 +15,8 @@
 #include "main.h"
 #include "nightlightdbusinterface.h"
 #include "nightlightlogging.h"
-#include "nightlightsettings.h"
-#include "nightlightstate.h"
+#include "nightlightscheduleclient.h"
 
-#include <KDarkLightScheduleProvider>
 #include <KGlobalAccel>
 #include <KLocalizedString>
 #include <KSystemClockSkewNotifier>
@@ -28,6 +26,7 @@
 #include <QDBusMessage>
 #include <QDBusPendingReply>
 #include <QDBusReply>
+#include <QTimeZone>
 #include <QTimer>
 
 namespace KWin
@@ -38,8 +37,6 @@ static const int TEMPERATURE_STEP = 50;
 
 NightLightManager::NightLightManager()
 {
-    NightLightSettings::instance(kwinApp()->config());
-
     m_iface = new NightLightDBusInterface(this);
     m_skewNotifier = new KSystemClockSkewNotifier(this);
     connect(m_skewNotifier, &KSystemClockSkewNotifier::skewed, this, &NightLightManager::resetAllTimers);
@@ -65,11 +62,20 @@ NightLightManager::NightLightManager()
         QDBusConnection::sessionBus().asyncCall(message);
     });
 
-    m_configWatcher = KConfigWatcher::create(kwinApp()->config());
-    connect(m_configWatcher.data(), &KConfigWatcher::configChanged, this, &NightLightManager::reconfigure);
-
-    // we may always read in the current config
-    readConfig();
+    m_scheduleClient = new NightLightScheduleClient(this);
+    connect(m_scheduleClient, &NightLightScheduleClient::frameReceived,
+            this, [this](const QVariantMap &values, qulonglong) {
+        applyScheduleFrame(values);
+        hardReset();
+    });
+    connect(m_scheduleClient, &NightLightScheduleClient::unavailable,
+            this, [this](const QString &) {
+        m_scheduleAvailable = false;
+        m_prev = DateTimes();
+        m_next = DateTimes();
+        hardReset();
+    });
+    m_scheduleClient->start();
 
     QAction *toggleAction = new QAction(this);
     toggleAction->setProperty("componentName", QStringLiteral("kwin"));
@@ -103,7 +109,8 @@ void NightLightManager::hardReset()
     updateTransitionTimings(QDateTime::currentDateTime());
     updateTargetTemperature();
 
-    if (isEnabled() && !isInhibited()) {
+    if (isEnabled() && !isInhibited()
+        && (m_mode == NightLightMode::Constant || m_scheduleAvailable)) {
         setRunning(true);
         commitGammaRamps(currentTargetTemperature());
     }
@@ -112,8 +119,6 @@ void NightLightManager::hardReset()
 
 void NightLightManager::reconfigure()
 {
-    cancelAllTimers();
-    readConfig();
     resetAllTimers();
 }
 
@@ -193,50 +198,32 @@ qint64 NightLightManager::scheduledTransitionDuration() const
     return m_next.first.msecsTo(m_next.second);
 }
 
-void NightLightManager::readConfig()
+void NightLightManager::applyScheduleFrame(const QVariantMap &values)
 {
-    NightLightSettings *settings = NightLightSettings::self();
-    settings->load();
-
-    setEnabled(settings->active());
-
-    const NightLightMode mode = settings->mode();
-    switch (settings->mode()) {
-    case NightLightMode::Constant:
-    case NightLightMode::DarkLight:
-        setMode(mode);
-        break;
-    default:
-        // Fallback for invalid setting values.
-        setMode(NightLightMode::DarkLight);
-        break;
-    }
-
-    if (m_active && m_mode == NightLightMode::DarkLight) {
-        if (!m_stateConfig) {
-            m_stateConfig = std::make_unique<NightLightState>();
-        }
-        if (!m_darkLightScheduler) {
-            m_darkLightScheduler = std::make_unique<KDarkLightScheduleProvider>(m_stateConfig->state());
-            connect(m_darkLightScheduler.get(), &KDarkLightScheduleProvider::scheduleChanged, this, [this]() {
-                m_stateConfig->setState(m_darkLightScheduler->state());
-                m_stateConfig->save();
-                resetAllTimers();
-            });
-        }
-    } else {
-        m_stateConfig.reset();
-        m_darkLightScheduler.reset();
-    }
-
-    m_dayTargetTemperature = std::clamp(settings->dayTemperature(), MIN_TEMPERATURE, DEFAULT_DAY_TEMPERATURE);
-    m_nightTargetTemperature = std::clamp(settings->nightTemperature(), MIN_TEMPERATURE, DEFAULT_DAY_TEMPERATURE);
+    const bool enabled = values.value(QStringLiteral("active")).toBool();
+    setEnabled(enabled);
+    setMode(values.value(QStringLiteral("mode")).toString() == QLatin1String("Constant")
+                ? NightLightMode::Constant : NightLightMode::DarkLight);
+    m_dayTargetTemperature = values.value(QStringLiteral("dayTemperatureKelvin")).toInt();
+    m_nightTargetTemperature = values.value(QStringLiteral("nightTemperatureKelvin")).toInt();
+    m_disabledOutputs = values.value(QStringLiteral("disabledOutputs")).toStringList();
+    m_scheduleAvailable = values.value(QStringLiteral("available")).toBool();
+    setDaylight(values.value(QStringLiteral("daylight")).toBool());
+    const auto dateTime = [](qulonglong milliseconds) {
+        return milliseconds == 0 ? QDateTime()
+            : QDateTime::fromMSecsSinceEpoch(qint64(milliseconds), QTimeZone::UTC);
+    };
+    m_prev = DateTimes(dateTime(values.value(QStringLiteral("previousStartMs")).toULongLong()),
+                       dateTime(values.value(QStringLiteral("previousEndMs")).toULongLong()));
+    m_next = DateTimes(dateTime(values.value(QStringLiteral("nextStartMs")).toULongLong()),
+                       dateTime(values.value(QStringLiteral("nextEndMs")).toULongLong()));
 }
 
 void NightLightManager::resetAllTimers()
 {
     cancelAllTimers();
-    setRunning(isEnabled() && !isInhibited());
+    setRunning(isEnabled() && !isInhibited()
+               && (m_mode == NightLightMode::Constant || m_scheduleAvailable));
     // we do this also for active being false in order to reset the temperature back to the day value
     updateTransitionTimings(QDateTime::currentDateTime());
     updateTargetTemperature();
@@ -419,67 +406,24 @@ void NightLightManager::updateTargetTemperature()
 
 void NightLightManager::updateTransitionTimings(const QDateTime &dateTime)
 {
+    Q_UNUSED(dateTime);
     const auto oldPrev = m_prev;
     const auto oldNext = m_next;
-
     if (!m_active) {
         setDaylight(true);
-        m_next = DateTimes();
         m_prev = DateTimes();
-    } else {
-        switch (m_mode) {
-        case NightLightMode::Constant: {
-            setDaylight(false);
-            m_next = DateTimes();
-            m_prev = DateTimes();
-            break;
-        }
-
-        case NightLightMode::DarkLight: {
-            const auto previousTransition = m_darkLightScheduler->schedule().previousTransition(dateTime);
-            const auto nextTransition = m_darkLightScheduler->schedule().nextTransition(dateTime);
-
-            bool passedMorning = false;
-            bool passedEvening = false;
-
-            switch (previousTransition->test(dateTime)) {
-            case KDarkLightTransition::Upcoming:
-                break;
-            case KDarkLightTransition::InProgress:
-            case KDarkLightTransition::Passed:
-                if (previousTransition->type() == KDarkLightTransition::Morning) {
-                    passedMorning = true;
-                } else {
-                    passedEvening = true;
-                }
-            }
-
-            switch (nextTransition->test(dateTime)) {
-            case KDarkLightTransition::Upcoming:
-                break;
-            case KDarkLightTransition::InProgress:
-            case KDarkLightTransition::Passed:
-                if (nextTransition->type() == KDarkLightTransition::Morning) {
-                    passedMorning = true;
-                } else {
-                    passedEvening = true;
-                }
-            }
-
-            setDaylight(passedMorning && !passedEvening);
-            m_prev = DateTimes(previousTransition->startDateTime(), previousTransition->endDateTime());
-            m_next = DateTimes(nextTransition->startDateTime(), nextTransition->endDateTime());
-            break;
-        }
-        }
+        m_next = DateTimes();
+    } else if (m_mode == NightLightMode::Constant) {
+        setDaylight(false);
+        m_prev = DateTimes();
+        m_next = DateTimes();
+    } else if (!m_scheduleAvailable) {
+        setDaylight(true);
+        m_prev = DateTimes();
+        m_next = DateTimes();
     }
-
-    if (oldPrev != m_prev) {
-        Q_EMIT previousTransitionTimingsChanged();
-    }
-    if (oldNext != m_next) {
-        Q_EMIT scheduledTransitionTimingsChanged();
-    }
+    if (oldPrev != m_prev) Q_EMIT previousTransitionTimingsChanged();
+    if (oldNext != m_next) Q_EMIT scheduledTransitionTimingsChanged();
 }
 
 bool NightLightManager::daylight() const
@@ -524,7 +468,10 @@ void NightLightManager::commitGammaRamps(int temperature)
     const QList<BackendOutput *> outputs = kwinApp()->outputBackend()->outputs();
     const QVector3D rgbFactors = sampleColorTemperature(temperature);
     for (BackendOutput *output : outputs) {
-        output->setChannelFactors(rgbFactors);
+        // The backend applies these factors to originalColorDescription, so
+        // unity removes only Night Light while retaining the output ICC base.
+        output->setChannelFactors(m_disabledOutputs.contains(output->name())
+                                      ? QVector3D(1, 1, 1) : rgbFactors);
     }
 
     setCurrentTemperature(temperature);
