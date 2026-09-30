@@ -91,6 +91,11 @@ no seeding for them (container-wm ADR-0291):
   fork simultaneously on private buses and HOME directories, proving native
   endpoints and config separation without a system install.
 
+The exported QindaQtKWin CMake package reports the exact fork configuration
+through QINDAQT_KWIN_BUILD_ACTIVITIES; plugins use that value to request
+Plasma Activities headers and linkage only when their compositor build exposes
+that API.
+
 ## Helper tests
 
 `-DQINDAQT_KWIN_BUILD_TESTS=ON` builds the tests of qindaqt-kwin's own helpers
@@ -125,3 +130,4 @@ In the build tree the program is `build/program/qindaqt-kwin`, because
 | QindaQt's defaults compiled in | the fork is QindaQt's compositor, not a renamed KDE copy | 0289 |
 | Vendored kdecoration, decorations only from the fork namespace | KWin links kdecoration's private library, whose ABI follows Plasma releases | 0289 |
 | Native termination of hung processes of root or another user (`qindaqt/helpers/terminate-process`) | KAuth needed polkit-kde and ksysguard's helper; the root helper pins the process with a pidfd and checks its start time, so a reused PID is never signalled | 0289 |
+| Plasma Activities disabled by default | QindaQt has no Activities service; configure `KWIN_BUILD_ACTIVITIES=ON` only for an explicit derivative build that supplies Plasma Activities | 0309 |

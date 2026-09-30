@@ -168,10 +168,10 @@ set_package_properties(KWayland PROPERTIES
 # optional frameworks
 find_package(PlasmaActivities ${PROJECT_DEP_VERSION} CONFIG)
 set_package_properties(PlasmaActivities PROPERTIES
-    PURPOSE "Enable building of KWin with kactivities support"
+    PURPOSE "Optional KWin support. QindaQt disables Activities by default"
     TYPE OPTIONAL
 )
-add_feature_info("PlasmaActivities" PlasmaActivities_FOUND "Enable building of KWin with kactivities support")
+add_feature_info("PlasmaActivities" PlasmaActivities_FOUND "Optional KWin Activities support")
 
 find_package(KF6DocTools ${KF6_MIN_VERSION} CONFIG)
 set_package_properties(KF6DocTools PROPERTIES
@@ -412,7 +412,7 @@ ecm_find_qmlmodule(org.kde.kquickcontrolsaddons 2.0)
 ecm_find_qmlmodule(org.kde.plasma.core 2.0)
 ecm_find_qmlmodule(org.kde.plasma.components 2.0)
 
-cmake_dependent_option(KWIN_BUILD_ACTIVITIES "Enable building of KWin with kactivities support" ON "PlasmaActivities_FOUND" OFF)
+cmake_dependent_option(KWIN_BUILD_ACTIVITIES "Enable building of KWin with kactivities support" OFF "PlasmaActivities_FOUND" OFF)
 cmake_dependent_option(KWIN_BUILD_EIS "Enable building KWin with libeis support" ON "Libeis-1.0_FOUND" OFF)
 cmake_dependent_option(KWIN_BUILD_QACCESSIBILITYCLIENT "Enable building KWin with libqaccessibilitysupport" ON "QAccessibilityClient6_FOUND" OFF)
 cmake_dependent_option(KWIN_BUILD_GAMECONTROLLER "Enable building of KWin Game Controller functionality" ON "libevdev_FOUND" OFF)
