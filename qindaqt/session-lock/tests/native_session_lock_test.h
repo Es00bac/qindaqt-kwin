@@ -34,6 +34,9 @@ private Q_SLOTS:
     void nativeQtAuthentication_data();
     void nativeQtAuthentication();
     void nativeQtCrashPendingWorker();
+#if defined(QINDAQT_PRIVATE_GATHERED_PLUGIN)
+    void nativeGatheredFence();
+#endif
 #endif
 };
 }

@@ -122,7 +122,7 @@ The actual native controller consumes a real disposable private-confdir PAM
 worker's authenticate + account approval and sends standard unlock, then waits
 for server sync before quitting. Production has no fixture input/path methods.
 
-The combined matrix with both Qt fixtures contains 32 checks. The QtQuick
+The matrix with both Qt fixtures contains 32 checks. The QtQuick
 rows cover wrong-password, cancellation and late response, account denial,
 Patrol/Reef public scenes, pure OSK model to QML credential sink, current-worker
 unlock, and greeter crash while PAM blocks outside callbacks. Parent death kills
@@ -138,6 +138,15 @@ superseded. The correct full CTest selector is
 `^kwin-testNativeSessionLock$`, always with `--no-tests=error`.
 
 Installed root-owned binding, physical DRM, real owner password/service-stack
-and coherent Portage delivery remain held qualification boundaries. Consumer
-gathered icon/shade scene qualification is separate from this server-only
-matrix and requires the exact matching hybrid plugin build.
+and coherent Portage delivery remain held qualification boundaries. The optional non-installable cache FILEPATH `QINDAQT_PRIVATE_GATHERED_PLUGIN`
+loads one exact consumer plugin through its public PluginFactory and adds the
+33rd matrix check. The private row creates a real Hybrid group with Meta+Shift
+drag, iconifies another client with Meta+wheel, and selects roll-up through the
+public QWidget popup UI (the compositor test QPA is offscreen). It proves actual
+chip and shaded-strip pixels before lock; the owned Qt greeter covers both
+regions, screenshot requests reject, and CPU/GL Window/Output/Region capture
+sources return black. Actual greeter crash leaves the whole output black; a
+replacement owned greeter's native PAM/OSK unlock restores both gathered ink
+regions. Cached geometry inventory is not treated as visibility evidence.
+Use the exact consumer artifact and rerun after consumer integration; never
+substitute a stale development plugin root or grant a production test bypass.
