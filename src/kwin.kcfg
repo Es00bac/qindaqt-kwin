@@ -308,7 +308,7 @@
             <default>true</default>
         </entry>
         <entry name="LayoutName" type="String">
-            <default>thumbnail_grid</default>
+            <default>qindaqt</default>
         </entry>
     </group>
     <group name="KDE">

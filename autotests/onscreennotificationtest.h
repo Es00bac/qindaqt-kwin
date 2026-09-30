@@ -19,6 +19,7 @@ private Q_SLOTS:
     void timeout();
     void iconName();
     void message();
+    void windowInputAndFocusPolicy();
 };
 
 #endif // ONSCREENNOTIFICATIONTEST_H

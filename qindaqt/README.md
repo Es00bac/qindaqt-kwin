@@ -70,7 +70,7 @@ no seeding for them (container-wm ADR-0291):
 | Setting | KWin default | qindaqt-kwin default | Why |
 |---|---|---|---|
 | Window decoration (`[org.kde.kdecoration2] library`) | `org.kde.breeze`, fallback Aurorae | `org.qindaqt`, also the fallback | QindaQt's own decoration |
-| Window switcher (`[TabBox] LayoutName`) | `thumbnail_grid` | `qindaqt`, falling back to the bundled `thumbnail_grid` | QindaQt's switcher from container-wm |
+| Window switcher (`[TabBox] LayoutName`) | `thumbnail_grid` | `qindaqt` with no bundled fallback | QindaQt's switcher from container-wm is required |
 | `[Windows] ElectricBorderMaximize`, `ElectricBorderTiling` | on | off | an ordinary drag stays a move; QindaQt's Meta+Shift drag docks |
 | `[MouseBindings] CommandAll3` (Meta+right button) | Resize | Nothing | the shell's live customization chord receives it |
 | `[Effect-blur] BlurStrength`, `NoiseStrength` | 15, 5 | 8, 2 | Theming v2 materials (container-wm ADR-0206) |
@@ -91,10 +91,13 @@ no seeding for them (container-wm ADR-0291):
   fork simultaneously on private buses and HOME directories, proving native
   endpoints and config separation without a system install.
 
-The exported QindaQtKWin CMake package reports the exact fork configuration
-through QINDAQT_KWIN_BUILD_ACTIVITIES; plugins use that value to request
-Plasma Activities headers and linkage only when their compositor build exposes
-that API.
+The exported QindaQtKWin CMake package reports
+QINDAQT_KWIN_BUILD_ACTIVITIES as false. The fork no longer discovers Plasma
+Activities, libplasma, Breeze, or Aurorae. Its QindaQt-owned outline,
+notifications, effect frames, output locator, and switcher layouts use QtQuick;
+classic Plasma presentation units are omitted from the production build. The
+separate Plasma Wayland protocol package remains for protocol generation and
+KWayland client code, not libplasma (container-wm ADR-0311).
 
 ## Helper tests
 
@@ -130,4 +133,4 @@ In the build tree the program is `build/program/qindaqt-kwin`, because
 | QindaQt's defaults compiled in | the fork is QindaQt's compositor, not a renamed KDE copy | 0289 |
 | Vendored kdecoration, decorations only from the fork namespace | KWin links kdecoration's private library, whose ABI follows Plasma releases | 0289 |
 | Native termination of hung processes of root or another user (`qindaqt/helpers/terminate-process`) | KAuth needed polkit-kde and ksysguard's helper; the root helper pins the process with a pidfd and checks its start time, so a reused PID is never signalled | 0289 |
-| Plasma Activities disabled by default | QindaQt has no Activities service; configure `KWIN_BUILD_ACTIVITIES=ON` only for an explicit derivative build that supplies Plasma Activities | 0309 |
+| Plasma Activities unavailable | the fork fixes `KWIN_BUILD_ACTIVITIES` and the exported consumer capability to false; activity-neutral workspace and output contracts remain | 0311 |

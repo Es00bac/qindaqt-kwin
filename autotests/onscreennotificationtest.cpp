@@ -14,6 +14,9 @@
 #include <KSharedConfig>
 
 #include <QQmlEngine>
+#include <QGuiApplication>
+#include <QQuickWindow>
+#include <QSet>
 #include <QSignalSpy>
 #include <QTest>
 
@@ -74,6 +77,42 @@ void OnScreenNotificationTest::show()
     QVERIFY(visibleChangedSpy.wait());
     QCOMPARE(notification.isVisible(), false);
     QCOMPARE(visibleChangedSpy.count(), 4);
+}
+
+void OnScreenNotificationTest::windowInputAndFocusPolicy()
+{
+    OnScreenNotification notification;
+    auto config = KSharedConfig::openConfig(QString(), KSharedConfig::SimpleConfig);
+    KConfigGroup group = config->group(QStringLiteral("OnScreenNotification"));
+    group.writeEntry(QStringLiteral("QmlPath"), QStringLiteral("qindaqt-kwin/onscreennotification/qindaqt/main.qml"));
+    group.sync();
+    notification.setConfig(config);
+    notification.setEngine(new QQmlEngine(&notification));
+    notification.setMessage(QStringLiteral("Passive OSD"));
+
+    QSet<QWindow *> existingWindows;
+    for (QWindow *window : QGuiApplication::allWindows()) {
+        existingWindows.insert(window);
+    }
+
+    notification.setVisible(true);
+    QQuickWindow *osdWindow = nullptr;
+    QTRY_VERIFY_WITH_TIMEOUT(([&] {
+        for (QWindow *window : QGuiApplication::allWindows()) {
+            if (!existingWindows.contains(window)) {
+                osdWindow = qobject_cast<QQuickWindow *>(window);
+                if (osdWindow) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    })(), 5000);
+
+    QVERIFY(osdWindow->isVisible());
+    QVERIFY(osdWindow->flags().testFlag(Qt::WindowTransparentForInput));
+    QVERIFY(osdWindow->flags().testFlag(Qt::WindowDoesNotAcceptFocus));
+    notification.setVisible(false);
 }
 
 void OnScreenNotificationTest::timeout()

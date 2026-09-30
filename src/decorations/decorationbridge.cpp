@@ -38,7 +38,7 @@ namespace Decoration
 // Key of the decoration settings inside a plugin's metadata.
 static const QString s_pluginName = QStringLiteral("org.kde.kdecoration3");
 // QindaQt: decoration plugins load only from qindaqt-kwin's own namespace, so
-// stock Breeze and Aurorae never load here (container-wm ADR-0289).
+// classic Breeze and Aurorae backends are not built by this fork (ADR-0311).
 // AGENT-CONTRACT: the vendored QindaQtKWinDecoration package exports this
 // namespace as KDECORATION_PLUGIN_DIR.
 static const QString s_pluginNamespace = QStringLiteral("qindaqt-kwin/decorations");
@@ -48,28 +48,12 @@ static const QString s_configKeyName = QStringLiteral("org.kde.kdecoration2");
 static const QString s_defaultPlugin = QStringLiteral("org.qindaqt");
 static const QString s_fallbackPlugin = QStringLiteral("org.qindaqt");
 
-static void migrateAuroraeTheme()
-{
-    const QString themeName = kwinApp()->config()->group(s_configKeyName).readEntry("theme");
-    if (!themeName.startsWith(QLatin1String("__aurorae__svg__"))) {
-        return;
-    }
-
-    const QString pluginName = kwinApp()->config()->group(s_configKeyName).readEntry("library");
-    if (pluginName != QLatin1String("org.kde.kwin.aurorae")) {
-        return;
-    }
-
-    kwinApp()->config()->group(s_configKeyName).writeEntry("library", "org.kde.kwin.aurorae.v2");
-}
-
 DecorationBridge::DecorationBridge()
     : m_factory(nullptr)
     , m_showToolTips(false)
     , m_settings()
     , m_noPlugin(false)
 {
-    migrateAuroraeTheme();
     readDecorationOptions();
 }
 

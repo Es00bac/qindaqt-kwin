@@ -133,6 +133,12 @@ set(testOnScreenNotification_SRCS
     onscreennotificationtest.cpp
 )
 add_executable(testOnScreenNotification ${testOnScreenNotification_SRCS})
+set(_osd_test_data_dir "${CMAKE_CURRENT_BINARY_DIR}/osd-test-data")
+set(_osd_test_qml "${_osd_test_data_dir}/qindaqt-kwin/onscreennotification/qindaqt/main.qml")
+file(MAKE_DIRECTORY "${_osd_test_data_dir}/qindaqt-kwin/onscreennotification/qindaqt")
+configure_file(
+    "${PROJECT_SOURCE_DIR}/src/qml/onscreennotification/qindaqt/main.qml"
+    "${_osd_test_qml}" COPYONLY)
 
 target_link_libraries(testOnScreenNotification
     Qt::DBus
@@ -144,6 +150,8 @@ target_link_libraries(testOnScreenNotification
 )
 
 add_test(NAME kwin-testOnScreenNotification COMMAND testOnScreenNotification)
+set_tests_properties(kwin-testOnScreenNotification PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;XDG_DATA_HOME=${_osd_test_data_dir}")
 ecm_mark_as_test(testOnScreenNotification)
 
 ########################################################

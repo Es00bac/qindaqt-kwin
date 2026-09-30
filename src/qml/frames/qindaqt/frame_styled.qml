@@ -1,45 +1,37 @@
 /*
     SPDX-FileCopyrightText: 2022 MBition GmbH
     SPDX-FileContributor: Kai Uwe Broulik <kai_uwe.broulik@mbition.io>
-
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 
 import QtQuick
 import QtQuick.Layouts
-
 import org.kde.kirigami as Kirigami
-import org.kde.ksvg as KSvg
-import org.kde.plasma.components as PlasmaComponents
 
 Item {
     id: root
 
     property QtObject effectFrame: null
 
-    implicitWidth: layout.implicitWidth + layout.anchors.leftMargin + layout.anchors.rightMargin
-    implicitHeight: layout.implicitHeight + layout.anchors.topMargin + layout.anchors.bottomMargin
+    implicitWidth: layout.implicitWidth + Kirigami.Units.largeSpacing * 2
+    implicitHeight: layout.implicitHeight + Kirigami.Units.largeSpacing * 2
 
-    KSvg.FrameSvgItem {
-        id: frameSvg
-        imagePath: "widgets/background"
-        opacity: root.effectFrame.frameOpacity
+    Rectangle {
         anchors.fill: parent
+        radius: Kirigami.Units.smallSpacing
+        color: Kirigami.Theme.backgroundColor
+        opacity: root.effectFrame.frameOpacity
+        border.color: Kirigami.Theme.textColor
+        border.width: 1
     }
 
     RowLayout {
         id: layout
-        anchors {
-            fill: parent
-            leftMargin: frameSvg.fixedMargins.left
-            rightMargin: frameSvg.fixedMargins.right
-            topMargin: frameSvg.fixedMargins.top
-            bottomMargin: frameSvg.fixedMargins.bottom
-        }
+        anchors.fill: parent
+        anchors.margins: Kirigami.Units.largeSpacing
         spacing: Kirigami.Units.smallSpacing
 
         Kirigami.Icon {
-            id: icon
             Layout.preferredWidth: root.effectFrame.iconSize.width
             Layout.preferredHeight: root.effectFrame.iconSize.height
             Layout.alignment: Qt.AlignHCenter
@@ -48,11 +40,11 @@ Item {
             source: root.effectFrame.icon
         }
 
-        PlasmaComponents.Label {
-            id: label
+        Text {
             Layout.fillWidth: true
             textFormat: Text.PlainText
             elide: Text.ElideRight
+            color: Kirigami.Theme.textColor
             font: root.effectFrame.font
             visible: text !== ""
             text: root.effectFrame.text

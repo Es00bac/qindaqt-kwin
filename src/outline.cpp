@@ -158,7 +158,7 @@ void OutlineVisual::show()
     if (!m_qmlComponent) {
         m_qmlComponent = std::make_unique<QQmlComponent>(Scripting::self()->qmlEngine());
         const QString fileName = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
-                                                        kwinApp()->config()->group(QStringLiteral("Outline")).readEntry("QmlPath", QStringLiteral("qindaqt-kwin/outline/plasma/outline.qml")));
+                                                        kwinApp()->config()->group(QStringLiteral("Outline")).readEntry("QmlPath", QStringLiteral("qindaqt-kwin/outline/qindaqt/outline.qml")));
         if (fileName.isEmpty()) {
             qCDebug(KWIN_CORE) << "Could not locate outline.qml";
             return;
