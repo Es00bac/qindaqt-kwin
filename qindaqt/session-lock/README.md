@@ -90,6 +90,17 @@ reports the native fence, and `Protected` reports current-generation actual
 physical presentation even without a locker. Property-change signals carry no
 authentication authority. There is no D-Bus unlock or PAM-result method.
 
+The additive native lock receipt calls avoid treating a QtDBus method reply as
+compositor identity. RequestLockWithReceipt(nonce) returns no value and sends
+lockAdmissionReceipt(nonce, admitted) only to the unique D-Bus caller captured
+from the request context. RequestStateWithReceipt(nonce) likewise sends one
+stateReceipt(nonce, locked, protected) snapshot to that caller. The producer
+accepts only exactly 32 lowercase hexadecimal characters. Admission is not
+physical protection. Existing RequestLock, properties and change signals stay
+available for compatibility; consumers requiring trusted current state use
+the targeted receipt and still join it to their independently admitted compositor
+attachment.
+
 The matrix adds root-file/alias, environment and real child trust rows. A harmless
 preload constructor actually loads in the independent hostile child, whose global
 is denied; the owned child strips injection and reports dumpability0. Even its
