@@ -179,7 +179,28 @@ void NativeSessionLockTest::nativeGatheredFence()
         && ink(pixels, chip) > 20 && ink(pixels, strip) > 20; };
     QTRY_VERIFY(gatheredPainted());
     const auto before = frame();
+    const QRect caption(chip.right()+8, chip.center().y()-16, 232, 32);
+    QVERIFY(frame().rect().contains(caption));
+    QCOMPARE(ink(before,caption),0);
+    QVERIFY(inject({pointer(chip.center())}));
+    auto captionPainted = [&] {
+        const auto pixels = frame(); if (pixels.isNull() || ink(pixels,caption)<100) return false;
+        // Probe the interior text band, away from the bubble's bright border.
+        int textPixels=0;
+        const auto interior=caption.adjusted(8,8,-8,-8);
+        for (int y=interior.top();y<=interior.bottom();++y) for(int x=interior.left();x<=interior.right();++x) {
+            const auto colour=pixels.pixelColor(x,y);
+            if (colour.red()>180&&colour.green()>180&&colour.blue()>180) ++textPixels;
+        }
+        return textPixels>15;
+    };
+    QTRY_VERIFY(captionPainted());
+    QVERIFY(frame().save(QStringLiteral(QINDAQT_PRIVATE_QT_LOCK_GREETER) + QStringLiteral("-gathered-hover-before.png")));
     QVERIFY(before.save(QStringLiteral(QINDAQT_PRIVATE_QT_LOCK_GREETER) + QStringLiteral("-gathered-before.png")));
+    // Hover leaves the allowed native cursor inside the chip probe. Hide only
+    // that cursor so uniform-background assertions measure desktop chrome.
+    Cursors::self()->hideCursor();
+    struct Cursor { ~Cursor() { Cursors::self()->showCursor(); } } cursor;
     QVERIFY(waylandServer()->sessionLock()->requestNativeLock());
     QByteArray messages;
     auto receive = [&](const QByteArray &marker) { waylandServer()->display()->flush(); messages += launcher->readTestOutput(); return messages.contains(marker); };
@@ -200,7 +221,7 @@ void NativeSessionLockTest::nativeGatheredFence()
         const auto pixels = frame(); if (pixels.isNull()) return false;
         const auto background = pixels.pixelColor(1,1);
         if (background == QColor(Qt::black)) return false;
-        for (const auto &rect : {chip, strip})
+        for (const auto &rect : {chip, strip, caption})
             for (int y=rect.top();y<=rect.bottom();++y) for(int x=rect.left();x<=rect.right();++x)
                 if (pixels.pixelColor(x,y) != background) return false;
         return true;
@@ -222,8 +243,6 @@ void NativeSessionLockTest::nativeGatheredFence()
     }
     // Actual output after owned greeter crash must contain neither ordinary
     // client pixels nor gathered chrome. Geometry inventory may remain cached.
-    Cursors::self()->hideCursor();
-    struct Cursor { ~Cursor() { Cursors::self()->showCursor(); } } cursor;
     launcher->stopTestFixture();
     QTRY_VERIFY(!waylandServer()->sessionLock()->client());
     QTRY_VERIFY(waylandServer()->sessionLock()->isPresentationProtected());
@@ -242,6 +261,8 @@ void NativeSessionLockTest::nativeGatheredFence()
     QTRY_COMPARE(hybrid().value("iconifiedWindows").toArray().size(), 1);
     QTRY_COMPARE(hybrid().value("shadedStripFrames").toArray().size(), 1);
     QTRY_VERIFY(gatheredPainted());
+    QVERIFY(inject({pointer(chip.center())}));
+    QTRY_VERIFY(captionPainted());
     QVERIFY(frame().save(QStringLiteral(QINDAQT_PRIVATE_QT_LOCK_GREETER) + QStringLiteral("-gathered-restored.png")));
 }
 }

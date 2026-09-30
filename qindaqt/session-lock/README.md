@@ -143,10 +143,13 @@ loads one exact consumer plugin through its public PluginFactory and adds the
 33rd matrix check. The private row creates a real Hybrid group with Meta+Shift
 drag, iconifies another client with Meta+wheel, and selects roll-up through the
 public QWidget popup UI (the compositor test QPA is offscreen). It proves actual
-chip and shaded-strip pixels before lock; the owned Qt greeter covers both
-regions, screenshot requests reject, and CPU/GL Window/Output/Region capture
+chip and shaded-strip pixels before lock, then actual rendered hover caption
+text beside the chip. The owned Qt greeter covers all three regions; screenshot
+requests reject, and CPU/GL Window/Output/Region capture
 sources return black. Actual greeter crash leaves the whole output black; a
 replacement owned greeter's native PAM/OSK unlock restores both gathered ink
-regions. Cached geometry inventory is not treated as visibility evidence.
+regions and the real hover caption. The native cursor is hidden only for uniform
+coverage/black pixel probes; it remains allowed by production lock policy.
+Cached geometry inventory is not treated as visibility evidence.
 Use the exact consumer artifact and rerun after consumer integration; never
 substitute a stale development plugin root or grant a production test bypass.
