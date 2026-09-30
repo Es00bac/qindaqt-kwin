@@ -31,6 +31,7 @@ class ShortcutRegistryTests final : public QObject
 private Q_SLOTS:
     void registrationDispatchAndConflictAreAtomic();
     void componentOwnerLifecycleReleasesBindings();
+    void inactiveOwnerKeepsReservationWithoutDispatch();
     void storePersistsAndImportsLegacyOnlyOnce();
     void malformedStoreDoesNotReplaceCurrentState();
     void invalidLegacyBatchLeavesStoreAndMarkerUntouched();
@@ -88,6 +89,24 @@ void ShortcutRegistryTests::componentOwnerLifecycleReleasesBindings()
     QVERIFY(registry.bindings().isEmpty());
     QVERIFY(!registry.dispatch(first.shortcuts.first()));
     QCOMPARE(registry.registerBinding(first).status, RegisterStatus::Registered);
+}
+
+void ShortcutRegistryTests::inactiveOwnerKeepsReservationWithoutDispatch()
+{
+    Registry registry;
+    const Binding owned = binding(QStringLiteral("shell"), QStringLiteral("launcher"),
+                                  Qt::META | Qt::Key_Space, QStringLiteral("Desktop shell"));
+    QCOMPARE(registry.registerBinding(owned).status, RegisterStatus::Registered);
+    QVERIFY(registry.setActive(owned.id(), false));
+    QVERIFY(!registry.dispatch(owned.shortcuts.first()));
+    const Binding contender = binding(QStringLiteral("kwin"), QStringLiteral("overview"),
+                                      Qt::META | Qt::Key_Space, QStringLiteral("Window manager"));
+    const RegisterResult conflict = registry.registerBinding(contender);
+    QCOMPARE(conflict.status, RegisterStatus::Conflict);
+    QCOMPARE(conflict.conflictingOwner, QStringLiteral("Desktop shell"));
+    QVERIFY(registry.setActive(owned.id(), true));
+    QCOMPARE(registry.dispatch(owned.shortcuts.first())->id(), owned.id());
+    QVERIFY(!registry.setActive(QStringLiteral("missing\x1faction"), true));
 }
 
 void ShortcutRegistryTests::storePersistsAndImportsLegacyOnlyOnce()

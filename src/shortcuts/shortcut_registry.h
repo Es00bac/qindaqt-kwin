@@ -25,6 +25,7 @@ struct Binding
     QList<QKeySequence> shortcuts;
     QList<QKeySequence> defaultShortcuts;
     bool repeat = false;
+    bool active = true; // Runtime owner lifecycle state; never persisted.
     QString id() const;
 };
 enum class RegisterStatus { Registered, Invalid, Duplicate, Conflict };
@@ -40,6 +41,7 @@ class Registry final
 public:
     RegisterResult registerBinding(Binding binding);
     RegisterResult setShortcuts(const QString &id, QList<QKeySequence> shortcuts);
+    bool setActive(const QString &id, bool active);
     void unregisterComponent(const QString &component);
     std::optional<Binding> binding(const QString &id) const;
     std::optional<Binding> dispatch(const QKeySequence &shortcut, bool repeat = false,

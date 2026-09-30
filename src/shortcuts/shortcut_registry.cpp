@@ -142,6 +142,14 @@ RegisterResult Registry::setShortcuts(const QString &id, QList<QKeySequence> sho
     return {RegisterStatus::Registered, {}};
 }
 
+bool Registry::setActive(const QString &id, bool active)
+{
+    auto it = m_bindings.find(id);
+    if (it == m_bindings.end()) return false;
+    it->active = active;
+    return true;
+}
+
 void Registry::unregisterComponent(const QString &component)
 {
     for (auto it = m_bindings.begin(); it != m_bindings.end();) {
@@ -161,7 +169,7 @@ std::optional<Binding> Registry::dispatch(const QKeySequence &shortcut, bool rep
 {
     if (shortcut.isEmpty() || locked || inhibited) return std::nullopt;
     for (const Binding &binding : m_bindings) {
-        if (binding.shortcuts.contains(shortcut) && (!repeat || binding.repeat))
+        if (binding.active && binding.shortcuts.contains(shortcut) && (!repeat || binding.repeat))
             return binding;
     }
     return std::nullopt;
