@@ -11,6 +11,7 @@
 #include <QFile>
 #include <QProcess>
 #include <QTemporaryDir>
+#include <QUuid>
 #include <cerrno>
 #include <fcntl.h>
 #include <sys/ptrace.h>
@@ -133,6 +134,19 @@ void NativeSessionLockTest::launcherConnectionIsolation()
     QTRY_VERIFY(!launcher->testIsRunning());
     launcher->setTestProgram({});
 }
+void NativeSessionLockTest::captureLockReceipt(const QString &nonce, bool admitted, const QDBusMessage &message)
+{
+    m_receiptNonce = nonce;
+    m_receiptAdmitted = admitted;
+    m_receiptMessage = message;
+}
+void NativeSessionLockTest::captureStateReceipt(const QString &nonce, bool locked, bool protectedPresentation, const QDBusMessage &message)
+{
+    m_receiptNonce = nonce;
+    m_receiptLocked = locked;
+    m_receiptProtected = protectedPresentation;
+    m_receiptMessage = message;
+}
 void NativeSessionLockTest::nativeLockBackendProtection()
 {
     const QString path = QStringLiteral("/org/qindaqt/KWin/NativeLock");
@@ -167,8 +181,26 @@ void NativeSessionLockTest::nativeLockBackendProtection()
         loop->inhibit();
         held.loops.append(loop);
     }
-    const auto request = invoke(QDBusMessage::createMethodCall(service, path, interface, QStringLiteral("RequestLock")));
+    auto bus = QDBusConnection::sessionBus();
+    const QString lockNonce = QUuid::createUuid().toString(QUuid::WithoutBraces).remove(QLatin1Char('-')).toLower();
+    QVERIFY(bus.connect(service, path, interface, QStringLiteral("lockAdmissionReceipt"), QStringList{lockNonce}, QStringLiteral("sb"), this,
+                        SLOT(captureLockReceipt(QString, bool, QDBusMessage))));
+    auto lockCall = QDBusMessage::createMethodCall(service, path, interface, QStringLiteral("RequestLockWithReceipt"));
+    lockCall << lockNonce;
+    const auto request = invoke(lockCall);
+    QTRY_COMPARE(m_receiptNonce, lockNonce);
+    bus.disconnect(service, path, interface, QStringLiteral("lockAdmissionReceipt"), QStringList{lockNonce}, QStringLiteral("sb"), this,
+                   SLOT(captureLockReceipt(QString, bool, QDBusMessage)));
     QCOMPARE(request.type(), QDBusMessage::ReplyMessage);
+    QCOMPARE(request.signature(), QString());
+    QCOMPARE(m_receiptNonce, lockNonce);
+    QVERIFY(m_receiptAdmitted);
+    QCOMPARE(m_receiptMessage.type(), QDBusMessage::SignalMessage);
+    QCOMPARE(m_receiptMessage.service(), service);
+    QCOMPARE(m_receiptMessage.path(), path);
+    QCOMPARE(m_receiptMessage.interface(), interface);
+    QCOMPARE(m_receiptMessage.member(), QStringLiteral("lockAdmissionReceipt"));
+    QCOMPARE(m_receiptMessage.signature(), QStringLiteral("sb"));
     QVERIFY(controller->isLocked());
     QVERIFY(!controller->isPresentationProtected());
     QTRY_VERIFY(!launcher->testIsRunning());
@@ -186,6 +218,24 @@ void NativeSessionLockTest::nativeLockBackendProtection()
     const auto values = qdbus_cast<QVariantMap>(properties.arguments().first());
     QCOMPARE(values.value(QStringLiteral("Locked")).toBool(), true);
     QCOMPARE(values.value(QStringLiteral("Protected")).toBool(), true);
+    const QString stateNonce = QUuid::createUuid().toString(QUuid::WithoutBraces).remove(QLatin1Char('-')).toLower();
+    QVERIFY(bus.connect(service, path, interface, QStringLiteral("stateReceipt"), QStringList{stateNonce}, QStringLiteral("sbb"), this,
+                        SLOT(captureStateReceipt(QString, bool, bool, QDBusMessage))));
+    auto stateCall = QDBusMessage::createMethodCall(service, path, interface, QStringLiteral("RequestStateWithReceipt"));
+    stateCall << stateNonce;
+    const auto stateReply = invoke(stateCall);
+    QTRY_COMPARE(m_receiptNonce, stateNonce);
+    bus.disconnect(service, path, interface, QStringLiteral("stateReceipt"), QStringList{stateNonce}, QStringLiteral("sbb"), this,
+                   SLOT(captureStateReceipt(QString, bool, bool, QDBusMessage)));
+    QCOMPARE(stateReply.type(), QDBusMessage::ReplyMessage);
+    QCOMPARE(stateReply.signature(), QString());
+    QCOMPARE(m_receiptNonce, stateNonce);
+    QVERIFY(m_receiptLocked);
+    QVERIFY(m_receiptProtected);
+    QCOMPARE(m_receiptMessage.type(), QDBusMessage::SignalMessage);
+    QCOMPARE(m_receiptMessage.service(), service);
+    QCOMPARE(m_receiptMessage.member(), QStringLiteral("stateReceipt"));
+    QCOMPARE(m_receiptMessage.signature(), QStringLiteral("sbb"));
     const auto xml = invoke(QDBusMessage::createMethodCall(service, path, QStringLiteral("org.freedesktop.DBus.Introspectable"), QStringLiteral("Introspect")));
     QCOMPARE(xml.type(), QDBusMessage::ReplyMessage);
     QVERIFY(xml.arguments().first().toString().contains("RequestLock"));

@@ -4,7 +4,11 @@
     <property name="Locked" type="b" access="read"/>
     <property name="Protected" type="b" access="read"/>
     <method name="RequestLock"><arg name="admitted" type="b" direction="out"/></method>
+    <method name="RequestLockWithReceipt"><arg name="nonce" type="s" direction="in"/></method>
+    <method name="RequestStateWithReceipt"><arg name="nonce" type="s" direction="in"/></method>
     <signal name="lockedChanged"><arg name="locked" type="b"/></signal>
     <signal name="protectedChanged"><arg name="protected" type="b"/></signal>
+    <signal name="lockAdmissionReceipt"><arg name="nonce" type="s"/><arg name="admitted" type="b"/></signal>
+    <signal name="stateReceipt"><arg name="nonce" type="s"/><arg name="locked" type="b"/><arg name="protected" type="b"/></signal>
   </interface>
 </node>
