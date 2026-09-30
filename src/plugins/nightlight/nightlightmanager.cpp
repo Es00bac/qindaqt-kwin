@@ -206,7 +206,8 @@ void NightLightManager::applyScheduleFrame(const QVariantMap &values)
                 ? NightLightMode::Constant : NightLightMode::DarkLight);
     m_dayTargetTemperature = values.value(QStringLiteral("dayTemperatureKelvin")).toInt();
     m_nightTargetTemperature = values.value(QStringLiteral("nightTemperatureKelvin")).toInt();
-    m_disabledOutputs = values.value(QStringLiteral("disabledOutputs")).toStringList();
+    m_disabledOutputUuids = values.value(QStringLiteral("disabledOutputUuids")).toStringList();
+    m_outputIdentityAvailable = values.value(QStringLiteral("outputIdentityAvailable")).toBool();
     m_scheduleAvailable = values.value(QStringLiteral("available")).toBool();
     setDaylight(values.value(QStringLiteral("daylight")).toBool());
     const auto dateTime = [](qulonglong milliseconds) {
@@ -470,7 +471,8 @@ void NightLightManager::commitGammaRamps(int temperature)
     for (BackendOutput *output : outputs) {
         // The backend applies these factors to originalColorDescription, so
         // unity removes only Night Light while retaining the output ICC base.
-        output->setChannelFactors(m_disabledOutputs.contains(output->name())
+        output->setChannelFactors(!m_outputIdentityAvailable
+                                      || m_disabledOutputUuids.contains(output->uuid())
                                       ? QVector3D(1, 1, 1) : rgbFactors);
     }
 

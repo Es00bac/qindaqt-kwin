@@ -255,7 +255,8 @@ private:
     KSystemClockSkewNotifier *m_skewNotifier;
 
     NightLightScheduleClient *m_scheduleClient = nullptr;
-    QStringList m_disabledOutputs;
+    QStringList m_disabledOutputUuids;
+    bool m_outputIdentityAvailable = true;
     bool m_scheduleAvailable = false;
 
     // Specifies whether Night Light is enabled.

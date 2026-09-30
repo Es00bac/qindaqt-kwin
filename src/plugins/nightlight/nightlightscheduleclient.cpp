@@ -41,7 +41,7 @@ bool field(const QVariantMap &values, const char *key, int type, QVariant *out)
 
 bool validFrame(const QVariantMap &values)
 {
-    if (values.size() != 19) return false;
+    if (values.size() != 21) return false;
     QVariant v;
     bool active = false;
     QString mode;
@@ -62,6 +62,18 @@ bool validFrame(const QVariantMap &values)
     if (day < 1000 || day > 6500 || day % 100 || night < 1000 || night > 6500 || night % 100) return false;
     if (!field(values, "disabledOutputs", QMetaType::QStringList, &v)) return false;
     disabled = v.toStringList();
+    if (!field(values, "disabledOutputUuids", QMetaType::QStringList, &v)) return false;
+    const QStringList disabledUuids = v.toStringList();
+    if (disabledUuids.size() > 32) return false;
+    for (qsizetype i = 0; i < disabledUuids.size(); ++i) {
+        if (disabledUuids.at(i).isEmpty() || disabledUuids.at(i).toUtf8().size() > 128
+            || disabledUuids.indexOf(disabledUuids.at(i)) != i) return false;
+    }
+    if (!field(values, "outputIdentityAvailable", QMetaType::Bool, &v)) return false;
+    const bool identitiesAvailable = v.toBool();
+    if (identitiesAvailable
+            ? disabledUuids.size() != disabled.size()
+            : !disabledUuids.isEmpty()) return false;
     if (disabled.size() > 32) return false;
     for (qsizetype i = 0; i < disabled.size(); ++i) {
         const QByteArray id = disabled.at(i).toUtf8();
