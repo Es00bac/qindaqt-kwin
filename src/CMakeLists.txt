@@ -16,6 +16,11 @@ if (KWIN_BUILD_KCMS)
     add_subdirectory(kcms)
 endif()
 
+# QindaQt PF22 core: pure registration, conflict policy and store boundary.
+add_library(qindaqt_kwin_shortcuts STATIC shortcuts/shortcut_registry.cpp)
+target_include_directories(qindaqt_kwin_shortcuts PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(qindaqt_kwin_shortcuts PUBLIC Qt::Core Qt::Gui)
+
 add_library(kwin SHARED)
 target_include_directories(kwin INTERFACE "$<INSTALL_INTERFACE:${KDE_INSTALL_INCLUDEDIR}/qindaqt-kwin>")
 # QindaQt: libqindaqt-kwin.so.0. Its ABI changes with every fork release; the
@@ -263,6 +268,8 @@ target_link_libraries(kwin
         lcms2::lcms2
         PkgConfig::libdisplayinfo
 )
+
+target_link_libraries(kwin PRIVATE qindaqt_kwin_shortcuts)
 
 if (TARGET K::KGlobalAccelD)
     target_link_libraries(kwin PRIVATE K::KGlobalAccelD)

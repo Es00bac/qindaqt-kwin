@@ -292,3 +292,16 @@ target_link_libraries(testRegion
 )
 add_test(NAME kwin-testRegion COMMAND testRegion)
 ecm_mark_as_test(testRegion)
+
+########################################################
+# Test the PF22 native shortcut registry core
+########################################################
+add_executable(testShortcutRegistry test_shortcut_registry.cpp)
+target_link_libraries(testShortcutRegistry
+    qindaqt_kwin_shortcuts
+    Qt::Core
+    Qt::Gui
+    Qt::Test
+)
+add_test(NAME kwin-testShortcutRegistry COMMAND testShortcutRegistry)
+ecm_mark_as_test(testShortcutRegistry)
