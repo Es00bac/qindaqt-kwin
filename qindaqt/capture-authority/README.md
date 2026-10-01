@@ -84,7 +84,8 @@ alter admission or publication. Run this target with its
 bus runner after coordinating the private runtime.
 
 The coordinated private boundary uses the standard `VirtualBackend` and
-`NoopSession`, virtual outputs, `LIBGL_ALWAYS_SOFTWARE=1`, and one explicitly
+`NoopSession`, virtual outputs, `LIBGL_ALWAYS_SOFTWARE=1`, explicit
+`MESA_LOADER_DRIVER_OVERRIDE=swrast`/`GALLIUM_DRIVER=llvmpipe`, and one explicitly
 identified render node (`/dev/dri/renderD128`) for buffer allocation. Read-only
 sysfs metadata permits libdrm discovery. No primary/card node, input/audio
 node, host bus or display is exposed. Setup requires a real EGL backend and

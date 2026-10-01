@@ -26,7 +26,11 @@ with tempfile.TemporaryDirectory(prefix="qindaqt-capture-owner-loss-") as direct
         path = root / leaf
         path.mkdir(mode=0o700)
         env[key] = str(path)
-    env.update(QT_QPA_PLATFORM="offscreen", LIBGL_ALWAYS_SOFTWARE="1", KWIN_COMPOSE="O2")
+    # AGENT-GUARD: GBM EGL must select swrast/llvmpipe explicitly; the
+    # generic LIBGL flag alone can still leave a hardware GBM context.
+    env.update(QT_QPA_PLATFORM="offscreen", LIBGL_ALWAYS_SOFTWARE="1",
+               MESA_LOADER_DRIVER_OVERRIDE="swrast", GALLIUM_DRIVER="llvmpipe",
+               KWIN_COMPOSE="O2")
     config = root / "bus.conf"
     # No included session configuration, service directories or activators.
     config.write_text(f'''<busconfig>
