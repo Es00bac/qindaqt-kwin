@@ -165,5 +165,12 @@ Focused behavioral regression is the existing unchanged native consumer
 private-compositor-survival assertion, followed by the full seven-case/three-
 compositor matrix. A Qt3/3 row accompanied by compositor death is a failure.
 The pre-repair original447 and two observer-driver failures remain preserved.
-Repair build and native qualification are pending; no production routing or
-full capture milestone is claimed by this source-only candidate.
+Executable repair42604a8f passes the bounded plugin build and one unchanged
+native-lock row with original447 driver, actual AMD rendering and a scoped
+private-bus monitor: Qt3/3, runner exit0, compositor alive through cleanup,
+lockedChanged(true), protectedChanged(true), real stream/file retirement and
+post-lock refusal. The exact same unmonitored row first failed its initial
+Screenshot before lock (response2/no helper). Monitoring shifts timing, so that
+recurring admission prerequisite remains unresolved; the full seven-case/three-
+compositor matrix and independent review remain required. All failures are
+retained. No production routing or full capture milestone is claimed.
