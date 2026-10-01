@@ -2,9 +2,12 @@
 #include "captureauthority.h"
 #include "kwin_wayland_test.h"
 #include "main.h"
+#include "pluginmanager.h"
 #include "screenshot.h"
 #include "screenshotoperation.h"
 #include "wayland_server.h"
+
+#include <KConfigGroup>
 
 #include <QElapsedTimer>
 #include <QDBusConnection>
@@ -81,10 +84,20 @@ void CaptureOwnerLossTest::initTestCase()
     QVERIFY(server->init(QStringLiteral("qindaqt-8")));
     static_cast<WaylandTestApplication *>(kwinApp())->setInputMethodServerToStart(QStringLiteral("internal"));
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
+    // AGENT-GUARD: this target compiles the production Screenshot sources
+    // with its observer. Do not autoload a second module instance that would
+    // own the same DBus object but have an unrelated private observer state.
+    KConfigGroup(kwinApp()->config(), QStringLiteral("Plugins")).writeEntry("screenshotEnabled", false);
     kwinApp()->start();
     Test::setOutputConfig({Rect(0, 0, 1100, 820)});
     QTRY_VERIFY_WITH_TIMEOUT(server->captureAuthority() && server->captureAuthority()->testBrokerReady(), 10000);
+    QVERIFY(!kwinApp()->pluginManager()->loadedPlugins().contains(QStringLiteral("screenshot")));
+    const QString screenshotPath = QStringLiteral("/org/kde/KWin/ScreenShot2");
+    QVERIFY(!QDBusConnection::sessionBus().objectRegisteredAt(screenshotPath));
     m_screenshot = std::make_unique<ScreenShotManager>();
+    auto *endpoint = QDBusConnection::sessionBus().objectRegisteredAt(screenshotPath);
+    QVERIFY(endpoint);
+    QCOMPARE(endpoint->parent(), static_cast<QObject *>(m_screenshot.get()));
 }
 
 void CaptureOwnerLossTest::ownerLoss_data()
