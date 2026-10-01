@@ -84,6 +84,16 @@ All sender names are D-Bus unique names; a self-reported name cannot replace
 bus-daemon UID/PID and retained pidfd. The broker additionally confirms the
 current compositor unique owner/PID before handling frontend calls.
 
+The v1 payload table is exact; a receiver rejects trailing bytes as well as
+missing fields. `Hello`, `JobStarted`, `ParentReady`, `ConsentGranted`,
+`CaptureReady`, `RevokeJob` and `JobRevoked` have empty payloads. `Ready` is
+little-endian `uint16 nameBytes` followed by exactly that many UTF-8 bytes
+of a D-Bus unique name (`1..255`, no NUL); the bus daemon, never this field,
+supplies its UID/PID. `StartJob` and `Error` use the layouts below. Broker
+handshake packets use job ID zero; helper handshake and every job packet use
+their assigned nonzero job ID. The first `Hello` fixes the generation for
+that child, and no later packet may change it.
+
 ## Job state and payloads
 
 `StartJob` is broker-to-compositor after the real portal frontend call and
