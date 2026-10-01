@@ -65,11 +65,15 @@ ancillary messages, wrong FD count, nonzero reserved bits, duplicated job IDs,
 generation mismatch and out-of-order transitions, closing all received FDs.
 No unbounded queue is permitted; at most 16 jobs exist per broker.
 
-The receiver enables `SO_PASSCRED` and requires `SCM_CREDENTIALS` on every
-*post-exec* child message. The compositor compares kernel UID/PID with its
-fixed-binary QProcess launch and still-live pidfd, and requires the private
-channel to be the exact retained endpoint. `SO_PEERCRED` on a socketpair made
-before fork/exec can describe its compositor creator and is insufficient.
+Each receiver enables `SO_PASSCRED` and requires `SCM_CREDENTIALS` on every
+packet. The compositor compares kernel UID/PID on *post-exec* child messages
+with its fixed-binary QProcess launch and still-live pidfd, and requires the
+private channel to be the exact retained endpoint. The broker and helper
+compare compositor packet credentials with the inherited compositor peer,
+its still-live pidfd and the **current** native D-Bus owner/PID; `Hello`'s
+generation alone is not proof. `SO_PEERCRED` on a socketpair made before
+fork/exec can describe its compositor creator and is insufficient to
+authenticate a child after exec.
 Opening a pidfd after launch is not by itself identity: the private channel,
 post-exec credentials, exact launch PID and (for helper Screenshot2) D-Bus
 unique sender must still join. A malformed or lost channel is terminal.
@@ -148,6 +152,24 @@ issuing Screenshot2 or `stream_output`. Manager visibility before consent is
 enumeration only; no pixels or stream may be created. The broker receives the
 helper result through its pipe and independently rechecks frontend/caller,
 session, parent, compositor and native privacy before publishing URI/node.
+
+For a Screenshot-scope job, the compositor permits **one** ScreenShot2 method
+invocation after `CaptureReady`. It marks the grant consumed at method entry;
+that operation's revocable lease may complete, but every later ScreenShot2
+invocation from the same helper/job is denied, including while the helper is
+still alive. The helper sends at most one result, hides its UI and remains
+idle with its control channel open while the broker retains the private
+screenshot file/URI for at most 300,000 ms **after the result**. This retained
+state grants no second capture. The broker owns the file and rechecks actor,
+parent, current native privacy, helper and compositor lineage on every
+read-through or publication. It sends `RevokeJob` at retention expiry, Close
+or any lost lineage; the compositor also revokes directly on its listed
+failure events. The helper then exits. PickColor uses the same one-shot
+Screenshot2 grant, but its single color result must finish publication before
+the broker intentionally revokes the job; it has no retained image URI. If
+the helper exits early, HUP revokes the job and the broker withdraws its
+retained URI even if the file still exists. The 30-second protected write
+deadline does not shorten this bounded retention lifetime.
 
 `RevokeJob`, `JobRevoked` and `Error` are terminal and idempotent for the same
 job. `Error` payload is a two-byte little-endian `Error` code only; text or
