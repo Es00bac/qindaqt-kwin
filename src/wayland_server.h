@@ -190,6 +190,11 @@ public:
     bool isScreenLocked() const;
     SessionLockController *sessionLock() const;
     CaptureAuthority *captureAuthority() const;
+#if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
+    // AGENT-GUARD: only non-installable test builds select disposable child
+    // images before initWorkspace constructs the production-owned authority.
+    void setCaptureTestPrograms(const QString &broker, const QString &helper);
+#endif
     LockerLauncher *lockerLauncher() const;
     bool isLockScreenInputSurface(SurfaceInterface *surface) const;
     void registerSessionLockWindow(SessionLockWindow *window);
@@ -281,6 +286,10 @@ private:
     QPointer<ClientConnection> m_inputMethodServerConnection;
     SessionLockController *m_sessionLock = nullptr;
     CaptureAuthority *m_captureAuthority = nullptr;
+#if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
+    QString m_captureTestBroker;
+    QString m_captureTestHelper;
+#endif
     LockerLauncher *m_lockerLauncher = nullptr;
     XdgForeignV2Interface *m_XdgForeign = nullptr;
     XdgActivationV1Integration *m_xdgActivationIntegration = nullptr;

@@ -2,6 +2,7 @@
 #include "capturewire.h"
 
 #include <QTest>
+#include <QtEndian>
 
 #include <sys/socket.h>
 #include <unistd.h>
@@ -16,7 +17,23 @@ private Q_SLOTS:
     void readyBindsActualKernelSender();
     void jobStartedCarriesExactlyTwoDescriptors();
     void rejectMissingCredentialsAndInvalidShape();
+    void rejectWrongDescriptorShape();
+    void rejectMalformedFrames_data();
+    void rejectMalformedFrames();
 };
+
+static QByteArray rawFrame(Wire::Message type, quint64 generation, quint64 job, const QByteArray &payload = {})
+{
+    QByteArray frame(Wire::HeaderBytes, '\0');
+    qToLittleEndian<quint32>(Wire::Magic, reinterpret_cast<uchar *>(frame.data()));
+    qToLittleEndian<quint16>(Wire::Version, reinterpret_cast<uchar *>(frame.data() + 4));
+    qToLittleEndian<quint16>(quint16(type), reinterpret_cast<uchar *>(frame.data() + 6));
+    qToLittleEndian<quint64>(generation, reinterpret_cast<uchar *>(frame.data() + 8));
+    qToLittleEndian<quint64>(job, reinterpret_cast<uchar *>(frame.data() + 16));
+    qToLittleEndian<quint32>(payload.size(), reinterpret_cast<uchar *>(frame.data() + 24));
+    frame.append(payload);
+    return frame;
+}
 
 void CaptureWireTest::readyBindsActualKernelSender()
 {
@@ -74,6 +91,63 @@ void CaptureWireTest::rejectMissingCredentialsAndInvalidShape()
     invalid[8] = 3;
     invalid[24] = 1;
     QCOMPARE(::send(pair[0], invalid.constData(), invalid.size(), MSG_NOSIGNAL), ssize_t(invalid.size()));
+    QCOMPARE(CaptureWire::receive(pair[1], &packet), -1);
+    close(pair[0]);
+    close(pair[1]);
+}
+
+void CaptureWireTest::rejectWrongDescriptorShape()
+{
+    int pair[2];
+    int pipeEnds[2];
+    QVERIFY(socketpair(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC, 0, pair) == 0);
+    QVERIFY(pipe(pipeEnds) == 0);
+    QVERIFY(CaptureWire::enableCredentials(pair[1]));
+    QVERIFY(!CaptureWire::send(pair[0], Wire::Message::JobStarted, 8, 1, {}, {pipeEnds[0]}));
+    QVERIFY(!CaptureWire::send(pair[0], Wire::Message::Hello, 8, 0, {}, {pipeEnds[0]}));
+    CaptureWire::Packet packet;
+    QCOMPARE(CaptureWire::receive(pair[1], &packet), 0);
+    close(pipeEnds[0]);
+    close(pipeEnds[1]);
+    close(pair[0]);
+    close(pair[1]);
+}
+
+void CaptureWireTest::rejectMalformedFrames_data()
+{
+    QTest::addColumn<QByteArray>("frame");
+    QByteArray frame = rawFrame(Wire::Message::Hello, 4, 0);
+    frame[0] = 'X';
+    QTest::newRow("bad-magic") << frame;
+    frame = rawFrame(Wire::Message::Hello, 4, 0);
+    frame[4] = 2;
+    QTest::newRow("unknown-version") << frame;
+    frame = rawFrame(Wire::Message(99), 4, 0);
+    QTest::newRow("unknown-type") << frame;
+    frame = rawFrame(Wire::Message::Hello, 0, 0);
+    QTest::newRow("zero-generation") << frame;
+    frame = rawFrame(Wire::Message::Hello, 4, 0);
+    frame[30] = 1;
+    QTest::newRow("reserved-header") << frame;
+    frame = rawFrame(Wire::Message::Hello, 4, 0);
+    frame[24] = 1;
+    QTest::newRow("short-payload") << frame;
+    frame = rawFrame(Wire::Message::Ready, 4, 0, QByteArray("\x05\0:1", 5));
+    QTest::newRow("wrong-ready-length") << frame;
+    frame = rawFrame(Wire::Message::StartJob, 4, 0, QByteArray(10, '\0'));
+    QTest::newRow("zero-start-job") << frame;
+    frame = rawFrame(Wire::Message::StartJob, 4, 1, QByteArray(10, '\0'));
+    QTest::newRow("invalid-start-scope") << frame;
+}
+
+void CaptureWireTest::rejectMalformedFrames()
+{
+    QFETCH(QByteArray, frame);
+    int pair[2];
+    QVERIFY(socketpair(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC, 0, pair) == 0);
+    QVERIFY(CaptureWire::enableCredentials(pair[1]));
+    QCOMPARE(::send(pair[0], frame.constData(), frame.size(), MSG_NOSIGNAL), ssize_t(frame.size()));
+    CaptureWire::Packet packet;
     QCOMPARE(CaptureWire::receive(pair[1], &packet), -1);
     close(pair[0]);
     close(pair[1]);

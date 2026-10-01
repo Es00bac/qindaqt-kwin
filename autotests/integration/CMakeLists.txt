@@ -277,3 +277,37 @@ if(QINDAQT_SESSION_LOCK_TEST_AUTHORIZATION)
     target_link_libraries(testNativeSessionLock KF6::Service KF6::I18n)
     ecm_qt_declare_logging_category(testNativeSessionLock HEADER screenshotlogging.h IDENTIFIER KWIN_SCREENSHOT CATEGORY_NAME kwin_screenshot DEFAULT_SEVERITY Warning)
 endif()
+
+if(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
+    add_executable(qindaqt-capture-interface-probe
+        ${PROJECT_SOURCE_DIR}/qindaqt/capture-authority/tests/capture_interface_probe.cpp)
+    target_link_libraries(qindaqt-capture-interface-probe PRIVATE Wayland::Client)
+    integrationTest(NAME testCaptureInterfaceFilter
+        RUNNER ${PROJECT_SOURCE_DIR}/qindaqt/tools/run-native-lock
+        SRCS ${PROJECT_SOURCE_DIR}/qindaqt/capture-authority/tests/capture_interface_filter_test.cpp)
+    target_include_directories(testCaptureInterfaceFilter PRIVATE
+        ${PROJECT_SOURCE_DIR}/qindaqt/capture-authority)
+    target_compile_definitions(testCaptureInterfaceFilter PRIVATE
+        QINDAQT_CAPTURE_INTERFACE_PROBE_PATH="$<TARGET_FILE:qindaqt-capture-interface-probe>")
+    add_dependencies(testCaptureInterfaceFilter screenshot screencast qindaqt-capture-interface-probe)
+
+    set(QINDAQT_PRIVATE_CAPTURE_BROKER "" CACHE FILEPATH "Non-installed capture-only test broker")
+    set(QINDAQT_PRIVATE_CAPTURE_HELPER "" CACHE FILEPATH "Non-installed native capture input helper")
+    if(QINDAQT_PRIVATE_CAPTURE_BROKER OR QINDAQT_PRIVATE_CAPTURE_HELPER)
+        if(NOT EXISTS "${QINDAQT_PRIVATE_CAPTURE_BROKER}" OR NOT EXISTS "${QINDAQT_PRIVATE_CAPTURE_HELPER}")
+            message(FATAL_ERROR "Native capture fixture needs both exact non-installed broker and helper images")
+        endif()
+        # This is a long-lived compositor driver for the separate consumer's
+        # actual primary frontend matrix, not a standalone CTest assertion.
+        add_executable(testNativeCaptureAuthority
+            ${PROJECT_SOURCE_DIR}/qindaqt/capture-authority/tests/native_capture_authority_test.cpp)
+        target_link_libraries(testNativeCaptureAuthority PRIVATE KWinIntegrationTestFramework Qt::Test)
+        target_include_directories(testNativeCaptureAuthority PRIVATE
+            ${PROJECT_SOURCE_DIR}/qindaqt/capture-authority)
+        target_compile_definitions(testNativeCaptureAuthority PRIVATE
+            QINDAQT_PRIVATE_CAPTURE_BROKER="${QINDAQT_PRIVATE_CAPTURE_BROKER}"
+            QINDAQT_PRIVATE_CAPTURE_HELPER="${QINDAQT_PRIVATE_CAPTURE_HELPER}")
+        add_dependencies(testNativeCaptureAuthority screenshot screencast)
+        ecm_mark_as_test(testNativeCaptureAuthority)
+    endif()
+endif()

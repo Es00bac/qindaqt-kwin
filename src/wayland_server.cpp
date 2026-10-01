@@ -143,6 +143,9 @@ public:
         QByteArrayLiteral("zkde_screencast_unstable_v1"),
         QByteArrayLiteral("org_kde_plasma_activation_feedback"),
         QByteArrayLiteral("kde_lockscreen_overlay_v1"),
+#if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
+        QByteArrayLiteral("qindaqt_capture_test_restricted_v1"),
+#endif
     };
 
     const QSet<QByteArray> inputmethodInterfaces = {"zwp_input_panel_v1", "zwp_input_method_v1"};
@@ -161,6 +164,19 @@ public:
         if (auto *authority = waylandServer()->captureAuthority();
             authority && authority->isTaggedCaptureClient(client)) {
             return authority->allowTaggedInterface(client, interfaceName);
+        }
+        // AGENT-GUARD: the helper's ordinary GUI socketpair also caches our
+        // PID. Its Qt/foreign-parent connection must never inherit the
+        // compositor self-PID shortcut to restricted capture or input globals.
+        if (auto *authority = waylandServer()->captureAuthority();
+            authority && authority->isOwnedGuiClient(client)) {
+            return authority->guiClientAllowed(client)
+                && !interfacesBlackList.contains(interfaceName)
+                && interfaceName != QByteArrayLiteral("ext_session_lock_manager_v1")
+                && interfaceName != QByteArrayLiteral("kde_lockscreen_overlay_v1")
+                && interfaceName != QByteArrayLiteral("wp_security_context_manager_v1")
+                && !inputmethodInterfaces.contains(interfaceName)
+                && !xwaylandInterfaces.contains(interfaceName);
         }
         if (!client->securityContextAppId().isEmpty() && interfaceName == QByteArrayLiteral("wp_security_context_manager_v1")) {
             return false;
@@ -662,6 +678,9 @@ void WaylandServer::initWorkspace()
         initScreenLocker();
     }
     m_captureAuthority = new CaptureAuthority(this, this);
+#if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
+    m_captureAuthority->setTestPrograms(m_captureTestBroker, m_captureTestHelper);
+#endif
     QTimer::singleShot(0, m_captureAuthority, [this] { m_captureAuthority->start(); });
 
     if (auto backend = qobject_cast<DrmBackend *>(kwinApp()->outputBackend())) {
@@ -691,6 +710,15 @@ CaptureAuthority *WaylandServer::captureAuthority() const
 {
     return m_captureAuthority;
 }
+
+#if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
+void WaylandServer::setCaptureTestPrograms(const QString &broker, const QString &helper)
+{
+    Q_ASSERT(!m_captureAuthority);
+    m_captureTestBroker = broker;
+    m_captureTestHelper = helper;
+}
+#endif
 
 WaylandServer::SocketPairConnection WaylandServer::createConnection()
 {

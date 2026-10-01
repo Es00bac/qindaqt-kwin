@@ -302,15 +302,18 @@ void CaptureAuthority::startJob(const CaptureWire::Packet &packet)
         handleHelperPacket(id, std::move(received));
     };
     job->helper->lost = [this, id] { revokeJob(id); };
-    if (!job->helper->start() || !job->helper->captureClient()) {
+    if (!job->helper->start() || !job->helper->captureClient() || !job->helper->guiClient()) {
         QByteArray payload(2, '\0');
         payload[0] = char(Error::Denied);
         m_broker->sendJob(Message::Error, id, payload);
         return;
     }
     ClientConnection *capture = job->helper->captureClient();
+    ClientConnection *gui = job->helper->guiClient();
     m_captureTags.insert(capture, id);
+    m_guiTags.insert(gui, id);
     connect(capture, &QObject::destroyed, this, [this, capture] { m_captureTags.remove(capture); });
+    connect(gui, &QObject::destroyed, this, [this, gui] { m_guiTags.remove(gui); });
     const FileDescriptor request = job->helper->takeRequestWriter();
     const FileDescriptor result = job->helper->takeResultReader();
     m_jobs.emplace(id, std::move(job));
@@ -424,78 +427,17 @@ void CaptureAuthority::revokeAll()
     }
 }
 
-bool CaptureAuthority::isTaggedCaptureClient(ClientConnection *client) const
-{
-    return client && m_captureTags.contains(client);
-}
-
-bool CaptureAuthority::allowTaggedInterface(ClientConnection *client, const QByteArray &name) const
-{
-    const auto found = m_captureTags.constFind(client);
-    if (found == m_captureTags.cend()) {
-        return false;
-    }
-    const auto it = m_jobs.find(*found);
-    if (it == m_jobs.end() || !jobLive(*it->second)) {
-        return false;
-    }
-    if (name == QByteArrayLiteral("wl_output") || name == QByteArrayLiteral("zxdg_output_manager_v1")) {
-        return true;
-    }
-    return it->second->scope == CaptureWire::Public::Scope::ScreenCast
-        && name == QByteArrayLiteral("zkde_screencast_unstable_v1");
-}
-
-std::optional<quint64> CaptureAuthority::streamJob(ClientConnection *client) const
-{
-    const auto found = m_captureTags.constFind(client);
-    if (found == m_captureTags.cend()) {
-        return std::nullopt;
-    }
-    return *found;
-}
-
-bool CaptureAuthority::streamAllowed(quint64 id) const
-{
-    const auto it = m_jobs.find(id);
-    return it != m_jobs.end() && it->second->scope == CaptureWire::Public::Scope::ScreenCast
-        && it->second->captureReady && jobLive(*it->second);
-}
-
-std::optional<quint64> CaptureAuthority::beginScreenshot(const QString &sender, pid_t pid)
-{
-    for (const auto &[id, owned] : m_jobs) {
-        Job &job = *owned;
-        if (job.scope == CaptureWire::Public::Scope::Screenshot && job.captureReady
-            && !job.screenshotConsumed && job.helperSender == sender
-            && job.helper->pid() == pid && jobLive(job)) {
-            job.screenshotConsumed = true;
-            return id;
-        }
-    }
-    return std::nullopt;
-}
-
-bool CaptureAuthority::screenshotOperationAllowed(quint64 id, const QString &sender, pid_t pid) const
-{
-    const auto it = m_jobs.find(id);
-    return it != m_jobs.end() && it->second->scope == CaptureWire::Public::Scope::Screenshot
-        && it->second->captureReady && it->second->screenshotConsumed
-        && it->second->helperSender == sender && it->second->helper->pid() == pid
-        && jobLive(*it->second);
-}
-
-bool CaptureAuthority::isProtectedHelperSender(const QString &sender, pid_t pid) const
-{
-    return m_helperSenders.value(sender, 0) == pid && pid > 0;
-}
-
 #if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
 void CaptureAuthority::setTestPrograms(const QString &broker, const QString &helper)
 {
     Q_ASSERT(!m_broker && m_jobs.empty());
     m_testBroker = broker;
     m_testHelper = helper;
+}
+
+bool CaptureAuthority::testBrokerReady() const
+{
+    return m_broker && m_broker->live() && !m_brokerSender.isEmpty();
 }
 #endif
 }

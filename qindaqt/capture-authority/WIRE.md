@@ -1,4 +1,4 @@
-# CaptureAuthority wire version 1 — proposed integration freeze
+# CaptureAuthority public wire version 1
 
 This is the public compositor/portal process boundary for protected native
 Screenshot and ScreenCast. The constants in `protocol.h` are installed under
@@ -48,8 +48,11 @@ helper-to-broker bounded result pipe). The compositor transfers the other two
 pipe ends to the broker in `JobStarted` via `SCM_RIGHTS` and closes its own
 copies. The helper never obtains the broker control socket, and the broker
 never obtains the helper control or capture socket. Ordinary GUI/foreign-parent
-globals live only on fd 4. fd 5 is tagged by exact `ClientConnection *`
-before the self-PID global shortcut and sees only `wl_output`,
+globals live only on fd 4. Both compositor-created Wayland connections cache
+the compositor's own PID: fd 4 is tagged as an owned GUI connection and denies
+restricted, lock, input-method, XWayland and security-context globals before
+the self-PID shortcut. fd 5 is tagged by exact `ClientConnection *` before that
+shortcut and sees only `wl_output`,
 `zxdg_output_manager_v1` and `zkde_screencast_unstable_v1`.
 
 The launcher uses one broker per selected current `org.qindaqt.KWin` D-Bus

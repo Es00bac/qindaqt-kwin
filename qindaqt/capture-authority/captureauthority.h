@@ -34,6 +34,8 @@ public:
 
     bool isTaggedCaptureClient(ClientConnection *client) const;
     bool allowTaggedInterface(ClientConnection *client, const QByteArray &interfaceName) const;
+    bool isOwnedGuiClient(ClientConnection *client) const;
+    bool guiClientAllowed(ClientConnection *client) const;
     std::optional<quint64> streamJob(ClientConnection *client) const;
     bool streamAllowed(quint64 job) const;
     bool privacyAllows() const;
@@ -45,6 +47,9 @@ public:
     bool isProtectedHelperSender(const QString &sender, pid_t pid) const;
 #if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
     void setTestPrograms(const QString &broker, const QString &helper);
+    bool testBrokerReady() const;
+    // Disposable per-client filter fixture; never models process lineage.
+    void tagTestClient(ClientConnection *client, CaptureWire::Public::Scope scope, bool gui);
 #endif
 
 Q_SIGNALS:
@@ -93,6 +98,7 @@ private:
     std::unique_ptr<CaptureChild> m_broker;
     std::unordered_map<quint64, std::unique_ptr<Job>> m_jobs;
     QHash<ClientConnection *, quint64> m_captureTags;
+    QHash<ClientConnection *, quint64> m_guiTags;
     QHash<QString, pid_t> m_helperSenders;
     QString m_brokerSender;
     quint64 m_generation = 0;
@@ -102,6 +108,12 @@ private:
 #if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
     QString m_testBroker;
     QString m_testHelper;
+    struct TestClientTag
+    {
+        CaptureWire::Public::Scope scope;
+        bool gui;
+    };
+    QHash<ClientConnection *, TestClientTag> m_testTags;
 #endif
 };
 }

@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
-target_sources(kwin PRIVATE capturelaunchpolicy.cpp capturewire.cpp capturechild.cpp captureauthority.cpp)
+target_sources(kwin PRIVATE capturelaunchpolicy.cpp capturewire.cpp capturechild.cpp
+    captureauthority.cpp captureauthorityinterfaces.cpp)
 configure_file(launchpaths.h.in "${CMAKE_CURRENT_BINARY_DIR}/launchpaths.h" @ONLY)
 target_include_directories(kwin PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/launchpaths.h"
@@ -16,4 +17,10 @@ if(BUILD_TESTING)
     target_include_directories(testCaptureWire PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     add_test(NAME kwin-testCaptureWire COMMAND testCaptureWire)
     ecm_mark_as_test(testCaptureWire)
+
+    add_executable(testCaptureLaunchPolicy tests/capturelaunchpolicy_test.cpp capturelaunchpolicy.cpp)
+    target_link_libraries(testCaptureLaunchPolicy PRIVATE kwin Qt::Test KF6::Service)
+    target_include_directories(testCaptureLaunchPolicy PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    add_test(NAME kwin-testCaptureLaunchPolicy COMMAND testCaptureLaunchPolicy)
+    ecm_mark_as_test(testCaptureLaunchPolicy)
 endif()
