@@ -82,3 +82,15 @@ compiled only into the noninstallable test-authorization build and cannot
 alter admission or publication. Run this target with its
 `qindaqt/capture-authority/tests/run_owner_loss.py` zero-activation private
 bus runner after coordinating the private runtime.
+
+The coordinated private boundary uses the standard `VirtualBackend` and
+`NoopSession`, virtual outputs, `LIBGL_ALWAYS_SOFTWARE=1`, and one explicitly
+identified render node (`/dev/dri/renderD128`) for buffer allocation. Read-only
+sysfs metadata permits libdrm discovery. No primary/card node, input/audio
+node, host bus or display is exposed. Setup requires a real EGL backend and
+an actual llvmpipe renderer; software fallback to QPainter fails. A render
+node permits render/allocation ioctls but cannot mode-set the host display.
+This is a narrowly approved exception to the earlier device-free namespace,
+not evidence of physical-display or real portal/PipeWire coverage. The prior
+custom software backend experiment is preserved on a separate branch and
+is absent from this fixture.

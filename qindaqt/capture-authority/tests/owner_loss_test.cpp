@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "captureauthority.h"
+#include "compositor.h"
+#include "opengl/eglbackend.h"
+#include "opengl/eglcontext.h"
 #include "kwin_wayland_test.h"
 #include "main.h"
 #include "pluginmanager.h"
@@ -90,6 +93,14 @@ void CaptureOwnerLossTest::initTestCase()
     KConfigGroup(kwinApp()->config(), QStringLiteral("Plugins")).writeEntry("screenshotEnabled", false);
     kwinApp()->start();
     Test::setOutputConfig({Rect(0, 0, 1100, 820)});
+    // AGENT-GUARD: the render node is allocation-only test infrastructure;
+    // qualification must use the standard virtual backend with software GL.
+    auto *egl = qobject_cast<EglBackend *>(Compositor::self()->backend());
+    QVERIFY(egl && egl->openglContext());
+    QVERIFY(egl->openglContext()->isSoftwareRenderer());
+    const QByteArray renderer(egl->openglContext()->renderer().data(), egl->openglContext()->renderer().size());
+    QVERIFY(renderer.toLower().contains("llvmpipe"));
+    qInfo() << "OWNER_LOSS_SOFTWARE_RENDERER" << renderer;
     QTRY_VERIFY_WITH_TIMEOUT(server->captureAuthority() && server->captureAuthority()->testBrokerReady(), 10000);
     QVERIFY(!kwinApp()->pluginManager()->loadedPlugins().contains(QStringLiteral("screenshot")));
     const QString screenshotPath = QStringLiteral("/org/kde/KWin/ScreenShot2");
