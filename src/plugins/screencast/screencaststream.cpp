@@ -128,6 +128,9 @@ void ScreenCastStream::onStreamStateChanged(pw_stream_state old, pw_stream_state
         if (nodeId() == 0 && m_pwStream) {
             m_pwNodeId = pw_stream_get_node_id(m_pwStream);
             Q_EMIT ready(nodeId());
+            if (m_closed) {
+                return;
+            }
         }
         m_pendingFrame.stop();
         m_pendingContents = Contents();
@@ -476,7 +479,14 @@ void ScreenCastStream::close()
     disconnect(m_cursor.positionChangedConnection);
     m_cursor.positionChangedConnection = {};
 
-    m_source.reset();
+    // AGENT-GUARD: scene repaint callbacks iterate snapshots of RenderView
+    // pointers. A synchronous close from repaintScheduled must revoke now but
+    // must not destroy the source's views until that notification unwinds.
+    // QObject parenting also owns cleanup if the stream dies before DeferredDelete.
+    auto *source = m_source.release();
+    source->disconnect(this);
+    source->setParent(this);
+    source->deleteLater();
 
     Q_EMIT closed();
 }
@@ -488,7 +498,8 @@ void ScreenCastStream::setCaptureGate(std::function<bool()> gate)
 
 bool ScreenCastStream::captureAllowed() const
 {
-    return !m_closed && (!m_captureGate || m_captureGate());
+    // The authority check can deliver a synchronous revocation itself.
+    return !m_closed && (!m_captureGate || m_captureGate()) && !m_closed;
 }
 
 void ScreenCastStream::scheduleRecord(Contents contents)
@@ -620,6 +631,11 @@ void ScreenCastStream::record(Contents contents)
         break;
     }
 
+    if (!captureAllowed()) {
+        close();
+        return;
+    }
+
     EglContext *context = backend->openglContext();
     context->makeCurrent();
 
@@ -646,6 +662,13 @@ void ScreenCastStream::record(Contents contents)
             bumpBufferAge(dmabuf);
         }
         m_damageJournal.add(damage);
+    }
+
+    // Rendering/cursor changes can synchronously close this stream. The
+    // retired source survives that stack, but m_source no longer owns it.
+    if (!captureAllowed()) {
+        close();
+        return;
     }
 
     if (spa_data[0].type == SPA_DATA_DmaBuf) {
@@ -686,7 +709,9 @@ void ScreenCastStream::record(Contents contents)
     pw_stream_queue_buffer(m_pwStream, pwBuffer);
     m_lastSent = std::chrono::steady_clock::now();
 
-    resize(m_source->textureSize());
+    if (!m_closed) {
+        resize(m_source->textureSize());
+    }
 }
 
 void ScreenCastStream::bumpBufferAge(ScreenCastBuffer *renderedBuffer)
@@ -831,7 +856,7 @@ spa_pod *ScreenCastStream::buildFormat(struct spa_pod_builder *b, enum spa_video
 
 void ScreenCastStream::addCursorMetadata(spa_buffer *spaBuffer, Cursor *cursor)
 {
-    if (!cursor) {
+    if (!cursor || m_closed) {
         return;
     }
 

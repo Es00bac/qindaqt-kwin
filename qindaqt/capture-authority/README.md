@@ -136,3 +136,34 @@ changing captured pixels. ScreenCast coverage remains a local idle closure
 observer; the full native frontend/consent/PipeWire matrix remains a separate
 held gate. Request independent review of the exact handoff commit, then the
 manager's matching native-driver rebuild and real frontend matrix.
+
+
+## ScreenCast source lifetime during revocation
+
+Stream closure synchronously marks the stream closed, stops its pending frame,
+disconnects cursor/source notifications and emits the existing closure. Every
+later frame entry and the final pre-queue authority check remain fail closed.
+The QObject source is transferred from unique ownership to the closing stream
+as parent, and retired with `deleteLater()` on the compositor thread. The stream
+owns fallback cleanup if it dies before the deferred event. PipeWire callbacks
+are dispatched on that thread through the existing Qt socket notifier.
+
+The physical source destruction must wait until the current synchronous scene
+notification unwinds: `Item::scheduleSceneRepaintInternal()` holds a snapshot
+of raw scene-view pointers, and `OutputLayer::repaintScheduled` can synchronously
+reach `ScreenCastStream::scheduleRecord()` and close when native lock begins.
+Immediate source deletion frees its later cursor/scene views while that snapshot
+is still being traversed. Exact447 failed the real native-lock consumer row's
+compositor-survival assertion; kernel fault context and the first return address
+place the invalid virtual dispatch at item.cpp508 (`view->shouldRenderItem`).
+The logical revocation stays immediate; no new pixels may be queued while the
+source waits for deletion. Ready and active-record continuations recheck closed
+state before dereferencing source ownership after a reentrant callback.
+
+Focused behavioral regression is the existing unchanged native consumer
+`nativeLockStopsActualStreamPendingCaptureAndRetainedFile` **and** its runner's
+private-compositor-survival assertion, followed by the full seven-case/three-
+compositor matrix. A Qt3/3 row accompanied by compositor death is a failure.
+The pre-repair original447 and two observer-driver failures remain preserved.
+Repair build and native qualification are pending; no production routing or
+full capture milestone is claimed by this source-only candidate.
