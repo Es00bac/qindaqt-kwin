@@ -6,7 +6,9 @@
 #include "screenshotoperation.h"
 #include "wayland_server.h"
 
+#include <QElapsedTimer>
 #include <QDBusConnection>
+#include <QDBusMessage>
 #include <QDBusConnectionInterface>
 #include <QDBusInterface>
 #include <QDBusReply>
@@ -64,6 +66,8 @@ private Q_SLOTS:
 private:
     std::unique_ptr<ScreenShotManager> m_screenshot;
     QHash<quint64, QSet<ScreenShotTestEvent>> m_events;
+    QString m_activeBroker;
+    QList<quint64> m_activeJobs;
 };
 
 void CaptureOwnerLossTest::initTestCase()
@@ -116,11 +120,14 @@ void CaptureOwnerLossTest::ownerLoss()
     const QDBusReply<QString> owner = QDBusConnection::sessionBus().interface()->serviceOwner(backendName);
     QVERIFY(owner.isValid());
     const QString brokerSender = owner.value();
+    m_activeBroker = brokerSender;
     QDBusInterface broker(brokerSender, peerPath, peerInterface, QDBusConnection::sessionBus());
     QVERIFY(broker.isValid());
     const auto begin = [&](CaptureWire::Public::Scope scope) {
         const QDBusReply<qulonglong> reply = broker.call(QStringLiteral("StartJob"), frontend.baseService(), caller.baseService(), int(scope));
-        return reply.isValid() ? reply.value() : 0;
+        if (!reply.isValid() || !reply.value()) return qulonglong(0);
+        m_activeJobs.append(reply.value());
+        return reply.value();
     };
     const quint64 screenshotJob = begin(CaptureWire::Public::Scope::Screenshot);
     const quint64 streamJob = begin(CaptureWire::Public::Scope::ScreenCast);
@@ -228,11 +235,28 @@ void CaptureOwnerLossTest::ownerLoss()
 
 void CaptureOwnerLossTest::cleanup()
 {
-    // Observer receiver outlives all worker callbacks, including failure paths.
-    QVERIFY(QThreadPool::globalInstance()->waitForDone(6000));
+    // AGENT-GUARD: negative controls fail while the writer is intentionally
+    // full. Always ask the authentic broker to revoke via the normal wire,
+    // and pump the compositor while waiting; blocking its thread would delay
+    // the very synchronous revoke needed to release the worker.
+    for (const auto id : m_activeJobs) {
+        auto call = QDBusMessage::createMethodCall(m_activeBroker, peerPath, peerInterface, QStringLiteral("Revoke"));
+        call.setArguments({QVariant::fromValue<qulonglong>(id)});
+        QDBusConnection::sessionBus().asyncCall(call, 1000);
+    }
+    QElapsedTimer deadline;
+    deadline.start();
+    do {
+        QTest::qWait(10);
+    } while (QThreadPool::globalInstance()->activeThreadCount() && deadline.elapsed() < 6000);
+    const bool quiescent = QThreadPool::globalInstance()->waitForDone(0);
     QCoreApplication::sendPostedEvents();
+    // Do not put a QVERIFY before clearing the observer: it returns early.
     setScreenShotTestObserver(nullptr, {});
     m_events.clear();
+    m_activeJobs.clear();
+    m_activeBroker.clear();
+    QVERIFY(quiescent);
 }
 }
 WAYLANDTEST_MAIN(KWin::CaptureOwnerLossTest)

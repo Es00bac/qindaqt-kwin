@@ -52,6 +52,10 @@ public Q_SLOTS:
         const auto it = m_results.find(id);
         return it == m_results.end() ? QString() : it->second.sender;
     }
+    bool Revoke(qulonglong id)
+    {
+        return !m_helper && CaptureWire::send(Wire::ControlFd, Wire::Message::RevokeJob, m_generation, id);
+    }
     bool Release()
     {
         return !m_helper && QDBusConnection::sessionBus().unregisterService(

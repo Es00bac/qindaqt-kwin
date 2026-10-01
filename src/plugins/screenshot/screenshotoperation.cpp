@@ -35,7 +35,7 @@ const QString s_errorCancelledMessage = QStringLiteral("Screenshot got cancelled
 }
 
 #if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
-static QObject *s_testReceiver = nullptr;
+static QPointer<QObject> s_testReceiver;
 static std::function<void(quint64, ScreenShotTestEvent)> s_testObserver;
 void setScreenShotTestObserver(QObject *receiver, std::function<void(quint64, ScreenShotTestEvent)> observer)
 {
@@ -176,7 +176,9 @@ ScreenShotSinkPipe2::ScreenShotSinkPipe2(int fd, QDBusMessage reply,
 #if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
     if (m_invocation.protectedJob && s_testReceiver && s_testObserver) {
         m_write->observe = [receiver = s_testReceiver, observer = s_testObserver, job = *m_invocation.protectedJob](ScreenShotTestEvent event) {
-            QMetaObject::invokeMethod(receiver, [observer, job, event] { observer(job, event); }, Qt::QueuedConnection);
+            if (receiver) {
+                QMetaObject::invokeMethod(receiver, [observer, job, event] { observer(job, event); }, Qt::QueuedConnection);
+            }
         };
     }
 #endif
