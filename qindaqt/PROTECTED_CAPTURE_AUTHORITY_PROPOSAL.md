@@ -19,12 +19,12 @@ That also rereads `/proc/<pid>/exe`. The candidate's resident and native helper
 set `PR_SET_DUMPABLE=0` before ordinary connections in
 `src/services/portal/capture/main.cpp` and the resident entry. A task-owned
 same-UID child probe already returned `EACCES` for that protected link, and a
-fork690 private log could not identify the protected Wayland peer. The actual
-Screenshot2 denial remains to be isolated. The corrected b367 frontend probe
-reached Screenshot but returned Response 2 and empty URI; that is an observed
-failure, not direct attribution to the permission check. Its first ScreenCast
-probe stopped at a missing primary frontend session token before Start, so
-no restricted ScreenCast denial or success was observed.
+fork690 private log could not identify the protected Wayland peer. The later
+e1b06401 protected private probe directly observed mapped native Screenshot
+`NoAuthorized` and frontend Screenshot Response 2/empty URI. Its ScreenCast
+journey reached CreateSession response 0, SelectSources response 0, then Start
+response 2 with empty streams; no frames or usability was qualified. The
+ScreenCast Start failure is not assigned a cause by these observations alone.
 
 Three possible repairs:
 
@@ -230,6 +230,44 @@ stale. For a pipe stalled before its first write, releasing it after revoke
 must produce zero bytes and no later success reply. Canceling a pending D-Bus
 reply alone does not stop this writer.
 
+### One bounded protected write/reply deadline
+
+The protected reply-after-complete-write contract needs the *same total
+deadline* on both sides. Today `KWinCaptureCall::timeoutMilliseconds` defaults
+to 15,000 ms (`capture_request.h:49`), `KWinCapturePort` passes that to
+`m_bus.asyncCall()` and separately times pipe completion at that value plus
+`PipeGraceMilliseconds` 10,000 (`kwin_capture_port.cpp:27,107,127`). A valid
+16–20-second continuously drained write would therefore lose its D-Bus call
+at 15 seconds if success follows the write. Do not use that legacy split for
+the protected capture job.
+
+Publish one versioned `ProtectedCaptureDeadline` in the installed
+`CaptureAuthority`/public `CompositorCapture` contract: **30,000 ms total from
+the accepted Screenshot2 invocation to both complete pipe EOF and terminal
+D-Bus reply**. The fork's protected writer must finish, close its pipe and
+send its final live-lease success reply by **28,000 ms** from the same
+invocation; the remaining 2,000 ms is an explicit transport/order margin.
+The public port starts a monotonic 30,000-ms total timer with the protected
+call and sets its pending D-Bus timeout to that same 30,000 ms, never the
+default 15,000 ms; it succeeds only after complete bytes/EOF, success reply
+and current lineage. Fork and port use the same versioned constants/epoch,
+not separately guessed timeouts. On either budget expiry, cancellation or
+revoke, close the pipe, wake/retire the writer, send at most one terminal error
+if no reply exists, and discard any late reply or bytes. The broker must not
+publish a URI from a timeout or partially drained pipe.
+
+Only a compositor-authenticated capture-job lease selects this protected
+deadline; untrusted callers cannot request it through an option or app ID.
+The pre-existing ordinary desktop-entry client timing, including
+`CaptureInteractive`'s selection allowance, remains its compatibility
+contract. If a protected job invokes `CaptureInteractive`, its selection and
+write share the same 30-second total; an expired selection fails closed. The
+native helper's existing 60-second pre-consent expiry must be
+retired when Allow starts capture, so a late but valid consent does not cut
+short this 30-second operation; Close/parent/privacy loss still cancels it.
+A protected write that takes longer than 28 seconds fails closed, even if
+the pipe remains writable.
+
 The compositor's grant record holds only generation, job ID, two exact client
 pointers, launched helper UID/PID/pidfd, its private channel, one exact D-Bus
 unique sender, frontend/caller unique names and pidfds, and an expiry/state.
@@ -254,14 +292,19 @@ peer credentials or `ClientConnection::processId()` as proof of the child.
   branch before the self-PID shortcut in `src/wayland_server.cpp`, covering
   exactly the tagged three-global allowlist; all-seven-method invocation,
   selection callback, sink, reply and asynchronous writer lease checks in
-  `src/plugins/screenshot/screenshotdbusinterface2.cpp`; and stream/job
+  `src/plugins/screenshot/screenshotdbusinterface2.cpp`, including the
+  protected 28-second writer/reply bound; and stream/job
   creation and revoke gates in `src/plugins/screencast/`.
   Preserve ordinary desktop-file permission behavior for unrelated clients and
   the deliberate legacy `org.kde.KWin.ScreenShot2` wire name until PF21.
-- Portal owner: public adapter in `src/services/compositor_capture/`, new
+- Portal owner: public adapter in `src/services/compositor_capture/`, including
+  coordinated protected call/port total deadlines in
+  `include/qindaqt/services/compositor_capture/capture_request.h` and
+  `src/kwin_capture_port.cpp`; new
   capture-only `src/services/portal/capture_backend/` executable composed from
   the existing capture adaptors, `RequestRegistry` and `CaptureSessions`, plus
-  helper FD/consent wiring in `src/services/portal/capture/`. Remove capture
+  helper FD/consent/pre-consent expiry wiring in
+  `src/services/portal/capture/`. Remove capture
   adaptors from `src/services/portal/src/foundation_composition.cpp` only when
   the separate backend qualifies. Its own `.portal` metadata and backend name
   route Screenshot/ScreenCast only after native gates; the general resident and
@@ -318,11 +361,22 @@ peer credentials or `ClientConnection::processId()` as proof of the child.
    `ScreenShotWriter2` poll; wake/release the pipe after revoke and assert no
    **post-revocation** bytes, no later success reply/URI, and timely writer
    exit. Check no stale node, screenshot-file residue or descendant processes.
+   A deterministic fork/public-port fixture must also pace a protected
+   screenshot pipe with a **continuously draining** reader so the complete
+   write takes 16–20 seconds (including an exact 20-second boundary row).
+   Assert real bytes/EOF and one success reply before the shared 30-second
+   total deadline; this must fail under the old 15-second D-Bus timeout.
+   Repeat with cancellation and lock/request revoke mid-write: writer stops
+   promptly, no writes follow the revoke barrier, no later success/URI, and
+   any late D-Bus reply is ignored by port serial/generation. A controlled
+   >28-second writer and 30-second total expiry both fail once without
+   extending the deadline or leaking a process/pipe.
 3. In an isolated actual frontend run, keep the `run_native_capture.py`
    three-group default matrix in `tests/services/portal/capture/`; use the
-   corrected protected caller/resident probe with its current Screenshot
-   Response 2 and pre-Start missing-token limitations kept distinct from
-   permission conclusions. No `KWIN_SCREENSHOT_NO_PERMISSION_CHECKS` or
+   corrected protected caller/resident probe with its current mapped native
+   Screenshot `NoAuthorized`/frontend Response 2, and ScreenCast
+   CreateSession 0, SelectSources 0, Start 2/empty streams. Neither provides
+   native pixels or frames. No `KWIN_SCREENSHOT_NO_PERMISSION_CHECKS` or
    `KWIN_WAYLAND_NO_PERMISSION_CHECKS`, no dumpable controller, host/root
    fallback, or fabricated PipeWire remote. Require actual changing mapped
    pixels, PickColor selection, an actual frontend-returned PipeWire FD with
