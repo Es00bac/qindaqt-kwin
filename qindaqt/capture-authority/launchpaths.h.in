@@ -1,0 +1,12 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+#pragma once
+
+// Generated from the fork's install directories. The consumer compares its
+// own fixed package destinations with these values at configure time.
+namespace QindaQt::CaptureAuthority::Wire
+{
+inline constexpr char BrokerExecutable[] = "@KDE_INSTALL_FULL_LIBEXECDIR@/qindaqt-portal-capture-backend";
+inline constexpr char HelperExecutable[] = "@KDE_INSTALL_FULL_LIBEXECDIR@/qindaqt-portal-capture";
+inline constexpr char BrokerDesktop[] = "@KDE_INSTALL_FULL_DATADIR@/applications/org.qindaqt.PortalCaptureBackend.desktop";
+inline constexpr char HelperDesktop[] = "@KDE_INSTALL_FULL_DATADIR@/applications/org.qindaqt.PortalCapture.desktop";
+}

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "capturechild.h"
 #include "capturelaunchpolicy.h"
+#include "launchpaths.h"
 
 #include "wayland/clientconnection.h"
 #include "wayland/display.h"
@@ -111,10 +112,10 @@ bool CaptureChild::makeHelperDescriptors()
 bool CaptureChild::start()
 {
     const bool helper = m_role == Role::Helper;
-    QString executable = helper ? QStringLiteral(QINDAQT_CAPTURE_HELPER_EXECUTABLE)
-                                : QStringLiteral(QINDAQT_CAPTURE_BROKER_EXECUTABLE);
-    const QString desktop = helper ? QStringLiteral(QINDAQT_CAPTURE_HELPER_DESKTOP_FILE)
-                                   : QStringLiteral(QINDAQT_CAPTURE_BROKER_DESKTOP_FILE);
+    QString executable = QString::fromUtf8(helper ? QindaQt::CaptureAuthority::Wire::HelperExecutable
+                                                   : QindaQt::CaptureAuthority::Wire::BrokerExecutable);
+    const QString desktop = QString::fromUtf8(helper ? QindaQt::CaptureAuthority::Wire::HelperDesktop
+                                                     : QindaQt::CaptureAuthority::Wire::BrokerDesktop);
 #if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
     const bool fixture = !m_testProgram.isEmpty();
     if (fixture) {

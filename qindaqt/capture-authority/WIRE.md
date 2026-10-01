@@ -13,11 +13,18 @@ UID supplied by an ordinary process.
 
 ## Fixed launch and descriptors
 
-The compositor may launch only `/usr/libexec/qindaqt-portal-capture-backend`
-as broker and `/usr/libexec/qindaqt-portal-capture` as per-job helper. Their
-desktop entries are respectively
-`/usr/share/applications/org.qindaqt.PortalCaptureBackend.desktop` and
-`/usr/share/applications/org.qindaqt.PortalCapture.desktop`. On each launch,
+The compositor may launch only the fixed configured
+`${KDE_INSTALL_FULL_LIBEXECDIR}/qindaqt-portal-capture-backend` broker and
+`${KDE_INSTALL_FULL_LIBEXECDIR}/qindaqt-portal-capture` per-job helper. On
+qinda's Gentoo install this full directory is `/usr/lib64/libexec`, not
+`/usr/libexec`. Their desktop entries are respectively the fixed configured
+`${KDE_INSTALL_FULL_DATADIR}/applications/org.qindaqt.PortalCaptureBackend.desktop`
+and `${KDE_INSTALL_FULL_DATADIR}/applications/org.qindaqt.PortalCapture.desktop`.
+The compositor compiles these four values from one generated installed Qt-free
+`qindaqt-kwin/capture-authority/launchpaths.h`; the separate package compares
+its own install destinations and desktop `Exec` values to that installed
+header at configure time. This is build-time equality, not runtime path
+discovery or an environment override. On each launch,
 canonical executable and desktop files and every original/canonical parent
 must be root-owned and non-group/world-writable, and desktop `Exec` must be
 exactly the compiled-in executable with no extra arguments. The helper entry

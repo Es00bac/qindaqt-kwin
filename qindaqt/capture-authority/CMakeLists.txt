@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 target_sources(kwin PRIVATE capturelaunchpolicy.cpp capturewire.cpp capturechild.cpp captureauthority.cpp)
-target_compile_definitions(kwin PRIVATE
-    QINDAQT_CAPTURE_BROKER_EXECUTABLE="${KDE_INSTALL_FULL_LIBEXECDIR}/qindaqt-portal-capture-backend"
-    QINDAQT_CAPTURE_BROKER_DESKTOP_FILE="${KDE_INSTALL_FULL_DATADIR}/applications/org.qindaqt.PortalCaptureBackend.desktop"
-    QINDAQT_CAPTURE_HELPER_EXECUTABLE="${KDE_INSTALL_FULL_LIBEXECDIR}/qindaqt-portal-capture"
-    QINDAQT_CAPTURE_HELPER_DESKTOP_FILE="${KDE_INSTALL_FULL_DATADIR}/applications/org.qindaqt.PortalCapture.desktop")
+configure_file(launchpaths.h.in "${CMAKE_CURRENT_BINARY_DIR}/launchpaths.h" @ONLY)
+target_include_directories(kwin PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/launchpaths.h"
+    DESTINATION ${KDE_INSTALL_INCLUDEDIR}/qindaqt-kwin/capture-authority
+    COMPONENT Devel)
 if(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
     target_compile_definitions(kwin PUBLIC QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
 endif()
