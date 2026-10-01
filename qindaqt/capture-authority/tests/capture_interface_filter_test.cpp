@@ -254,10 +254,14 @@ void CaptureInterfaceFilterTest::exactCaptureAndGuiFilterBeforeSelfPid()
     // could enumerate. The tagged disposable peer must be disconnected.
     int pair[2];
     QVERIFY(socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, pair) == 0);
-    auto *referenceClient = waylandServer()->display()->createClient(pair[0]);
+    QPointer<ClientConnection> referenceClient = waylandServer()->display()->createClient(pair[0]);
     QVERIFY(referenceClient);
-    close(pair[1]);
+    // AGENT-GUARD: nested probe event loops dispatch Wayland disconnects.
+    // Keep this peer open until every global name is queried; closing it
+    // here invalidates the ClientConnection during the first probe.
+    FileDescriptor referencePeer(pair[1]);
     for (size_t i : {size_t(2), size_t(3), size_t(4), size_t(5), size_t(7), size_t(9), size_t(10), size_t(11), size_t(12), size_t(13)}) {
+        QVERIFY(referenceClient);
         const uint32_t id = wl_global_get_name(m_globals[i], referenceClient->client());
         QVERIFY(id != 0);
         if (i != 2) {
