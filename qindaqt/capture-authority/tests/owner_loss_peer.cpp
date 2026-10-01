@@ -66,7 +66,7 @@ public Q_SLOTS:
         if (!m_helper || !m_granted || !pipe.isValid()) return false;
         auto call = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin.ScreenShot2"),
             QStringLiteral("/org/kde/KWin/ScreenShot2"), QStringLiteral("org.kde.KWin.ScreenShot2"), QStringLiteral("CaptureArea"));
-        call.setArguments({0, 0, 1024, 768, QVariantMap{}, QVariant::fromValue(pipe)});
+        call.setArguments({0, 0, uint(1024), uint(768), QVariantMap{}, QVariant::fromValue(pipe)});
         // asyncCall serializes/owns its UnixFD; this slot retains no writer.
         QDBusConnection::sessionBus().asyncCall(call, 5000);
         return true;
