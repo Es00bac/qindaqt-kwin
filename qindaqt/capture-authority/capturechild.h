@@ -31,8 +31,8 @@ public:
     bool sendJob(CaptureWire::Public::Message type, quint64 job, const QByteArray &payload = {}, const std::vector<int> &fds = {});
     FileDescriptor takeRequestWriter();
     FileDescriptor takeResultReader();
-    ClientConnection *captureClient() const { return m_captureClient; }
-    ClientConnection *guiClient() const { return m_guiClient; }
+    ClientConnection *captureClient() const;
+    ClientConnection *guiClient() const;
     pid_t pid() const { return m_pid; }
     quint64 generation() const { return m_generation; }
     quint64 job() const { return m_job; }

@@ -46,6 +46,16 @@ CaptureChild::~CaptureChild()
     stop();
 }
 
+ClientConnection *CaptureChild::captureClient() const
+{
+    return m_captureClient;
+}
+
+ClientConnection *CaptureChild::guiClient() const
+{
+    return m_guiClient;
+}
+
 bool CaptureChild::makeControl()
 {
     int pair[2];

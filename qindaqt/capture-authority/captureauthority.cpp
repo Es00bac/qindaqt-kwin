@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "captureauthority.h"
 
-#include "qindaqt/session-lock/sessionlockcontroller.h"
+#include "../session-lock/sessionlockcontroller.h"
 #include "wayland/clientconnection.h"
 #include "wayland_server.h"
 
