@@ -147,11 +147,8 @@ if(KWIN_BUILD_TABBOX AND KWIN_BUILD_KCMS)
     )
 endif()
 
-find_package(KNightTime ${PROJECT_DEP_VERSION} CONFIG)
-set_package_properties(KNightTime PROPERTIES
-    PURPOSE "Needed for Night Light"
-    TYPE REQUIRED
-)
+# AGENT-CONTRACT: the nightlight plugin consumes QindaQt Schedule1 receipts;
+# KNightTime discovery would retain the retired Plasma scheduler (ADR-0313).
 
 find_package(Threads)
 set_package_properties(Threads PROPERTIES
@@ -535,5 +532,4 @@ install(
 install(EXPORT KWinTargets DESTINATION "${CMAKECONFIG_INSTALL_DIR}" FILE QindaQtKWinTargets.cmake NAMESPACE QindaQtKWin:: )
 
 # QindaQt: the QindaQt session supervisor starts the compositor; no systemd unit.
-
 

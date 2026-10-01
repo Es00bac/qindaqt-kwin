@@ -99,6 +99,12 @@ classic Plasma presentation units are omitted from the production build. The
 separate Plasma Wayland protocol package remains for protocol generation and
 KWayland client code, not libplasma (container-wm ADR-0311).
 
+The night-light plugin consumes QindaQt's authenticated Schedule1 frames.
+KNightTime is neither discovered at configure time nor linked or started;
+the native service in container-wm owns schedule calculation and Settings1
+preferences (container-wm ADR-0313). A production configure must succeed with
+`-DCMAKE_DISABLE_FIND_PACKAGE_KNightTime=ON`.
+
 ## Helper tests
 
 `-DQINDAQT_KWIN_BUILD_TESTS=ON` builds the tests of qindaqt-kwin's own helpers
