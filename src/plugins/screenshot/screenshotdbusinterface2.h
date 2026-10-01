@@ -8,6 +8,7 @@
 #pragma once
 
 #include "screenshot.h"
+#include "screenshotoperation.h"
 
 #include <QDBusContext>
 #include <QDBusUnixFileDescriptor>
@@ -62,7 +63,7 @@ private:
     void takeScreenShot(const Rect &area, ScreenShotFlags flags, ScreenShotSinkPipe2 *sink, std::optional<pid_t> pid);
     void takeScreenShot(Window *window, ScreenShotFlags flags, ScreenShotSinkPipe2 *sink);
     std::optional<pid_t> determineCallerPid() const;
-    bool checkPermissions(std::optional<pid_t> pid) const;
+    std::optional<ScreenShotInvocation> beginInvocation(std::optional<pid_t> pid) const;
 
     ScreenShotManager *m_effect;
 };

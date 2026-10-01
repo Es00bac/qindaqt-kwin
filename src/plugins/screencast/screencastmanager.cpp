@@ -7,6 +7,7 @@
 */
 
 #include "screencastmanager.h"
+#include "../../../qindaqt/capture-authority/captureauthority.h"
 #include "compositor.h"
 #include "core/backendoutput.h"
 #include "core/output.h"
@@ -48,12 +49,26 @@ static bool isSupportedCompositingType()
     return false;
 }
 
+bool ScreencastManager::admitStream(ScreencastStreamV1Interface *stream) const
+{
+    auto *authority = waylandServer()->captureAuthority();
+    if (!authority || !authority->privacyAllows()) {
+        stream->sendFailed(i18n("Session is locked"));
+        return false;
+    }
+    if (const auto job = authority->streamJob(stream->connection());
+        job && !authority->streamAllowed(*job)) {
+        stream->sendFailed(i18n("Capture request is no longer authorized"));
+        return false;
+    }
+    return true;
+}
+
 void ScreencastManager::streamWindow(ScreencastStreamV1Interface *waylandStream,
                                      const QString &winid,
                                      ScreencastV1Interface::CursorMode mode)
 {
-    if (waylandServer()->isScreenLocked()) {
-        waylandStream->sendFailed(i18n("Session is locked"));
+    if (!admitStream(waylandStream)) {
         return;
     }
     if (!isSupportedCompositingType()) {
@@ -81,8 +96,7 @@ void ScreencastManager::streamVirtualOutput(ScreencastStreamV1Interface *stream,
                                             double scale,
                                             ScreencastV1Interface::CursorMode mode)
 {
-    if (waylandServer()->isScreenLocked()) {
-        stream->sendFailed(i18n("Session is locked"));
+    if (!admitStream(stream)) {
         return;
     }
     if (!isSupportedCompositingType()) {
@@ -101,8 +115,7 @@ void ScreencastManager::streamWaylandOutput(ScreencastStreamV1Interface *wayland
                                             OutputInterface *output,
                                             ScreencastV1Interface::CursorMode mode)
 {
-    if (waylandServer()->isScreenLocked()) {
-        waylandStream->sendFailed(i18n("Session is locked"));
+    if (!admitStream(waylandStream)) {
         return;
     }
     if (!isSupportedCompositingType()) {
@@ -126,8 +139,7 @@ void ScreencastManager::streamOutput(ScreencastStreamV1Interface *waylandStream,
                                      LogicalOutput *streamOutput,
                                      ScreencastV1Interface::CursorMode mode)
 {
-    if (waylandServer()->isScreenLocked()) {
-        waylandStream->sendFailed(i18n("Session is locked"));
+    if (!admitStream(waylandStream)) {
         return;
     }
     if (!streamOutput) {
@@ -163,8 +175,7 @@ static qreal devicePixelRatioForRegion(const Rect &region)
 
 void ScreencastManager::streamRegion(ScreencastStreamV1Interface *waylandStream, const Rect &geometry, qreal scale, ScreencastV1Interface::CursorMode mode)
 {
-    if (waylandServer()->isScreenLocked()) {
-        waylandStream->sendFailed(i18n("Session is locked"));
+    if (!admitStream(waylandStream)) {
         return;
     }
     if (!isSupportedCompositingType()) {
@@ -191,6 +202,19 @@ void ScreencastManager::streamRegion(ScreencastStreamV1Interface *waylandStream,
 
 void ScreencastManager::integrateStreams(ScreencastStreamV1Interface *waylandStream, ScreenCastStream *stream)
 {
+    auto *authority = waylandServer()->captureAuthority();
+    const auto job = authority ? authority->streamJob(waylandStream->connection()) : std::nullopt;
+    const QPointer<CaptureAuthority> guard(authority);
+    stream->setCaptureGate([guard, job] {
+        return guard && guard->privacyAllows() && (!job || guard->streamAllowed(*job));
+    });
+    if (job) {
+        connect(authority, &CaptureAuthority::jobRevoked, stream, [stream, job](quint64 revoked) {
+            if (revoked == *job) {
+                stream->close();
+            }
+        }, Qt::DirectConnection);
+    }
     // Revoke existing streams synchronously before any lock frame is painted.
     connect(waylandServer(), &WaylandServer::screenAboutToLock, stream, &ScreenCastStream::close);
     connect(waylandStream, &ScreencastStreamV1Interface::finished, stream, &ScreenCastStream::close);
@@ -198,8 +222,12 @@ void ScreencastManager::integrateStreams(ScreencastStreamV1Interface *waylandStr
         waylandStream->sendClosed();
         stream->deleteLater();
     });
-    connect(stream, &ScreenCastStream::ready, stream, [waylandStream](uint nodeid) {
-        waylandStream->sendCreated(nodeid);
+    connect(stream, &ScreenCastStream::ready, stream, [stream, waylandStream](uint nodeid) {
+        if (stream->captureAllowed()) {
+            waylandStream->sendCreated(nodeid);
+        } else {
+            stream->close();
+        }
     });
     if (!stream->init()) {
         waylandStream->sendFailed(stream->error());

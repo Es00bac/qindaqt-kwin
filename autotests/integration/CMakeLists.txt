@@ -249,6 +249,7 @@ if(QINDAQT_SESSION_LOCK_TEST_AUTHORIZATION)
         ${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/native_lock_capture_requests_test.cpp
         ${PROJECT_SOURCE_DIR}/src/plugins/screenshot/screenshot.cpp
         ${PROJECT_SOURCE_DIR}/src/plugins/screenshot/screenshotdbusinterface2.cpp
+        ${PROJECT_SOURCE_DIR}/src/plugins/screenshot/screenshotoperation.cpp
         ${PROJECT_SOURCE_DIR}/src/plugins/screenshot/screenshotlayer.cpp
         ${PROJECT_SOURCE_DIR}/src/plugins/screencast/screencastsource.cpp
         ${PROJECT_SOURCE_DIR}/src/plugins/screencast/windowscreencastsource.cpp

@@ -481,9 +481,22 @@ void ScreenCastStream::close()
     Q_EMIT closed();
 }
 
+void ScreenCastStream::setCaptureGate(std::function<bool()> gate)
+{
+    m_captureGate = std::move(gate);
+}
+
+bool ScreenCastStream::captureAllowed() const
+{
+    return !m_closed && (!m_captureGate || m_captureGate());
+}
+
 void ScreenCastStream::scheduleRecord(Contents contents)
 {
-    Q_ASSERT(!m_closed);
+    if (!captureAllowed()) {
+        close();
+        return;
+    }
 
     const char *error = "";
     auto state = pw_stream_get_state(m_pwStream, &error);
@@ -570,7 +583,8 @@ pw_buffer *ScreenCastStream::dequeueBuffer()
 
 void ScreenCastStream::record(Contents contents)
 {
-    if (m_closed || waylandServer()->isScreenLocked()) {
+    if (!captureAllowed() || waylandServer()->isScreenLocked()) {
+        close();
         return;
     }
     EglBackend *backend = qobject_cast<EglBackend *>(Compositor::self()->backend());
@@ -663,6 +677,12 @@ void ScreenCastStream::record(Contents contents)
         spa_data->chunk->flags = SPA_CHUNK_FLAG_CORRUPTED;
     }
 
+    // AGENT-GUARD: revoke can occur during rendering; never queue pixels
+    // after the exact job or native privacy ceased to be current.
+    if (!captureAllowed()) {
+        close();
+        return;
+    }
     pw_stream_queue_buffer(m_pwStream, pwBuffer);
     m_lastSent = std::chrono::steady_clock::now();
 

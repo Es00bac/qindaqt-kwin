@@ -15,6 +15,7 @@
 #include <QObject>
 #include <QTimer>
 #include <chrono>
+#include <functional>
 #include <memory>
 #include <optional>
 
@@ -66,6 +67,8 @@ public:
     }
 
     void close();
+    void setCaptureGate(std::function<bool()> gate);
+    bool captureAllowed() const;
 
     void scheduleRecord(Contents contents = Content::Video);
 
@@ -113,6 +116,7 @@ private:
 
     QSize m_resolution;
     bool m_closed = false;
+    std::function<bool()> m_captureGate;
 
     spa_video_info_raw m_videoFormat;
     QString m_error;

@@ -94,7 +94,7 @@ int receive(int fd, Packet *out)
     message.msg_control = ancillary.data();
     message.msg_controllen = ancillary.size();
     const ssize_t received = recvmsg(fd, &message, MSG_DONTWAIT | MSG_CMSG_CLOEXEC);
-    if (received < 0 && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) {
+    if (received < 0 && (errno == EAGAIN || errno == EINTR)) {
         return 0;
     }
     if (received <= 0) {

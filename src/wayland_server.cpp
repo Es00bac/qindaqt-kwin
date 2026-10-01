@@ -11,6 +11,7 @@
 #include "../qindaqt/session-lock/lockerlauncher.h"
 #include "../qindaqt/session-lock/nativelockdbusinterface.h"
 #include "../qindaqt/session-lock/sessionlockwindow.h"
+#include "../qindaqt/capture-authority/captureauthority.h"
 
 #include "config-kwin.h"
 
@@ -106,6 +107,7 @@
 // Qt
 #include <QDir>
 #include <QFileInfo>
+#include <QTimer>
 
 // system
 #include <sys/socket.h>
@@ -153,6 +155,13 @@ public:
 
     bool allowInterface(ClientConnection *client, const QByteArray &interfaceName) override
     {
+        // AGENT-GUARD: Display::createClient caches the compositor PID for a
+        // private socketpair. Answer every global for the exact tagged
+        // capture client before the self-PID and generic permission paths.
+        if (auto *authority = waylandServer()->captureAuthority();
+            authority && authority->isTaggedCaptureClient(client)) {
+            return authority->allowTaggedInterface(client, interfaceName);
+        }
         if (!client->securityContextAppId().isEmpty() && interfaceName == QByteArrayLiteral("wp_security_context_manager_v1")) {
             return false;
         }
@@ -178,7 +187,13 @@ public:
             return true;
         }
 
+        // Historical fixture convenience exists only in non-installable
+        // native test builds and never precedes the capture-client branch.
+#if defined(QINDAQT_SESSION_LOCK_TEST_AUTHORIZATION) || defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
         static bool permissionCheckDisabled = qEnvironmentVariableIntValue("KWIN_WAYLAND_NO_PERMISSION_CHECKS") == 1;
+#else
+        constexpr bool permissionCheckDisabled = false;
+#endif
         if (!permissionCheckDisabled) {
             if (client->executablePath().isEmpty()) {
                 qCDebug(KWIN_CORE) << "Could not identify process with pid" << client->processId();
@@ -230,6 +245,7 @@ WaylandServer::~WaylandServer()
 {
     // Stop native callbacks before Display tears down client resources. The
     // compositor/workspace may already be gone during application shutdown.
+    delete std::exchange(m_captureAuthority, nullptr);
     delete std::exchange(m_sessionLock, nullptr);
     delete std::exchange(m_lockerLauncher, nullptr);
     s_self = nullptr;
@@ -645,6 +661,8 @@ void WaylandServer::initWorkspace()
     if (kwinApp()->supportsLockScreen()) {
         initScreenLocker();
     }
+    m_captureAuthority = new CaptureAuthority(this, this);
+    QTimer::singleShot(0, m_captureAuthority, [this] { m_captureAuthority->start(); });
 
     if (auto backend = qobject_cast<DrmBackend *>(kwinApp()->outputBackend())) {
         m_leaseManager = new DrmLeaseManagerV1(backend, m_display, m_display);
@@ -667,6 +685,11 @@ void WaylandServer::initScreenLocker()
     connect(m_sessionLock, &SessionLockController::aboutToLock, this, &WaylandServer::screenAboutToLock);
     connect(m_sessionLock, &SessionLockController::lockStateChanged, this, &WaylandServer::lockStateChanged);
     if (kwinApp()->initiallyLocked()) { m_sessionLock->requestNativeLock(); }
+}
+
+CaptureAuthority *WaylandServer::captureAuthority() const
+{
+    return m_captureAuthority;
 }
 
 WaylandServer::SocketPairConnection WaylandServer::createConnection()

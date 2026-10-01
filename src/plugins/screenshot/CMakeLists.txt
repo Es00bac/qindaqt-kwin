@@ -2,6 +2,7 @@ set(screenshot_SOURCES
     main.cpp
     screenshot.cpp
     screenshotdbusinterface2.cpp
+    screenshotoperation.cpp
     screenshotlayer.cpp
 )
 

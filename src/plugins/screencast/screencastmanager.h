@@ -26,6 +26,7 @@ public:
     explicit ScreencastManager();
 
 private:
+    bool admitStream(ScreencastStreamV1Interface *stream) const;
     void streamWindow(ScreencastStreamV1Interface *stream,
                       const QString &winid,
                       ScreencastV1Interface::CursorMode mode);
