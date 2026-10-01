@@ -95,3 +95,44 @@ This is a narrowly approved exception to the earlier device-free namespace,
 not evidence of physical-display or real portal/PipeWire coverage. The prior
 custom software backend experiment is preserved on a separate branch and
 is absent from this fixture.
+
+
+### Bounded owner-loss qualification evidence
+
+Executable source `48d2f2dd0f82f9c45f6a5a880d98292cb4cd5efd` passed the
+coordinated render-only namespace on 2026-10-01. Its actual GL renderer was
+`llvmpipe (LLVM 22.1.8, 256 bits)`. The changed fixture target rebuilt with
+`cmake --build build/focused --target testCaptureOwnerLoss -- -j8 -l24`
+(exit 0, three effective Ninja steps). Inside the approved namespace:
+
+| Command | Qt results | Exit |
+| --- | --- | --- |
+| `python3 -I -B qindaqt/capture-authority/tests/run_owner_loss.py build/focused/bin/testCaptureOwnerLoss` | 6 passed, 0 failed; all four role-loss rows | 0 |
+| `build/focused/bin/testCaptureWire` | 15 passed, 0 failed | 0 |
+| `build/focused/bin/testCaptureLaunchPolicy` | 4 passed, 0 failed | 0 |
+| `python3 -I -B qindaqt/tools/run-native-lock build/focused/bin/testCaptureInterfaceFilter` | 3 passed, 0 failed | 0 |
+
+The matched negative-control source
+`21bd149c9087399874ea04533aeca84b5cf1e30c` differs from that executable
+source only by omitting the constructor's `watchPortalOwners()` call. Its
+identical rebuilt fixture (exit 0, three effective Ninja steps) ran only
+`ownerLoss:backend-replacement`: Qt 2 passed/1 failed, exit 1, at the expected
+queued-revocation barrier after the actual writer wait. Its cleanup passed;
+this establishes that the role watcher supplies the tested revocation.
+
+Raw commands, image hashes, logs, timing and descendant inventories are
+preserved in ignored `build/namespace-owner-loss-render-only-48d2/` and
+`build/namespace-owner-loss-negative-21bd/` evidence directories. Every phase
+had zero owned survivors, scoped core files or timeouts. The earlier
+`115378c2e453e3d31ab4033bd04f896ee5987b4c` prerequisite failure remains in
+`build/namespace-owner-loss-render-only/`: Qt 1 passed/1 failed, exit 1,
+`isSoftwareRenderer()` false before any owner-loss row. Explicit swrast and
+llvmpipe selection was the causal changed input; no assertion was weakened.
+
+The bounded runs also emitted denied DRM dumb-buffer allocation and virtual
+output-layer warnings. They qualify the actual Screenshot2 cancellation path
+and its real blocked writer, not successful virtual output presentation or
+changing captured pixels. ScreenCast coverage remains a local idle closure
+observer; the full native frontend/consent/PipeWire matrix remains a separate
+held gate. Request independent review of the exact handoff commit, then the
+manager's matching native-driver rebuild and real frontend matrix.
