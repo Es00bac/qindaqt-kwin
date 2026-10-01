@@ -17,8 +17,13 @@ namespace KWin
 class ClientConnection;
 class WaylandServer;
 
-// Compositor-owned process authority. Portal Request/Session/app policy and
-// publication remain in the separate capture-only broker (WIRE.md).
+// AGENT-CONTRACT: WaylandServer owns this compositor-thread object for its
+// lifetime. Screenshot and ScreenCast plugins may query its exported API only
+// on that thread; missing lineage, current native privacy or transport fails
+// closed. jobRevoked is synchronous before the tagged client is destroyed, so
+// plugin writers and streams must stop publication in their direct handlers.
+// Portal Request/Session/app policy and publication remain in the separate
+// capture-only broker (WIRE.md); this class never accepts ordinary callers.
 class KWIN_EXPORT CaptureAuthority : public QObject
 {
     Q_OBJECT
