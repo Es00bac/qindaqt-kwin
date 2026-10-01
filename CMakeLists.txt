@@ -105,6 +105,13 @@ if(QINDAQT_SESSION_LOCK_TEST_AUTHORIZATION)
     endif()
     install(CODE [[message(FATAL_ERROR "Lock authorization test builds cannot be installed")]])
 endif()
+option(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION "Permit non-installed capture authority fixtures; installation forbidden" OFF)
+if(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
+    if(NOT BUILD_TESTING)
+        message(FATAL_ERROR "Capture authority test authorization requires BUILD_TESTING")
+    endif()
+    install(CODE [[message(FATAL_ERROR "Capture authority test builds cannot be installed")]])
+endif()
 if (BUILD_TESTING)
     find_package(KPipeWire)
 
@@ -487,6 +494,7 @@ option(QINDAQT_KWIN_BUILD_TESTS "Build the tests of qindaqt-kwin's own helpers w
 add_subdirectory(qindaqt)
 add_subdirectory(src)
 add_subdirectory(qindaqt/session-lock)
+add_subdirectory(qindaqt/capture-authority)
 
 if (BUILD_TESTING)
     if (Qt6WaylandClient_VERSION VERSION_GREATER_EQUAL "6.10.0")
@@ -532,4 +540,3 @@ install(
 install(EXPORT KWinTargets DESTINATION "${CMAKECONFIG_INSTALL_DIR}" FILE QindaQtKWinTargets.cmake NAMESPACE QindaQtKWin:: )
 
 # QindaQt: the QindaQt session supervisor starts the compositor; no systemd unit.
-
