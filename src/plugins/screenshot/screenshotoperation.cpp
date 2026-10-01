@@ -175,10 +175,13 @@ ScreenShotSinkPipe2::ScreenShotSinkPipe2(int fd, QDBusMessage reply,
 {
 #if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
     if (m_invocation.protectedJob && s_testReceiver && s_testObserver) {
-        m_write->observe = [receiver = s_testReceiver, observer = s_testObserver, job = *m_invocation.protectedJob](ScreenShotTestEvent event) {
-            if (receiver) {
-                QMetaObject::invokeMethod(receiver, [observer, job, event] { observer(job, event); }, Qt::QueuedConnection);
-            }
+        m_write->observe = [context = QCoreApplication::instance(), receiver = s_testReceiver,
+                            observer = s_testObserver, job = *m_invocation.protectedJob](ScreenShotTestEvent event) {
+            // The app outlives the test receiver and writer cleanup. Only
+            // dereference its guarded receiver back on the compositor thread.
+            QMetaObject::invokeMethod(context, [receiver, observer, job, event] {
+                if (receiver) observer(job, event);
+            }, Qt::QueuedConnection);
         };
     }
 #endif
