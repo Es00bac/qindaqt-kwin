@@ -2,6 +2,7 @@
 #pragma once
 
 #include "capturechild.h"
+#include "kwin_export.h"
 
 #include <QHash>
 #include <QObject>
@@ -18,7 +19,7 @@ class WaylandServer;
 
 // Compositor-owned process authority. Portal Request/Session/app policy and
 // publication remain in the separate capture-only broker (WIRE.md).
-class CaptureAuthority : public QObject
+class KWIN_EXPORT CaptureAuthority : public QObject
 {
     Q_OBJECT
 public:
