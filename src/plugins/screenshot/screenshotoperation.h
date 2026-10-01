@@ -9,11 +9,19 @@
 #include <QPointer>
 #include <QVariantMap>
 
+#include <functional>
 #include <memory>
 #include <optional>
 
 namespace KWin
 {
+#if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
+enum class ScreenShotTestEvent { WriterWaiting, WriterExited, ErrorReply, SuccessReply };
+// Test observer is installed/cleared on the compositor thread. Its receiver
+// must outlive writers; callbacks are queued there and never change policy.
+void setScreenShotTestObserver(QObject *receiver, std::function<void(quint64, ScreenShotTestEvent)> observer);
+#endif
+
 class CaptureAuthority;
 struct ScreenShotWriteState;
 

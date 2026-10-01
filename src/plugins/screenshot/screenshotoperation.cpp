@@ -34,8 +34,21 @@ const QString s_errorCancelled = QStringLiteral("org.kde.KWin.ScreenShot2.Error.
 const QString s_errorCancelledMessage = QStringLiteral("Screenshot got cancelled");
 }
 
+#if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
+static QObject *s_testReceiver = nullptr;
+static std::function<void(quint64, ScreenShotTestEvent)> s_testObserver;
+void setScreenShotTestObserver(QObject *receiver, std::function<void(quint64, ScreenShotTestEvent)> observer)
+{
+    s_testReceiver = receiver;
+    s_testObserver = std::move(observer);
+}
+#endif
+
 struct ScreenShotWriteState
 {
+#if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
+    std::function<void(ScreenShotTestEvent)> observe;
+#endif
     std::mutex barrier;
     bool active = true;
     FileDescriptor wakeRead;
@@ -91,6 +104,9 @@ public:
                 const char *bytes = reinterpret_cast<const char *>(m_image.constBits());
                 qsizetype offset = 0;
                 const qsizetype size = m_image.sizeInBytes();
+#if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
+                bool firstWait = true;
+#endif
                 while (offset < size) {
                     const auto now = std::chrono::steady_clock::now();
                     if (now >= m_state->deadline) {
@@ -98,6 +114,12 @@ public:
                     }
                     const auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(m_state->deadline - now);
                     pollfd events[2] = {{m_pipe.get(), POLLOUT, 0}, {m_state->wakeRead.get(), POLLIN, 0}};
+#if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
+                    if (firstWait) {
+                        firstWait = false;
+                        if (m_state->observe) m_state->observe(ScreenShotTestEvent::WriterWaiting);
+                    }
+#endif
                     const int result = poll(events, 2, int(std::min<std::int64_t>(remaining.count(), 1000)));
                     if (result < 0) {
                         if (errno == EINTR) continue;
@@ -123,6 +145,9 @@ public:
         // Closing before the success callback makes the public port's EOF
         // observable before the protected D-Bus success reply.
         m_pipe.reset();
+#if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
+        if (m_state->observe) m_state->observe(ScreenShotTestEvent::WriterExited);
+#endif
         if (auto *app = QCoreApplication::instance()) {
             const auto sink = m_sink;
             QMetaObject::invokeMethod(app, [sink, success] {
@@ -148,6 +173,13 @@ ScreenShotSinkPipe2::ScreenShotSinkPipe2(int fd, QDBusMessage reply,
     , m_authority(authority)
     , m_write(std::make_shared<ScreenShotWriteState>(m_invocation.protectedJob.has_value()))
 {
+#if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
+    if (m_invocation.protectedJob && s_testReceiver && s_testObserver) {
+        m_write->observe = [receiver = s_testReceiver, observer = s_testObserver, job = *m_invocation.protectedJob](ScreenShotTestEvent event) {
+            QMetaObject::invokeMethod(receiver, [observer, job, event] { observer(job, event); }, Qt::QueuedConnection);
+        };
+    }
+#endif
     connect(waylandServer(), &WaylandServer::screenAboutToLock, this, &ScreenShotSinkPipe2::revoke,
             Qt::DirectConnection);
     connect(waylandServer(), &WaylandServer::lockStateChanged, this, [this] {
@@ -212,6 +244,9 @@ void ScreenShotSinkPipe2::replyError(const QString &name, const QString &message
 {
     if (!m_replySent) {
         m_replySent = true;
+#if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
+        if (m_write->observe) m_write->observe(ScreenShotTestEvent::ErrorReply);
+#endif
         QDBusConnection::sessionBus().send(m_reply.createErrorReply(name, message));
     }
 }
@@ -220,6 +255,9 @@ void ScreenShotSinkPipe2::replySuccess()
 {
     if (!m_replySent) {
         m_replySent = true;
+#if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
+        if (m_write->observe) m_write->observe(ScreenShotTestEvent::SuccessReply);
+#endif
         QDBusConnection::sessionBus().send(m_reply.createReply(m_result));
     }
 }

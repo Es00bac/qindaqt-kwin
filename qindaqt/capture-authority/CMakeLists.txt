@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 target_sources(kwin PRIVATE capturelaunchpolicy.cpp capturewire.cpp capturechild.cpp
-    captureauthority.cpp captureauthorityinterfaces.cpp)
+    captureauthority.cpp captureauthorityinterfaces.cpp captureauthorityowners.cpp)
 configure_file(launchpaths.h.in "${CMAKE_CURRENT_BINARY_DIR}/launchpaths.h" @ONLY)
 target_include_directories(kwin PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/launchpaths.h"

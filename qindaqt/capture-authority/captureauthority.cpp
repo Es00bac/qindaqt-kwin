@@ -62,6 +62,7 @@ CaptureAuthority::CaptureAuthority(WaylandServer *server, QObject *parent)
             revokeAll();
         }
     });
+    watchPortalOwners();
     auto *selected = new QDBusServiceWatcher(QStringLiteral("org.qindaqt.KWin"),
                                              QDBusConnection::sessionBus(),
                                              QDBusServiceWatcher::WatchForOwnerChange, this);

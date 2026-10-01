@@ -26,7 +26,8 @@ grant itself pixels: the helper must report parent import and a real consent
 action before the compositor sends `CaptureReady`. Request/Session/app policy,
 dialog choice and screenshot URI publication stay with the capture-only
 broker/helper. The compositor retains only process/interface/lease authority.
-Its lifecycle and actor checks live in `captureauthority.cpp`; the exported
+Its lifecycle and actor checks live in `captureauthority.cpp`; role-owner
+change handling lives in `captureauthorityowners.cpp`; the exported
 Wayland and Screenshot/ScreenCast grants live in `captureauthorityinterfaces.cpp`
 so process control and interface policy remain reviewable separately.
 
@@ -53,3 +54,31 @@ framing, kernel credentials, fixed file trust and environment sanitization.
 The full protected frontend, actual changing pixels/frames and revocation
 matrix still requires the separately coordinated private native fixture; a
 successful unit test or plugin build alone does not establish that behavior.
+
+
+## Portal owner revocation regression
+
+Loss or replacement of `org.freedesktop.portal.Desktop` immediately revokes
+jobs bound to that event's old unique frontend sender, even if the sender and
+its pidfd remain alive. Loss or replacement of the capture backend's well-known
+name retires its selected broker and revokes every job. Matching the event's
+old owner prevents a delayed event for a different actor from retiring newly
+admitted authority. Existing current-owner checks still fence every invocation.
+
+The noninstalled test-authorization target `testCaptureOwnerLoss` uses a
+QtCore peer launched through the existing pre-workspace test-program seam.
+It exchanges actual fd3 Hello/Ready and normal StartJob/ParentReady/
+ConsentGranted/CaptureReady packets; it never seeds authority jobs or grants.
+Its four rows cover frontend/backend release/replacement while the original
+unique owner and kernel process are alive before mutation. Each row starts a
+real Screenshot2 call from its admitted helper against a pipe prefilled to
+EAGAIN, observes the actual writer's first POLLOUT wait, waits for queued
+post-direct `jobRevoked` observers, then requires writer exit, a terminal error,
+EOF, exactly the sentinel bytes and no successful reply or image bytes.
+A simultaneous idle ScreenCast job has only a direct local closure observer;
+this proves notification ordering, **not** actual PipeWire stream/node teardown,
+real portal consent, or the separate native consumer matrix. The observer is
+compiled only into the noninstallable test-authorization build and cannot
+alter admission or publication. Run this target with its
+`qindaqt/capture-authority/tests/run_owner_loss.py` zero-activation private
+bus runner after coordinating the private runtime.

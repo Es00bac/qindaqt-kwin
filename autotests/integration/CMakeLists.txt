@@ -291,6 +291,35 @@ if(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
         QINDAQT_CAPTURE_INTERFACE_PROBE_PATH="$<TARGET_FILE:qindaqt-capture-interface-probe>")
     add_dependencies(testCaptureInterfaceFilter screenshot screencast qindaqt-capture-interface-probe)
 
+    # Non-installed owner-role regression: authentic compositor-launched peers,
+    # actual Screenshot2 writer, and an explicitly local idle-stream observer.
+    add_executable(qindaqt-capture-owner-loss-peer
+        ${PROJECT_SOURCE_DIR}/qindaqt/capture-authority/tests/owner_loss_peer.cpp
+        ${PROJECT_SOURCE_DIR}/qindaqt/capture-authority/capturewire.cpp)
+    target_include_directories(qindaqt-capture-owner-loss-peer PRIVATE
+        ${PROJECT_SOURCE_DIR}/qindaqt/capture-authority)
+    target_link_libraries(qindaqt-capture-owner-loss-peer PRIVATE kwin Qt::Core Qt::DBus)
+    set(capture_owner_loss_sources
+        ${PROJECT_SOURCE_DIR}/qindaqt/capture-authority/tests/owner_loss_test.cpp
+        ${PROJECT_SOURCE_DIR}/src/plugins/screenshot/screenshot.cpp
+        ${PROJECT_SOURCE_DIR}/src/plugins/screenshot/screenshotdbusinterface2.cpp
+        ${PROJECT_SOURCE_DIR}/src/plugins/screenshot/screenshotoperation.cpp
+        ${PROJECT_SOURCE_DIR}/src/plugins/screenshot/screenshotlayer.cpp)
+    qt_add_dbus_adaptor(capture_owner_loss_sources
+        ${PROJECT_SOURCE_DIR}/src/plugins/screenshot/org.kde.KWin.ScreenShot2.xml
+        ${PROJECT_SOURCE_DIR}/src/plugins/screenshot/screenshotdbusinterface2.h KWin::ScreenShotDBusInterface2)
+    integrationTest(NAME testCaptureOwnerLoss
+        RUNNER ${PROJECT_SOURCE_DIR}/qindaqt/capture-authority/tests/run_owner_loss.py
+        SRCS ${capture_owner_loss_sources} LIBS KF6::Service KF6::I18n)
+    target_include_directories(testCaptureOwnerLoss PRIVATE
+        ${PROJECT_SOURCE_DIR}/qindaqt/capture-authority ${PROJECT_SOURCE_DIR}/src/plugins/screenshot
+        ${CMAKE_CURRENT_BINARY_DIR})
+    target_compile_definitions(testCaptureOwnerLoss PRIVATE
+        QINDAQT_OWNER_LOSS_PEER="$<TARGET_FILE:qindaqt-capture-owner-loss-peer>")
+    ecm_qt_declare_logging_category(testCaptureOwnerLoss HEADER screenshotlogging.h
+        IDENTIFIER KWIN_SCREENSHOT CATEGORY_NAME kwin_screenshot DEFAULT_SEVERITY Warning)
+    add_dependencies(testCaptureOwnerLoss qindaqt-capture-owner-loss-peer)
+
     set(QINDAQT_PRIVATE_CAPTURE_BROKER "" CACHE FILEPATH "Non-installed capture-only test broker")
     set(QINDAQT_PRIVATE_CAPTURE_HELPER "" CACHE FILEPATH "Non-installed native capture input helper")
     if(QINDAQT_PRIVATE_CAPTURE_BROKER OR QINDAQT_PRIVATE_CAPTURE_HELPER)

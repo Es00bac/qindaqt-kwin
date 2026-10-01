@@ -93,6 +93,7 @@ private:
     void revokeAll();
     void maybeGrant(Job &job);
     void watchActor(quint64 job, const Actor &actor);
+    void watchPortalOwners();
 
     WaylandServer *m_server;
     std::unique_ptr<CaptureChild> m_broker;
