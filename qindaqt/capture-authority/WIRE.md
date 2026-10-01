@@ -94,6 +94,27 @@ handshake packets use job ID zero; helper handshake and every job packet use
 their assigned nonzero job ID. The first `Hello` fixes the generation for
 that child, and no later packet may change it.
 
+| Message | Sender to receiver | Job ID | Payload | FDs |
+| --- | --- | --- | --- | --- |
+| `Hello` | compositor to broker or helper | zero for broker; assigned ID for helper | empty | zero |
+| `Ready` | broker or helper to compositor | matches `Hello` | `uint16 nameBytes`, then exact unique sender bytes | zero |
+| `StartJob` | broker to compositor | broker-allocated ID | `Scope` plus two exact unique names below | zero |
+| `JobStarted` | compositor to broker | echoes `StartJob` | empty | two, in the stated order |
+| `ParentReady`, `ConsentGranted` | helper to compositor | assigned ID | empty | zero |
+| `CaptureReady` | compositor to helper | assigned ID | empty | zero |
+| `RevokeJob` | broker or helper to compositor | assigned ID | empty | zero |
+| `JobRevoked` | compositor to broker and helper while each channel exists | assigned ID | empty | zero |
+| `Error` | compositor to the relevant child | assigned ID, or zero for broker handshake failure | `uint16 Error` | zero |
+
+The trusted broker allocates a strictly increasing, nonzero `uint64` job ID
+within its compositor generation, after admitting the portal request and
+before sending `StartJob`. The compositor remembers the highest submitted ID
+for that generation and rejects zero, reuse, wrap or non-increasing values;
+it echoes the accepted ID in `JobStarted` and the helper's `Hello`. No caller
+field, PID or app ID chooses an ID, and IDs are correlation keys rather than
+bearer authorization. The authenticated private channel plus current state
+always decide authority.
+
 ## Job state and payloads
 
 `StartJob` is broker-to-compositor after the real portal frontend call and
@@ -103,10 +124,14 @@ then those exact UTF-8 names. Each name is 1..255 bytes; no trailing NUL or
 app ID is carried. Compositor independently queries the D-Bus daemon for both
 current names' UID/PID and retains pidfds. It requires the broker channel and
 its selected compositor generation, known/unlocked native privacy and a free
-job slot; otherwise it sends terminal `Error`. Job ID is nonzero and unique
-in that generation. It does not parse portal request/session handles or user
+job slot; otherwise it sends terminal `Error`. It does not parse portal request/session handles or user
 options. The broker binds each job ID to its validated request/session/parent
 and sends `RevokeJob` on Close, actor/parent loss or publication failure.
+`Scope::Screenshot` covers the capture backend's Screenshot and PickColor
+portal intents; the only privileged KWin method it may admit is ScreenShot2.
+There is no implied ColorPicker/global or unrelated restricted permission.
+`Scope::ScreenCast` allows only the restricted screencast global and stream
+operations. A job cannot change scope or mint another interface.
 
 On success the compositor creates a fixed helper launch plus separate GUI and
 capture socketpairs and request/result pipes. `JobStarted` transfers exactly
@@ -160,6 +185,15 @@ retain existing 15,000-ms D-Bus plus 10,000-ms pipe grace and interactive
 selection timing. The helper's 60-second pre-consent expiry retires when
 Allow begins protected capture. Bytes or a reply delivered before revocation
 cannot be recalled; no new bytes, reply or URI may publish after it.
+
+The 30,000-ms outer and 28,000-ms fork clocks apply only to each protected
+Screenshot2 invocation, starting when that invocation is sent/received as
+specified above. They do **not** expire a ScreenCast stream or its session.
+For ScreenCast, the 60-second pre-consent deadline bounds helper selection;
+after Share and `CaptureReady`, its stream and frame authority continue only
+while the exact request/session, parent, helper, broker, actors, compositor
+generation and known/unlocked privacy remain live. Any revocation closes the
+stream and stops new frames; a later session requires a new job and consent.
 
 The only test authority hook is compiled under an explicit non-installable
 test flag and is absent from production builds. It cannot use an environment
