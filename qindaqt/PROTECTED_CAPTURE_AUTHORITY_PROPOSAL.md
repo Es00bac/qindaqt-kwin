@@ -109,7 +109,7 @@ No fork-private headers enter container-wm.
    xdg-foreign parent import and a **separate** restricted capture pair via
    `Display::createClient()`; the latter's exact
    `ClientConnection *` is tagged with this job and the sole
-   `zkde_screencast_unstable_v1` grant. The existing portal resident-supplied
+   `zkde_screencast_unstable_v1` enumeration grant. The existing portal resident-supplied
    restricted Wayland FD is replaced by this compositor-supplied FD; neither
    the general resident nor the broker can manufacture a grant by calling
    `CompositorAttachment::openConnection()`. The helper inherits only these
@@ -129,8 +129,9 @@ No fork-private headers enter container-wm.
    for the selection UI, before Share is pressed. Preserve that early binding
    if needed, but add a compositor-side job/consent check at every
    `stream_output` creation and before frame production; a client-side
-   `pixelsAllowed()` callback alone cannot enforce consent. No other globals
-   or Screenshot2 methods gain authority by implication.
+   `pixelsAllowed()` callback alone cannot enforce consent. The capture client
+   receives only the globals used by that public port; no other globals or
+   Screenshot2 methods gain authority by implication.
 5. The capture broker owns Close, Session close, frontend/caller owner loss, parent
    loss notification, helper response validation, and final publication. It
    sends revoke over the private channel immediately when any of these retire
@@ -140,14 +141,94 @@ No fork-private headers enter container-wm.
    generation change, broker/helper control HUP or process exit, D-Bus sender
    replacement, caller/frontend PIDFD exit, and a bounded pre-consent timeout.
    It destroys the tagged Wayland client, closes active streams, cancels
-   in-flight Screenshot2 work and removes the exact D-Bus sender grant. A
+   in-flight Screenshot2 work **and its pipe writer**, and removes the exact D-Bus sender grant. A
    stream must not survive a revoked job even if the ordinary Wayland socket
    remains open elsewhere. Screenshot pixel publication must check the grant
-   again at completion, in addition to the existing lock check. Restart or
+   again at completion using an explicit current lock check. Restart or
    ordinary reconnect creates a *new* generation/job only through a new
    compositor launch and frontend request/consent; old FDs and unique names
    cannot authorize it. The helper's parent-loss message also revokes directly
    at the compositor; the broker independently checks parent before publication.
+
+## Mandatory fork admission ordering for private capture clients
+
+The private socketpair's creator is the compositor. `Display::createClient()`
+constructs `ClientConnection` while it still owns both ends; the cached
+`wl_client_get_credentials` PID can therefore be `getpid()`. Fork690
+`KWinDisplay::allowInterface()` returns true on that self-PID at
+`src/wayland_server.cpp:165-167`, before the blacklist and input-method/XWayland
+checks. The capture-specific branch **must precede the self-PID return and all
+generic allow paths**. Lookup uses the exact compositor-owned
+`ClientConnection *` tagged to a live job, never the cached PID, executable
+path or app ID.
+
+For a tagged capture client, that branch returns an answer for **every**
+global: `wl_output` and `zxdg_output_manager_v1` are allowed for monitor
+enumeration; `zkde_screencast_unstable_v1` is visible only while the
+launch-authenticated job/generation is live; every other global is denied by
+default. The current public `WaylandScreenCast`
+(`src/services/compositor_capture/src/wayland_screencast.cpp`) binds only those
+three globals. In particular, the branch denies all other
+`interfacesBlackList` entries (`org_kde_plasma_window_management`,
+`org_kde_kwin_fake_input`, `org_kde_plasma_activation_feedback`,
+`kde_lockscreen_overlay_v1`), `ext_session_lock_manager_v1`, both
+`inputmethodInterfaces`, both `xwaylandInterfaces`, and
+`wp_security_context_manager_v1`. Its default-deny behavior also covers a
+new sensitive global added later. Ordinary GUI/foreign-parent work uses the
+separate ordinary client and its existing filter. A ScreenCast manager binding
+before user consent authorizes enumeration only: the compositor checks live
+job, actual helper consent, selected generation and unlocked/known privacy at
+each `stream_output` request and before frame production. Retiring the job
+destroys its exact capture client and stream; a new socketpair cannot inherit
+the retired pointer's tag.
+
+## Complete Screenshot2 method and delayed-delivery policy
+
+Fork690 XML exports seven methods: `CaptureWindow`, `CaptureActiveWindow`,
+`CaptureArea`, `CaptureScreen`, `CaptureActiveScreen`, `CaptureInteractive` and
+`CaptureWorkspace`. All seven must enter one authorization decision at
+invocation, before duplicating the caller's pipe or starting selection. The
+decision requires known/unlocked native privacy and either (a) the live exact
+capture job's helper D-Bus unique sender, daemon UID/PID, pidfd and generation,
+or (b) the existing restricted desktop-entry permission for an ordinary
+identifiable legacy client. Option (b) preserves already authorized Spectacle
+use; it is not a new same-UID privilege. `CaptureInteractive` additionally
+requires its actual click/selection, but selection alone is not authorization.
+An untrusted same-UID caller without (a) or (b) receives an error and zero
+pipe bytes even if it supplies a writable pipe. A failed identity/lock lookup
+fails closed, including for `CaptureInteractive`.
+
+Each accepted invocation holds a revocable operation lease with exact sender,
+pidfd, permission kind, compositor privacy generation and, for (a), capture
+job generation. `CaptureInteractive` stores this lease in both window/position
+callbacks; cancellation or late selection after lock, owner change or broker
+Request.Close closes the duplicated pipe and sends at most one failure, never
+calls `takeScreenShot`. All seven methods recheck the lease immediately before
+`takeScreenShot`, at sink `flush`, and before any success reply. A late frame
+or sink completion after revocation discards its image, closes the pipe and
+cannot emit a new success reply. Each operation has a single terminal reply
+state: revocation may send a failure only if no reply was sent already, and a
+pre-revocation legacy success cannot be followed by a contradictory failure.
+
+`ScreenShotSinkPipe2::flush()` currently sends success before launching
+`ScreenShotWriter2`; the worker then may poll/write for 60 seconds without
+checking lock or grant (`screenshotdbusinterface2.cpp:35-99,191-209`). The
+revocable lease must travel into that worker. Revoke marks it terminal, wakes
+any stalled poll, and establishes a short synchronized barrier with each
+nonblocking write; after revoke completes, no further write is allowed. The
+worker must not call Qt/Wayland lock objects from its thread; the compositor
+updates the shared lease on the owning thread. For a protected capture-job
+lease, send success only after the complete write and a final live check; the
+public `KWinCapturePort` already drains the pipe concurrently with its pending
+D-Bus reply (`kwin_capture_port.cpp:89-129,179-205`). This also prevents a
+success reply when revocation interrupts a stalled writer. Legacy authorized
+clients may retain reply-before-bytes ordering for compatibility, but that
+reply must be sent only while its lease is live, and its writer must stop at
+revoke. A success reply or bytes sent *before* revocation cannot be recalled;
+the broker must still refuse a URI if the write is truncated or lineage is
+stale. For a pipe stalled before its first write, releasing it after revoke
+must produce zero bytes and no later success reply. Canceling a pending D-Bus
+reply alone does not stop this writer.
 
 The compositor's grant record holds only generation, job ID, two exact client
 pointers, launched helper UID/PID/pidfd, its private channel, one exact D-Bus
@@ -169,10 +250,12 @@ peer credentials or `ClientConnection::processId()` as proof of the child.
 ## Implementation ownership and compatibility
 
 - Fork owner: new `qindaqt/capture-authority/` private launcher, registry and
-  focused tests plus explicit public wire/header documentation; narrow hooks in
-  `src/wayland_server.cpp` for only the tagged ScreenCast client,
-  `src/plugins/screenshot/screenshotdbusinterface2.cpp` for exact sender/job
-  admission and completion checks, and `src/plugins/screencast/` for job revoke.
+  focused tests plus explicit public wire/header documentation; a capture
+  branch before the self-PID shortcut in `src/wayland_server.cpp`, covering
+  exactly the tagged three-global allowlist; all-seven-method invocation,
+  selection callback, sink, reply and asynchronous writer lease checks in
+  `src/plugins/screenshot/screenshotdbusinterface2.cpp`; and stream/job
+  creation and revoke gates in `src/plugins/screencast/`.
   Preserve ordinary desktop-file permission behavior for unrelated clients and
   the deliberate legacy `org.kde.KWin.ScreenShot2` wire name until PF21.
 - Portal owner: public adapter in `src/services/compositor_capture/`, new
@@ -209,14 +292,32 @@ peer credentials or `ClientConnection::processId()` as proof of the child.
    fail both restricted entrypoints. Assert owned helper PR0 via
    `PR_GET_DUMPABLE==0`; missing Yama/root-managed files fail closed. Assert
    exact private ScreenCast client and exact helper D-Bus sender succeed only
-   for their own live job, with no lock grant and no other restricted global.
+   for their own live job. Create a real compositor-owned socketpair, pass its
+   peer to the protected helper, and assert its actual `ClientConnection`
+   credentials include the self-PID case. The tagged capture client must bind
+   only `wl_output`, `zxdg_output_manager_v1` and the planned ScreenCast manager:
+   deny the four other blacklist names, lock/overlay, both input-method and
+   both XWayland globals, `wp_security_context_manager_v1`, an unknown global,
+   and a newly added restricted test global. Assert ordinary same-UID and
+   self-launched copies gain no tag; destroy/reconnect after revocation cannot
+   reuse it. Test this through `KWinDisplay::allowInterface`, not a policy-only
+   substitute, so the early self-PID return is exercised.
 2. Revocation fixtures: Close Request/Session, frontend/caller owner or pidfd
    loss, parent import/loss, helper/broker crash, private channel HUP,
    compositor owner replacement, native lock/unknown, pre-consent timeout,
    ordinary reconnect, and late screenshot/stream completion must remove the
    job and stop frames. Exercise both a grant before creation and a live stream
-   or in-flight screenshot. Assert no stale URI/node publication. Check cleanup
-   of screenshot files and private process descendants.
+   or in-flight screenshot. Invoke **all seven** Screenshot2 methods with an
+   untrusted same-UID sender and verify denial/zero bytes, especially
+   `CaptureInteractive` with a writable pipe. Preserve a desktop-entry
+   authorized interactive client and its real selection; it still fails on
+   locked/unknown privacy. For protected jobs, retire during pending window
+   and position selection by lock, compositor owner replacement and
+   Request.Close; no `takeScreenShot`, pipe bytes, late success or URI. Retire
+   between accepted request and frame/sink completion, and during a stalled
+   `ScreenShotWriter2` poll; wake/release the pipe after revoke and assert no
+   **post-revocation** bytes, no later success reply/URI, and timely writer
+   exit. Check no stale node, screenshot-file residue or descendant processes.
 3. In an isolated actual frontend run, keep the `run_native_capture.py`
    three-group default matrix in `tests/services/portal/capture/`; use the
    corrected protected caller/resident probe with its current Screenshot
