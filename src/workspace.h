@@ -85,6 +85,7 @@ class TileManager;
 class OutputConfigurationStore;
 class LidSwitchTracker;
 class DpmsInputEventFilter;
+class DisplayPowerAuthority;
 class OrientationSensor;
 class BrightnessDevice;
 class BackendOutput;
@@ -752,6 +753,7 @@ private:
     UInt32Serial m_activationTokenSerial = 0;
 
     DpmsState m_dpms = DpmsState::On;
+    std::unique_ptr<DisplayPowerAuthority> m_displayPowerAuthority;
     QList<QString> m_recentlyRemovedDpmsOffOutputs;
     QTimer m_dpmsTimer;
     FileDescriptor m_sleepInhibitor;

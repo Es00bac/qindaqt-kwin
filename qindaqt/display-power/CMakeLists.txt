@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+target_sources(kwin PRIVATE blankleases.cpp displaypowerauthority.cpp)
+install(FILES org.qindaqt.KWin.DisplayPower1.xml DESTINATION ${KDE_INSTALL_DBUSINTERFACEDIR})
+if(QINDAQT_KWIN_BUILD_TESTS)
+    enable_testing()
+    find_package(Qt6 REQUIRED COMPONENTS Test)
+    add_executable(testQindaDisplayBlankLeases tests/blankleases_test.cpp blankleases.cpp)
+    target_link_libraries(testQindaDisplayBlankLeases PRIVATE Qt6::Core Qt6::Test)
+    target_include_directories(testQindaDisplayBlankLeases PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_compile_options(testQindaDisplayBlankLeases PRIVATE -Wall -Wextra -Werror)
+    add_test(NAME qindaqt.display-blank-leases COMMAND testQindaDisplayBlankLeases)
+endif()

@@ -11,6 +11,7 @@
 */
 // own
 #include "workspace.h"
+#include "../qindaqt/display-power/displaypowerauthority.h"
 // kwin libs
 #include "opengl/glplatform.h"
 // kwin
@@ -183,6 +184,7 @@ Workspace::Workspace()
     initShortcuts();
 
     init();
+    m_displayPowerAuthority = std::make_unique<DisplayPowerAuthority>(this);
 }
 
 void Workspace::init()
@@ -469,6 +471,7 @@ void Workspace::cleanupX11()
 
 Workspace::~Workspace()
 {
+    m_displayPowerAuthority.reset();
     blockStackingUpdates(true);
 
 #if KWIN_BUILD_X11
@@ -551,6 +554,11 @@ OutputConfigurationError Workspace::applyOutputConfiguration(OutputConfiguration
 
 void Workspace::requestDpmsState(DpmsState state)
 {
+    // AGENT-GUARD: ADR-0338 records same-mode external requests before the
+    // upstream no-op check; our finite cause cannot erase another writer's Off.
+    if (m_displayPowerAuthority && !m_displayPowerAuthority->internalRequest()) {
+        m_displayPowerAuthority->externalRequest(state != DpmsState::On);
+    }
     const bool requestOn = state == DpmsState::On;
     const bool isOn = m_dpms == DpmsState::On;
     if (requestOn == isOn) {
