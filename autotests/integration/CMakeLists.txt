@@ -221,8 +221,12 @@ if(QINDAQT_SESSION_LOCK_TEST_AUTHORIZATION)
             SRCS ${PROJECT_SOURCE_DIR}/qindaqt/shortcuts/tests/native_shortcuts_integration_test.cpp
             LIBS Qt::DBus)
         target_include_directories(testNativeShortcuts PRIVATE ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+        # Both native fixtures live in this binary directory. Reuse the lock
+        # protocol generated once below; Qt otherwise emits duplicate rules.
+        target_sources(testNativeShortcuts PRIVATE
+            ${CMAKE_CURRENT_BINARY_DIR}/wayland-ext-session-lock-v1-protocol.c
+            ${CMAKE_CURRENT_BINARY_DIR}/qwayland-ext-session-lock-v1.cpp)
         qt6_generate_wayland_protocol_client_sources(testNativeShortcuts PRIVATE_CODE FILES
-            ${WaylandProtocols_DATADIR}/staging/ext-session-lock/ext-session-lock-v1.xml
             ${WaylandProtocols_DATADIR}/unstable/keyboard-shortcuts-inhibit/keyboard-shortcuts-inhibit-unstable-v1.xml)
     endif()
     add_subdirectory(${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/probe ${CMAKE_CURRENT_BINARY_DIR}/native-lock-probe)
