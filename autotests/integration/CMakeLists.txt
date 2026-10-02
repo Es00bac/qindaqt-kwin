@@ -215,6 +215,12 @@ add_subdirectory(effects)
 add_subdirectory(fakes)
 
 if(QINDAQT_SESSION_LOCK_TEST_AUTHORIZATION)
+    integrationTest(NAME testNativeDisplayPower
+        RUNNER ${PROJECT_SOURCE_DIR}/qindaqt/tools/run-native-lock
+        SRCS ${PROJECT_SOURCE_DIR}/qindaqt/display-power/tests/native_display_power_test.cpp
+             ${PROJECT_SOURCE_DIR}/src/backends/virtual/virtual_output.cpp
+        LIBS Qt::DBus)
+    target_include_directories(testNativeDisplayPower PRIVATE ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
     if(KWIN_NATIVE_SHORTCUTS)
         integrationTest(NAME testNativeShortcuts
             RUNNER ${PROJECT_SOURCE_DIR}/qindaqt/tools/run-native-lock

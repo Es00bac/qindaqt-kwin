@@ -18,7 +18,7 @@ namespace KWin
 namespace {
 const QString Path = QStringLiteral("/org/qindaqt/KWin/DisplayPower");
 const QString Interface = QStringLiteral("org.qindaqt.KWin.DisplayPower1");
-const QString Session = QStringLiteral("org.qindaqt.Session1");
+const QString SessionService = QStringLiteral("org.qindaqt.Session1");
 const QString Legacy = QStringLiteral("org.kde.Solid.PowerManagement"); // qindaqt-identity: keep
 bool validId(const QString &id)
 {
@@ -28,7 +28,7 @@ bool validId(const QString &id)
 }
 DisplayPowerAuthority::DisplayPowerAuthority(Workspace *workspace)
     : QObject(workspace), m_workspace(workspace), m_bus(QDBusConnection::sessionBus()),
-      m_owners(Session, m_bus, QDBusServiceWatcher::WatchForOwnerChange),
+      m_owners(SessionService, m_bus, QDBusServiceWatcher::WatchForOwnerChange),
       m_leases(workspace->dpmsState() != Workspace::DpmsState::On)
 {
     m_clock.start();
@@ -108,7 +108,7 @@ void DisplayPowerAuthority::refreshOwners()
     QString owner;
     bool absent = false;
     if (auto *bus = m_bus.interface()) {
-        const QDBusReply<QString> resolved = bus->serviceOwner(Session);
+        const QDBusReply<QString> resolved = bus->serviceOwner(SessionService);
         if (resolved.isValid() && !resolved.value().isEmpty()) {
             const QDBusReply<uint> uid = bus->serviceUid(resolved.value());
             if (uid.isValid() && uid.value() == static_cast<uint>(::getuid())) owner = resolved.value();
