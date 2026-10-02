@@ -51,13 +51,11 @@ systemd unit, the hicolor `kwin` icons, the kcfg files, `kwindowprop`.
   `KDecoration3::KDecoration` and `KDecoration3::KDecoration3Private`, the
   decoration config group `[org.kde.kdecoration2]` and the plugin metadata key
   `org.kde.kdecoration3`.
-- Carve-outs until PF21: the fork also owns `org.kde.KWin`, and ScreenShot2
-  (`org.kde.KWin.ScreenShot2`), the EIS remote desktop and input capture
-  objects, TabletModeManager (`/org/kde/KWin`), VirtualKeyboard
-  (`/VirtualKeyboard`) and Scripting (`/Scripting`, `/Scripting/Script<N>`, also
-  under the new names) keep their KDE names, because the KDE portal, Spectacle,
-  Kirigami and Gabbee call them. The `X-KDE-*` privileged-client keys are honoured
-  until then too.
+- PF21 removes the KDE service alias and the legacy Scripting objects. Screenshot,
+  EIS, TabletModeManager and VirtualKeyboard use only `org.qindaqt.KWin*`
+  interfaces and `/org/qindaqt/KWin` paths. Privileged clients must use QindaQt's
+  desktop-file keys; stock KDE keys do not grant access. Deploy with the matching
+  container-wm caller cutover and Gabbee native endpoint preference (ADR-0340).
 
 A source line that must keep a stock name despite a rename rule carries the
 comment marker `qindaqt-identity: keep`.

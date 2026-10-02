@@ -70,7 +70,7 @@ void NativeSessionLockTest::captureRequestsBlocked()
             qunsetenv("KWIN_SCREENSHOT_NO_PERMISSION_CHECKS");
         }
     } close{descriptors};
-    auto message = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin.ScreenShot2"), QStringLiteral("/org/kde/KWin/ScreenShot2"), QStringLiteral("org.kde.KWin.ScreenShot2"), QStringLiteral("CaptureWindow"));
+    auto message = QDBusMessage::createMethodCall(QStringLiteral("org.qindaqt.KWin.ScreenShot2"), QStringLiteral("/org/qindaqt/KWin/ScreenShot2"), QStringLiteral("org.qindaqt.KWin.ScreenShot2"), QStringLiteral("CaptureWindow"));
     message.setArguments({ordinary.m_window->internalId().toString(), QVariantMap{}, QVariant::fromValue(QDBusUnixFileDescriptor(descriptors[1]))});
     QDBusPendingCallWatcher watcher(QDBusConnection::sessionBus().asyncCall(message));
     QSignalSpy done(&watcher, &QDBusPendingCallWatcher::finished);

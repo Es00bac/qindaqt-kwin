@@ -17,7 +17,7 @@ namespace KWin
 class KWIN_EXPORT VirtualKeyboardDBus : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.kde.kwin.VirtualKeyboard")
+    Q_CLASSINFO("D-Bus Interface", "org.qindaqt.KWin.VirtualKeyboard")
     Q_PROPERTY(bool available READ isAvailable NOTIFY availableChanged)
     Q_PROPERTY(bool enabled READ isEnabled WRITE setEnabled NOTIFY enabledChanged)
     Q_PROPERTY(bool active READ isActive WRITE setActive NOTIFY activeChanged)

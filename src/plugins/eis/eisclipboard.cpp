@@ -20,8 +20,8 @@ constexpr int maxMimeTypes = 64;
 
 void sendTargeted(const QString &owner, const QString &member, const QVariantList &arguments)
 {
-    auto signal = QDBusMessage::createTargetedSignal(owner, QStringLiteral("/org/kde/KWin/EIS/RemoteDesktop"),
-                                                     QStringLiteral("org.kde.KWin.EIS.RemoteDesktop"), member);
+    auto signal = QDBusMessage::createTargetedSignal(owner, QStringLiteral("/org/qindaqt/KWin/EIS/RemoteDesktop"),
+                                                     QStringLiteral("org.qindaqt.KWin.EIS.RemoteDesktop"), member);
     signal.setArguments(arguments);
     QDBusConnection::sessionBus().send(signal);
 }

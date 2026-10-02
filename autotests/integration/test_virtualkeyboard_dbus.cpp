@@ -67,7 +67,7 @@ void VirtualKeyboardDBusTest::cleanup()
 void VirtualKeyboardDBusTest::testEnabled()
 {
     VirtualKeyboardDBus dbus(KWin::kwinApp()->inputMethod());
-    OrgKdeKwinVirtualKeyboardInterface iface(QStringLiteral("org.kde.kwin.testvirtualkeyboard"), QStringLiteral("/VirtualKeyboard"), QDBusConnection::sessionBus());
+    OrgKdeKwinVirtualKeyboardInterface iface(QStringLiteral("org.kde.kwin.testvirtualkeyboard"), QStringLiteral("/org/qindaqt/KWin/VirtualKeyboard"), QDBusConnection::sessionBus());
     QSignalSpy helperChangedSpy(&iface, &OrgKdeKwinVirtualKeyboardInterface::enabledChanged);
 
     QCOMPARE(dbus.isEnabled(), false);
@@ -114,7 +114,7 @@ void VirtualKeyboardDBusTest::testRequestEnabled()
     QFETCH(bool, expectedResult);
 
     VirtualKeyboardDBus dbus(KWin::kwinApp()->inputMethod());
-    OrgKdeKwinVirtualKeyboardInterface iface(QStringLiteral("org.kde.kwin.testvirtualkeyboard"), QStringLiteral("/VirtualKeyboard"), QDBusConnection::sessionBus());
+    OrgKdeKwinVirtualKeyboardInterface iface(QStringLiteral("org.kde.kwin.testvirtualkeyboard"), QStringLiteral("/org/qindaqt/KWin/VirtualKeyboard"), QDBusConnection::sessionBus());
 
     iface.setEnabled(expectedResult);
     QTRY_COMPARE(iface.enabled(), expectedResult);

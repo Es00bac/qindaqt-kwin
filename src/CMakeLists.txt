@@ -454,9 +454,8 @@ if (KWIN_BUILD_NOTIFICATIONS)
     # AGENT-CONTRACT: KNotification component "qindaqt-kwin" (compositor.cpp, sm.cpp).
     install(FILES kwin.notifyrc DESTINATION ${KDE_INSTALL_KNOTIFYRCDIR} RENAME qindaqt-kwin.notifyrc)
 endif()
-# QindaQt: installed under qindaqt-kwin names (container-wm ADR-0289). The
-# VirtualKeyboard and TabletModeManager files still describe their org.kde.*
-# carve-out interfaces until PF21.
+# QindaQt: installed under native names (container-wm ADR-0340). Source XML
+# filenames remain upstream-owned; interface contents and installed names are native.
 install(FILES org.kde.KWin.VirtualDesktopManager.xml DESTINATION ${KDE_INSTALL_DBUSINTERFACEDIR} RENAME org.qindaqt.KWin.VirtualDesktopManager.xml)
 install(FILES org.kde.KWin.xml DESTINATION ${KDE_INSTALL_DBUSINTERFACEDIR} RENAME org.qindaqt.KWin.xml)
 install(FILES org.kde.kwin.Compositing.xml DESTINATION ${KDE_INSTALL_DBUSINTERFACEDIR} RENAME org.qindaqt.KWin.Compositing.xml)

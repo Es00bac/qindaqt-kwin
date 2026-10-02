@@ -70,21 +70,21 @@ static std::optional<pid_t> pidToHide(std::optional<pid_t> callerPid, const QVar
     return callerPid;
 }
 
-static const QString s_dbusServiceName = QStringLiteral("org.kde.KWin.ScreenShot2");
-static const QString s_dbusInterface = QStringLiteral("org.kde.KWin.ScreenShot2");
-static const QString s_dbusObjectPath = QStringLiteral("/org/kde/KWin/ScreenShot2");
+static const QString s_dbusServiceName = QStringLiteral("org.qindaqt.KWin.ScreenShot2");
+static const QString s_dbusInterface = QStringLiteral("org.qindaqt.KWin.ScreenShot2");
+static const QString s_dbusObjectPath = QStringLiteral("/org/qindaqt/KWin/ScreenShot2");
 
-static const QString s_errorNotAuthorized = QStringLiteral("org.kde.KWin.ScreenShot2.Error.NoAuthorized");
+static const QString s_errorNotAuthorized = QStringLiteral("org.qindaqt.KWin.ScreenShot2.Error.NoAuthorized");
 static const QString s_errorNotAuthorizedMessage = QStringLiteral("The process is not authorized to take a screenshot");
-static const QString s_errorInvalidWindow = QStringLiteral("org.kde.KWin.ScreenShot2.Error.InvalidWindow");
+static const QString s_errorInvalidWindow = QStringLiteral("org.qindaqt.KWin.ScreenShot2.Error.InvalidWindow");
 static const QString s_errorInvalidWindowMessage = QStringLiteral("Invalid window requested");
-static const QString s_errorNoActiveWindow = QStringLiteral("org.kde.KWin.ScreenShot2.Error.NoActiveWindow");
+static const QString s_errorNoActiveWindow = QStringLiteral("org.qindaqt.KWin.ScreenShot2.Error.NoActiveWindow");
 static const QString s_errorNoActiveWindowMessage = QStringLiteral("No active window");
-static const QString s_errorInvalidArea = QStringLiteral("org.kde.KWin.ScreenShot2.Error.InvalidArea");
+static const QString s_errorInvalidArea = QStringLiteral("org.qindaqt.KWin.ScreenShot2.Error.InvalidArea");
 static const QString s_errorInvalidAreaMessage = QStringLiteral("Invalid area requested");
-static const QString s_errorInvalidScreen = QStringLiteral("org.kde.KWin.ScreenShot2.Error.InvalidScreen");
+static const QString s_errorInvalidScreen = QStringLiteral("org.qindaqt.KWin.ScreenShot2.Error.InvalidScreen");
 static const QString s_errorInvalidScreenMessage = QStringLiteral("Invalid screen requested");
-static const QString s_errorFileDescriptor = QStringLiteral("org.kde.KWin.ScreenShot2.Error.FileDescriptor");
+static const QString s_errorFileDescriptor = QStringLiteral("org.qindaqt.KWin.ScreenShot2.Error.FileDescriptor");
 static const QString s_errorFileDescriptorMessage = QStringLiteral("No valid file descriptor");
 
 ScreenShotDBusInterface2::ScreenShotDBusInterface2(ScreenShotManager *manager)

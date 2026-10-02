@@ -96,19 +96,21 @@ RULES = [
     Rule("config kcminputrc", r"(?<=[\"'])kcminputrc(?=[\"'])", "qindaqt/kwininputrc"),
     Rule("config kxkbrc", r"(?<=[\"'])kxkbrc(?=[\"'])", "qindaqt/kwinxkbrc"),
     Rule("state kwinstaterc", r"(?<=[\"'])kwinstaterc(?=[\"'])", "qindaqt/kwinstaterc"),
-    # D-Bus. Carve-outs keep their KDE names until PF21 because the KDE portal and
-    # Spectacle call them: ScreenShot2, EIS (remote desktop, input capture),
-    # TabletModeManager (/org/kde/KWin) and VirtualKeyboard (/VirtualKeyboard).
+    # PF21 moves privileged interfaces with their QindaQt callers. Wayland
+    # protocol identifiers remain wire contracts and are intentionally unchanged.
     # Source file names of interface XML (*.xml) are not renamed; CMake renames
     # the installed copies.
-    Rule("D-Bus service and interfaces", r"\borg\.kde\.KWin\b(?!\.(?:ScreenShot2|EIS|TabletModeManager)\b)(?![\w.]*\.xml\b)",
+    Rule("D-Bus service and interfaces", r"\borg\.kde\.KWin\b(?![\w.]*\.xml\b)",
          "org.qindaqt.KWin"),
+    Rule("D-Bus wrapper service", r"\borg\.kde\.KWinWrapper\b", "org.qindaqt.KWinWrapper"),
     Rule("D-Bus lower-case interfaces",
-         r"\borg\.kde\.kwin\.(Effects|Compositing|Scripting|Script|FTrace|ColorPicker|InputDevice)\b(?![\w.]*\.xml\b)",
+         r"\borg\.kde\.kwin\.(Effects|Compositing|Scripting|Script|FTrace|ColorPicker|InputDevice|VirtualKeyboard)\b(?![\w.]*\.xml\b)",
          r"org.qindaqt.KWin.\1"),
-    Rule("D-Bus object paths", r"(?<=[\"'])/org/kde/KWin(?=/(?!ScreenShot2\b|EIS/))", "/org/qindaqt/KWin"),
+    Rule("D-Bus tablet-mode object path", r"(?<=[\"'])/org/kde/KWin(?=[\"'])",
+         "/org/qindaqt/KWin/TabletModeManager", files=["*tabletmodemanager.cpp"]),
+    Rule("D-Bus object paths", r"(?<=[\"'])/org/kde/KWin(?=[/\"'])", "/org/qindaqt/KWin"),
     Rule("D-Bus main object path", r"(?<=[\"'])/KWin(?=[\"'])", "/org/qindaqt/KWin"),
-    Rule("D-Bus root object paths", r"(?<=[\"'])/(Compositor|VirtualDesktopManager|Plugins|Effects|FTrace|ColorPicker|Scripting)(?=[\"'/])",
+    Rule("D-Bus root object paths", r"(?<=[\"'])/(Compositor|VirtualDesktopManager|Plugins|Effects|FTrace|ColorPicker|Scripting|VirtualKeyboard)(?=[\"'/])",
          r"/org/qindaqt/KWin/\1"),
     # Translation domain. No catalogs ship yet, and stock kwin.mo is never used.
     Rule("translation domain (build)", r'(TRANSLATION_DOMAIN=\\")kwin(?=\\")', r"\1qindaqt-kwin",

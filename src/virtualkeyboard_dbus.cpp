@@ -16,7 +16,7 @@ VirtualKeyboardDBus::VirtualKeyboardDBus(InputMethod *parent)
     : QObject(parent)
     , m_inputMethod(parent)
 {
-    QDBusConnection::sessionBus().registerObject(QStringLiteral("/VirtualKeyboard"), this,
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/qindaqt/KWin/VirtualKeyboard"), this,
                                                  QDBusConnection::ExportAllProperties | QDBusConnection::ExportScriptableContents | // qdbuscpp2xml doesn't support yet properties with NOTIFY
                                                      QDBusConnection::ExportAllSlots);
     connect(parent, &InputMethod::activeChanged, this, &VirtualKeyboardDBus::activeChanged);

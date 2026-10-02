@@ -28,9 +28,9 @@ namespace KWin
 {
 namespace
 {
-const QString s_errorNotAuthorized = QStringLiteral("org.kde.KWin.ScreenShot2.Error.NoAuthorized");
+const QString s_errorNotAuthorized = QStringLiteral("org.qindaqt.KWin.ScreenShot2.Error.NoAuthorized");
 const QString s_errorNotAuthorizedMessage = QStringLiteral("The process is not authorized to take a screenshot");
-const QString s_errorCancelled = QStringLiteral("org.kde.KWin.ScreenShot2.Error.Cancelled");
+const QString s_errorCancelled = QStringLiteral("org.qindaqt.KWin.ScreenShot2.Error.Cancelled");
 const QString s_errorCancelledMessage = QStringLiteral("Screenshot got cancelled");
 }
 
@@ -242,7 +242,7 @@ bool ScreenShotSinkPipe2::live() const
     }
     return m_invocation.legacyTestPermission
         || fetchRestrictedDBusInterfacesFromPid(m_invocation.pid)
-               .contains(QStringLiteral("org.kde.KWin.ScreenShot2"));
+               .contains(QStringLiteral("org.qindaqt.KWin.ScreenShot2"));
 }
 
 void ScreenShotSinkPipe2::replyError(const QString &name, const QString &message)

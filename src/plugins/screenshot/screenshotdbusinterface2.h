@@ -25,10 +25,10 @@ class ScreenShotSource2;
 
 /**
  * The ScreenshotDBusInterface2 class provides a d-bus api to take screenshots. This implements
- * the org.kde.KWin.ScreenShot2 interface.
+ * the org.qindaqt.KWin.ScreenShot2 interface.
  *
- * An application that requests a screenshot must have "org.kde.KWin.ScreenShot2" listed in its
- * X-KDE-DBUS-Restricted-Interfaces desktop file field.
+ * An application that requests a screenshot must have "org.qindaqt.KWin.ScreenShot2" listed in its
+ * X-QindaQt-KWin-DBus-Restricted-Interfaces desktop file field.
  */
 class ScreenShotDBusInterface2 : public QObject, public QDBusContext
 {

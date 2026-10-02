@@ -147,7 +147,7 @@ EisInputCaptureManager::EisInputCaptureManager()
         }
     });
 
-    QDBusConnection::sessionBus().registerObject("/org/kde/KWin/EIS/InputCapture", "org.kde.KWin.EIS.InputCaptureManager", this, QDBusConnection::ExportAllInvokables | QDBusConnection::ExportAllSignals);
+    QDBusConnection::sessionBus().registerObject("/org/qindaqt/KWin/EIS/InputCapture", "org.qindaqt.KWin.EIS.InputCaptureManager", this, QDBusConnection::ExportAllInvokables | QDBusConnection::ExportAllSignals);
 }
 
 EisInputCaptureManager::~EisInputCaptureManager()

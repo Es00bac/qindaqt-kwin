@@ -166,7 +166,7 @@ void KWinWrapper::run()
     auto envSyncJob = new KUpdateLaunchEnvironmentJob(env);
     connect(envSyncJob, &KUpdateLaunchEnvironmentJob::finished, this, []() {
         // The service name is merely there to indicate to the world that we're up and ready with all envs exported
-        QDBusConnection::sessionBus().registerService(QStringLiteral("org.kde.KWinWrapper"));
+        QDBusConnection::sessionBus().registerService(QStringLiteral("org.qindaqt.KWinWrapper"));
     });
 }
 
