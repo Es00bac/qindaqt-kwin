@@ -6,6 +6,7 @@
 
 #include "eisbackend.h"
 
+#include "eisclipboard.h"
 #include "eiscontext.h"
 #include "eisdevice.h"
 #include "eisportaladmission.h"
@@ -69,6 +70,9 @@ EisBackend::EisBackend(QObject *parent)
         std::erase_if(m_contexts, [&service](const std::unique_ptr<DbusEisContext> &context) {
             return context->dbusService == service;
         });
+        if (m_clipboard) {
+            m_clipboard->removeOwner(service);
+        }
         m_serviceWatcher->removeWatchedService(service);
     });
 }
@@ -97,8 +101,10 @@ void EisBackend::initialize()
 
     // AGENT-GUARD: native lock ends every portal-issued RemoteDesktop transport
     // before the locker maps; contexts never resume after unlock.
+    m_clipboard = std::make_unique<EisClipboard>();
     connect(waylandServer(), &WaylandServer::screenAboutToLock, this, [this] {
         m_contexts.clear();
+        m_clipboard->clear();
         m_serviceWatcher->setWatchedServices({});
     });
 
@@ -155,6 +161,55 @@ void EisBackend::disconnect(int cookie)
     if (it != std::ranges::end(m_contexts) && calledFromDBus() && (*it)->dbusService == message().service()) {
         m_contexts.erase(it);
     }
+}
+
+bool EisBackend::portalCall()
+{
+    if (!m_clipboard || !eisPortalBackendCaller(*this) || eisNativeLockActive()) {
+        sendErrorReply(QDBusError::AccessDenied, QStringLiteral("Only the selected unlocked portal backend may use the clipboard"));
+        return false;
+    }
+    return true;
+}
+
+int EisBackend::connectClipboard()
+{
+    if (!portalCall()) {
+        return 0;
+    }
+    const int handle = m_clipboard->open(message().service());
+    if (!handle) {
+        sendErrorReply(QDBusError::LimitsExceeded, QStringLiteral("Too many clipboard handles"));
+        return 0;
+    }
+    m_serviceWatcher->addWatchedService(message().service());
+    return handle;
+}
+
+void EisBackend::disconnectClipboard(int handle)
+{
+    if (portalCall() && !m_clipboard->close(message().service(), handle)) {
+        sendErrorReply(QDBusError::AccessDenied, QStringLiteral("Clipboard handle belongs to another sender"));
+    }
+}
+
+void EisBackend::setSelection(int handle, const QStringList &mimeTypes)
+{
+    if (portalCall() && !m_clipboard->setSelection(message().service(), handle, mimeTypes)) {
+        sendErrorReply(QDBusError::AccessDenied, QStringLiteral("Clipboard selection refused"));
+    }
+}
+
+QDBusUnixFileDescriptor EisBackend::readSelection(int handle, const QString &mimeType)
+{
+    if (!portalCall()) {
+        return {};
+    }
+    auto fd = m_clipboard->readSelection(message().service(), handle, mimeType);
+    if (!fd.isValid()) {
+        sendErrorReply(QDBusError::Failed, QStringLiteral("Clipboard selection unavailable"));
+    }
+    return fd;
 }
 
 eis_device *createDevice(eis_seat *seat, const QByteArray &name)
