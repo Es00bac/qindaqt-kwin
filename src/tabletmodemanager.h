@@ -20,7 +20,7 @@ namespace KWin
 class KWIN_EXPORT TabletModeManager : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.kde.KWin.TabletModeManager")
+    Q_CLASSINFO("D-Bus Interface", "org.qindaqt.KWin.TabletModeManager")
     // assuming such a switch is not pluggable for now
     Q_PROPERTY(bool tabletModeAvailable READ isTabletModeAvailable NOTIFY tabletModeAvailableChanged)
     Q_PROPERTY(bool tabletMode READ effectiveTabletMode NOTIFY tabletModeChanged)

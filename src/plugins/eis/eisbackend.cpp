@@ -108,7 +108,7 @@ void EisBackend::initialize()
         m_serviceWatcher->setWatchedServices({});
     });
 
-    QDBusConnection::sessionBus().registerObject("/org/kde/KWin/EIS/RemoteDesktop", "org.kde.KWin.EIS.RemoteDesktop", this, QDBusConnection::ExportAllInvokables);
+    QDBusConnection::sessionBus().registerObject("/org/qindaqt/KWin/EIS/RemoteDesktop", "org.qindaqt.KWin.EIS.RemoteDesktop", this, QDBusConnection::ExportAllInvokables);
 }
 
 void EisBackend::updateScreens()

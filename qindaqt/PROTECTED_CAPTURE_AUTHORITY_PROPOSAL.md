@@ -296,7 +296,7 @@ peer credentials or `ClientConnection::processId()` as proof of the child.
   protected 28-second writer/reply bound; and stream/job
   creation and revoke gates in `src/plugins/screencast/`.
   Preserve ordinary desktop-file permission behavior for unrelated clients and
-  the deliberate legacy `org.kde.KWin.ScreenShot2` wire name until PF21.
+  the deliberate legacy `org.qindaqt.KWin.ScreenShot2` wire name until PF21.
 - Portal owner: public adapter in `src/services/compositor_capture/`, including
   coordinated protected call/port total deadlines in
   `include/qindaqt/services/compositor_capture/capture_request.h` and

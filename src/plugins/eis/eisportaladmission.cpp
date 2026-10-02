@@ -26,7 +26,7 @@ bool eisPortalBackendCaller(const QDBusContext &context)
     if (!uid.isValid() || uid.value() != static_cast<uint>(geteuid())) {
         return false;
     }
-    for (const auto *name : {"org.freedesktop.impl.portal.desktop.qindaqt", "org.freedesktop.impl.portal.desktop.kde"}) {
+    for (const auto *name : {"org.freedesktop.impl.portal.desktop.qindaqt"}) {
         const QDBusReply<QString> owner = daemon->serviceOwner(QString::fromLatin1(name));
         if (owner.isValid() && owner.value() == sender) {
             return true;

@@ -29,9 +29,9 @@
 using namespace KWin;
 
 static const QString s_socketName = QStringLiteral("wayland_test_kwin_input_capture=0");
-static QString kwinInputCapturePath = QStringLiteral("/org/kde/KWin/EIS/InputCapture");
-static QString kwinInputCaptureManagerInterface = QStringLiteral("org.kde.KWin.EIS.InputCaptureManager");
-static QString kwinInputCaptureInterface = QStringLiteral("org.kde.KWin.EIS.InputCapture");
+static QString kwinInputCapturePath = QStringLiteral("/org/qindaqt/KWin/EIS/InputCapture");
+static QString kwinInputCaptureManagerInterface = QStringLiteral("org.qindaqt.KWin.EIS.InputCaptureManager");
+static QString kwinInputCaptureInterface = QStringLiteral("org.qindaqt.KWin.EIS.InputCapture");
 
 enum class PortalCapabilities {
     Keyboard = 1,

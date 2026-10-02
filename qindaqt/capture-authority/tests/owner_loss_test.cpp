@@ -103,7 +103,7 @@ void CaptureOwnerLossTest::initTestCase()
     QVERIFY(renderer.toLower().contains("llvmpipe"));
     QTRY_VERIFY_WITH_TIMEOUT(server->captureAuthority() && server->captureAuthority()->testBrokerReady(), 10000);
     QVERIFY(!kwinApp()->pluginManager()->loadedPlugins().contains(QStringLiteral("screenshot")));
-    const QString screenshotPath = QStringLiteral("/org/kde/KWin/ScreenShot2");
+    const QString screenshotPath = QStringLiteral("/org/qindaqt/KWin/ScreenShot2");
     QVERIFY(!QDBusConnection::sessionBus().objectRegisteredAt(screenshotPath));
     m_screenshot = std::make_unique<ScreenShotManager>();
     auto *endpoint = QDBusConnection::sessionBus().objectRegisteredAt(screenshotPath);

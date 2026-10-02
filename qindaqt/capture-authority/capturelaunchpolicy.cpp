@@ -77,7 +77,7 @@ bool isInstalledCaptureEntry(const QString &desktopPath, const QString &executab
     const auto dbus = entry.property<QStringList>(s_dbusRestrictedInterfaceName);
     const auto wayland = entry.property<QStringList>(s_waylandInterfaceName);
     if (helper) {
-        return dbus == QStringList{QStringLiteral("org.kde.KWin.ScreenShot2")}
+        return dbus == QStringList{QStringLiteral("org.qindaqt.KWin.ScreenShot2")}
             && wayland.isEmpty();
     }
     return dbus.isEmpty() && wayland.isEmpty();

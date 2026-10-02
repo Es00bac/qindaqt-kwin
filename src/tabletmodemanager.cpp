@@ -116,8 +116,8 @@ TabletModeManager::TabletModeManager()
     connect(m_settingsWatcher.data(), &KConfigWatcher::configChanged, this, &KWin::TabletModeManager::refreshSettings);
     refreshSettings();
 
-    QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/kde/KWin"),
-                                                 QStringLiteral("org.kde.KWin.TabletModeManager"),
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/org/qindaqt/KWin"),
+                                                 QStringLiteral("org.qindaqt.KWin.TabletModeManager"),
                                                  this,
                                                  // NOTE: slots must be exported for properties to work correctly
                                                  QDBusConnection::ExportAllProperties | QDBusConnection::ExportAllSignals | QDBusConnection::ExportAllSlots);

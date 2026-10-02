@@ -28,7 +28,7 @@ discovery or an environment override. On each launch,
 canonical executable and desktop files and every original/canonical parent
 must be root-owned and non-group/world-writable, and desktop `Exec` must be
 exactly the compiled-in executable with no extra arguments. The helper entry
-declares only `org.kde.KWin.ScreenShot2` for its legacy compatibility key;
+declares only `org.qindaqt.KWin.ScreenShot2` for its legacy compatibility key;
 the broker entry declares no general restricted permission. The compositor
 requires Yama `ptrace_scope` 1–3, sets core limits to zero, uses fixed empty
 argv and a sanitized allowlist environment, resets IDs and signal handlers,
@@ -201,7 +201,7 @@ job/sender lease, plus known/unlocked native privacy. Legacy authorized
 interactive selection remains allowed. Protected method entry, delayed
 selection, sink, reply and writer check the same lease; legacy and protected
 operations each send at most one terminal reply. The existing
-`org.kde.KWin`/`org.kde.KWin.ScreenShot2` wire names and `X-KDE-*` carve-outs
+`org.kde.KWin`/`org.qindaqt.KWin.ScreenShot2` wire names and `X-KDE-*` carve-outs
 remain until PF21.
 
 For a protected Screenshot2 job, the public port's earlier outer timer is

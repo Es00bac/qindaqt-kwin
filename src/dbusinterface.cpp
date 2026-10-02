@@ -36,12 +36,8 @@
 namespace KWin
 {
 
-// AGENT-NOTE: carve-out until PF21 (container-wm ADR-0289). The KDE portal,
-// Spectacle and Kirigami's tablet-mode watcher still reach ScreenShot2, the EIS
-// remote desktop and input capture objects, TabletModeManager (/org/kde/KWin)
-// and VirtualKeyboard (/VirtualKeyboard) through the KDE service name, so the fork owns
-// that name as well. Every other object exists only under /org/qindaqt/KWin.
-static const QString s_legacyServiceName = QStringLiteral("org.kde.KWin"); // qindaqt-identity: keep
+// AGENT-CONTRACT: native clients and Gabbee use only the QindaQt service and
+// object namespace after the coordinated PF21 cutover (container-wm ADR-0340).
 
 DBusInterface::DBusInterface(QObject *parent)
     : QObject(parent)
@@ -52,7 +48,6 @@ DBusInterface::DBusInterface(QObject *parent)
     QDBusConnection dbus = QDBusConnection::sessionBus();
     dbus.registerObject(QStringLiteral("/org/qindaqt/KWin"), this);
     dbus.registerService(m_serviceName);
-    dbus.registerService(s_legacyServiceName);
     dbus.connect(QString(), QStringLiteral("/org/qindaqt/KWin"), QStringLiteral("org.qindaqt.KWin"), QStringLiteral("reloadConfig"),
                  Workspace::self(), SLOT(slotReloadConfig()));
 
@@ -61,7 +56,6 @@ DBusInterface::DBusInterface(QObject *parent)
 
 DBusInterface::~DBusInterface()
 {
-    QDBusConnection::sessionBus().unregisterService(s_legacyServiceName);
     QDBusConnection::sessionBus().unregisterService(m_serviceName);
 }
 

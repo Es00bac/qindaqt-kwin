@@ -114,8 +114,8 @@ EisInputCapture::EisInputCapture(EisInputCaptureManager *manager, const QString 
     eis_log_set_handler(m_eis, eis_log_handler);
     connect(&m_socketNotifier, &QSocketNotifier::activated, this, &EisInputCapture::handleEvents);
     static int counter = 0;
-    m_dbusPath = QStringLiteral("/org/kde/KWin/EIS/InputCapture/%1").arg(++counter);
-    QDBusConnection::sessionBus().registerObject(m_dbusPath, "org.kde.KWin.EIS.InputCapture", this, QDBusConnection::ExportAllInvokables | QDBusConnection::ExportAllSignals);
+    m_dbusPath = QStringLiteral("/org/qindaqt/KWin/EIS/InputCapture/%1").arg(++counter);
+    QDBusConnection::sessionBus().registerObject(m_dbusPath, "org.qindaqt.KWin.EIS.InputCapture", this, QDBusConnection::ExportAllInvokables | QDBusConnection::ExportAllSignals);
 }
 
 EisInputCapture::~EisInputCapture()

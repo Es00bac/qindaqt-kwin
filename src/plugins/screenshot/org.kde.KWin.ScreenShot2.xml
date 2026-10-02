@@ -5,15 +5,15 @@
 
     SPDX-License-Identifier: LGPL-2.1-only OR LGPL-3.0-only OR LicenseRef-KDE-Accepted-LGPL
 -->
-<node name="/org/kde/KWin/ScreenShot2">
+<node name="/org/qindaqt/KWin/ScreenShot2">
     <!--
-        org.kde.KWin.ScreenShot2:
+        org.qindaqt.KWin.ScreenShot2:
         @short_description: Screen shot interface
 
         This interface provides a way to request a screenshot of a rectangular area,
         a screen, or a window.
     -->
-    <interface name="org.kde.KWin.ScreenShot2">
+    <interface name="org.qindaqt.KWin.ScreenShot2">
         <!--
             Version:
 
@@ -28,7 +28,7 @@
             @pipe: The pipe file descriptor where the screenshot will be written
 
             Take a screenshot of the specified window. The application that
-            requests the screenshot must have the org.kde.KWin.ScreenShot2
+            requests the screenshot must have the org.qindaqt.KWin.ScreenShot2
             interface listed in the X-KDE-DBUS-Restricted-Interfaces desktop
             file entry.
 
@@ -76,7 +76,7 @@
             @pipe: The pipe file descriptor where the screenshot will be written
 
             Take a screenshot of the active window. The application that
-            requests the screenshot must have the org.kde.KWin.ScreenShot2
+            requests the screenshot must have the org.qindaqt.KWin.ScreenShot2
             interface listed in the X-KDE-DBUS-Restricted-Interfaces desktop
             file entry.
 
@@ -129,7 +129,7 @@
             @pipe: The pipe file descriptor where the screenshot will be written
 
             Take a screenshot of the specified rectangular area. The application
-            that requests the screenshot must have the org.kde.KWin.ScreenShot2
+            that requests the screenshot must have the org.qindaqt.KWin.ScreenShot2
             interface listed in the X-KDE-DBUS-Restricted-Interfaces desktop file
             entry.
 
@@ -178,7 +178,7 @@
             @pipe: The pipe file descriptor where the screenshot will be written
 
             Take a screenshot of the specified monitor. The application that
-            requests the screenshot must have the org.kde.KWin.ScreenShot2
+            requests the screenshot must have the org.qindaqt.KWin.ScreenShot2
             interface listed in the X-KDE-DBUS-Restricted-Interfaces desktop file
             entry.
 
@@ -225,7 +225,7 @@
             @pipe: The pipe file descriptor where the screenshot will be written
 
             Take a screenshot of the active monitor. The application that
-            requests the screenshot must have the org.kde.KWin.ScreenShot2
+            requests the screenshot must have the org.qindaqt.KWin.ScreenShot2
             interface listed in the X-KDE-DBUS-Restricted-Interfaces desktop file
             entry.
 
@@ -330,7 +330,7 @@
             @pipe: The pipe file descriptor where the screenshot will be written
 
             Take a screenshot of the workspace, i.e. all screens united. The
-            application that requests the screenshot must have the org.kde.KWin.ScreenShot2
+            application that requests the screenshot must have the org.qindaqt.KWin.ScreenShot2
             interface listed in the X-KDE-DBUS-Restricted-Interfaces desktop file
             entry.
 

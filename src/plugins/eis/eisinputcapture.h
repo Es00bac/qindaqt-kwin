@@ -25,7 +25,7 @@ class BarrierSpy;
 class EisInputCapture : public QObject, protected QDBusContext
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.kde.KWin.EIS.InputCapture")
+    Q_CLASSINFO("D-Bus Interface", "org.qindaqt.KWin.EIS.InputCapture")
 public:
     EisInputCapture(EisInputCaptureManager *manager, const QString &dbusService, QFlags<eis_device_capability> allowedCapabilities);
     ~EisInputCapture();
