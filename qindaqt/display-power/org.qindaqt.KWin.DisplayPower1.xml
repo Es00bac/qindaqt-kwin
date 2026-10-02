@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<node>
+  <interface name="org.qindaqt.KWin.DisplayPower1">
+    <method name="RequestInventoryWithReceipt"><arg name="nonce" type="s" direction="in"/></method>
+    <method name="SetNativeAdmission"><arg name="epoch" type="t" direction="in"/><arg name="enabled" type="b" direction="in"/><arg name="accepted" type="b" direction="out"/></method>
+    <method name="AcquireBlank"><arg name="epoch" type="t" direction="in"/><arg name="requestId" type="s" direction="in"/><arg name="deadlineMs" type="t" direction="in"/><arg name="accepted" type="b" direction="out"/></method>
+    <method name="ReleaseBlank"><arg name="epoch" type="t" direction="in"/><arg name="requestId" type="s" direction="in"/><arg name="released" type="b" direction="out"/></method>
+    <signal name="InventoryChanged"/>
+    <signal name="InventoryReceipt"><arg name="nonce" type="s"/><arg name="epoch" type="t"/><arg name="available" type="b"/><arg name="inventory" type="ay"/></signal>
+    <signal name="LeaseEnded"><arg name="requestId" type="s"/><arg name="reason" type="s"/></signal>
+  </interface>
+</node>

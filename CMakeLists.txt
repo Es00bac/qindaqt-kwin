@@ -495,6 +495,7 @@ add_subdirectory(qindaqt)
 add_subdirectory(src)
 add_subdirectory(qindaqt/session-lock)
 add_subdirectory(qindaqt/capture-authority)
+add_subdirectory(qindaqt/display-power)
 
 if (BUILD_TESTING)
     if (Qt6WaylandClient_VERSION VERSION_GREATER_EQUAL "6.10.0")
