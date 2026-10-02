@@ -105,6 +105,12 @@ bool CaptureAuthority::privacyAllows() const
 
 void CaptureAuthority::start()
 {
+#if defined(QINDAQT_CAPTURE_AUTHORITY_TEST_AUTHORIZATION)
+    // Test-only remote-input driver omits capture publication, never grants it.
+    if (m_testBroker == QStringLiteral("@native-input-no-capture-broker")) {
+        return;
+    }
+#endif
     if (m_stopping || m_broker) {
         return;
     }
