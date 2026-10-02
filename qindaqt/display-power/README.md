@@ -8,7 +8,9 @@ nonzero random compositor-incarnation values. The supervisor uses its ordinary
 attachment and authenticated nonce-correlated InventoryReceipt before admission.
 
 AcquireBlank(epoch, requestId, deadlineMs) uses a 32-lowercase-hex request ID and
-an absolute same-host Qt monotonic reference deadline, at most60seconds ahead.
+an absolute same-host Qt monotonic reference deadline. Remaining lifetime at
+server admission must be at least1000ms and at most60seconds. The fixture uses
+1500ms for expiry, retaining delivery slack over the existing minimum.
 The finite deadline prevents a delayed acquire/renew from reviving a canceled
 request after its bounded cancel record expires. Same-connection release order
 and owner loss remain the primary cancellation fences. At most64 live IDs and a

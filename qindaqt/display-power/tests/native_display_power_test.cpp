@@ -276,7 +276,7 @@ private Q_SLOTS:
     void expiryAndAuthorityLoss()
     {
         expect(authority(), "SetNativeAdmission", {m_epoch, true}, true);
-        expect(authority(), "AcquireBlank", {m_epoch, m_request, deadline(350)}, true);
+        expect(authority(), "AcquireBlank", {m_epoch, m_request, deadline(1500)}, true);
         QTRY_COMPARE_WITH_TIMEOUT(m_reason, QStringLiteral("expired"), 2500);
         QTRY_COMPARE(workspace()->dpmsState(), Workspace::DpmsState::On);
         expect(authority(), "AcquireBlank", {m_epoch, QStringLiteral("2123456789abcdef0123456789abcdef"), deadline()}, true);
