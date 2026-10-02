@@ -50,8 +50,9 @@ bool CompatibilityEndpoint::handleNative(const QDBusMessage &message, const QDBu
     if (!signatures.contains(member) || signatures.value(member) != message.signature()) {
         connection.send(message.createErrorReply(QStringLiteral("org.freedesktop.DBus.Error.InvalidArgs"), QStringLiteral("Native shortcut signature mismatch"))); return true;
     }
+    const Registry before = *m_registry;
     const auto restore = snapshotRestore();
-    const auto reply = [this, &connection, &message, restore](QVariantList values, bool changed = false) {
+    const auto reply = [this, &connection, &message, restore, before](QVariantList values, bool changed = false) {
         QString error;
         if (changed && !persist(&error)) {
             restore();
@@ -59,7 +60,7 @@ bool CompatibilityEndpoint::handleNative(const QDBusMessage &message, const QDBu
             return;
         }
         connection.send(message.createReply(values));
-        if (changed) connection.send(QDBusMessage::createSignal(QStringLiteral("/org/qindaqt/Shortcuts1"), QStringLiteral("org.qindaqt.Shortcuts1"), QStringLiteral("BindingsChanged")));
+        if (changed) announceChanges(before);
     };
     if (message.interface() != QLatin1String("org.qindaqt.Shortcuts1")) return false;
     if (member == QLatin1String("ListBindings") && args.isEmpty()) {

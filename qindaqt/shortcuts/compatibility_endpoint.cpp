@@ -207,13 +207,14 @@ bool CompatibilityEndpoint::handleMessage(const QDBusMessage &message, const QDB
     const auto args = message.arguments();
     const QString member = message.member();
     const QString path = message.path();
+    const Registry before = *m_registry;
     const auto restore = snapshotRestore();
-    const auto sendReply = [this, &connection, &message, restore](QVariantList values = {}) {
+    const auto sendReply = [this, &connection, &message, restore, before](QVariantList values = {}) {
         QString error;
         if (!persist(&error)) {
             restore();
             connection.send(message.createErrorReply(QStringLiteral("org.qindaqt.Shortcuts1.Error.Persistence"), error));
-        } else connection.send(message.createReply(values));
+        } else { connection.send(message.createReply(values)); announceChanges(before); }
     };
     const auto failUnsupported = [&connection, &message]() {
         connection.send(message.createErrorReply(QStringLiteral("org.freedesktop.DBus.Error.UnknownMethod"),

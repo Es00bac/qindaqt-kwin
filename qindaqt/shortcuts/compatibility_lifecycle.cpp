@@ -5,6 +5,7 @@
 #include "compatibility_endpoint.h"
 #include "runtime_store.h"
 #include "desktop_actions.h"
+#include "compatibility_endpoint_wire.h"
 #include <QDBusConnectionInterface>
 #include <QDBusReply>
 #include <unistd.h>
@@ -52,6 +53,21 @@ void CompatibilityEndpoint::ownerLost(const QString &owner)
     }
     m_blockers.remove(owner); m_blocked = !m_blockers.isEmpty();
     m_watch->removeWatchedService(owner);
+}
+void CompatibilityEndpoint::announceChanges(const Registry &before)
+{
+    bool changed = false;
+    for (const auto &binding : m_registry->bindings()) {
+        const auto previous = before.binding(binding.id());
+        if (!previous || previous->shortcuts != binding.shortcuts) {
+            auto compatibility = QDBusMessage::createSignal(QStringLiteral("/kglobalaccel"), QStringLiteral("org.kde.KGlobalAccel"), QStringLiteral("yourShortcutsChanged"));
+            compatibility.setArguments({m_actionIds.value(binding.id()), encodedSequences(binding.shortcuts)}); m_bus.send(compatibility);
+        }
+        if (!previous || previous->shortcuts != binding.shortcuts || previous->defaultShortcuts != binding.defaultShortcuts
+            || previous->active != binding.active || previous->description != binding.description || previous->repeat != binding.repeat) changed = true;
+    }
+    for (const auto &binding : before.bindings()) if (!m_registry->binding(binding.id())) changed = true;
+    if (changed) m_bus.send(QDBusMessage::createSignal(QStringLiteral("/org/qindaqt/Shortcuts1"), QStringLiteral("org.qindaqt.Shortcuts1"), QStringLiteral("BindingsChanged")));
 }
 void CompatibilityEndpoint::setAdmission(std::function<bool()> admission) { m_admission = std::move(admission); }
 bool CompatibilityEndpoint::admitted() const { return !m_blocked && (!m_admission || m_admission()); }

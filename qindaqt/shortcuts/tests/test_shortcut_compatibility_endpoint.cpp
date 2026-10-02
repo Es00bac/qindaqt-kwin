@@ -137,6 +137,19 @@ void ShortcutCompatibilityEndpointTest::publicClientRegistrationAndInvocation()
     QCOMPARE(unsupported.type(), QDBusMessage::ErrorMessage);
     QCOMPARE(unsupported.errorName(), QStringLiteral("org.freedesktop.DBus.Error.UnknownMethod"));
 
+    // Native Settings must update existing KF6 client caches through the
+    // preserved compatibility signal, not only change compositor dispatch.
+    QDBusInterface native(QStringLiteral("org.qindaqt.Shortcuts1"), QStringLiteral("/org/qindaqt/Shortcuts1"),
+                          QStringLiteral("org.qindaqt.Shortcuts1"), QDBusConnection::sessionBus());
+    const QKeySequence nativeSequence(Qt::ALT | Qt::Key_F10);
+    const auto nativeChanged = native.call(QStringLiteral("SetShortcuts"), actionId.at(0), actionId.at(1),
+                                          QStringList{nativeSequence.toString(QKeySequence::PortableText)});
+    QCOMPARE(nativeChanged.type(), QDBusMessage::ReplyMessage); QVERIFY(nativeChanged.arguments().first().toBool());
+    QTRY_COMPARE(KGlobalAccel::self()->shortcut(&action), QList<QKeySequence>{nativeSequence});
+    QVERIFY(native.call(QStringLiteral("SetShortcuts"), actionId.at(0), actionId.at(1),
+                        QStringList{otherSequence.toString(QKeySequence::PortableText)}).arguments().first().toBool());
+    QTRY_COMPARE(KGlobalAccel::self()->shortcut(&action), QList<QKeySequence>{otherSequence});
+
     const auto binding = registry.binding(QStringLiteral("qindaqt-private-contract")
                                           + QChar(0x1f) + QStringLiteral("show-launcher"));
     QVERIFY(binding);

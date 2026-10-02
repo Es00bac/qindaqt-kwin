@@ -42,6 +42,7 @@ public:
 private:
     QString nativeIntrospection() const;
     std::function<void()> snapshotRestore();
+    void announceChanges(const Registry &before);
     bool authenticated(const QDBusMessage &) const;
     bool handleNative(const QDBusMessage &, const QDBusConnection &);
     void ownerLost(const QString &owner);
