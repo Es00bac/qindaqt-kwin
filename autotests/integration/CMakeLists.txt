@@ -226,7 +226,9 @@ if(QINDAQT_SESSION_LOCK_TEST_AUTHORIZATION)
             RUNNER ${PROJECT_SOURCE_DIR}/qindaqt/tools/run-native-lock
             SRCS ${PROJECT_SOURCE_DIR}/qindaqt/shortcuts/tests/native_shortcuts_integration_test.cpp
             LIBS Qt::DBus)
-        target_include_directories(testNativeShortcuts PRIVATE ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+        target_include_directories(testNativeShortcuts PRIVATE
+            ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/qindaqt/session-lock
+            ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
         # Both native fixtures live in this binary directory. Reuse the lock
         # protocol generated once below; Qt otherwise emits duplicate rules.
         target_sources(testNativeShortcuts PRIVATE
