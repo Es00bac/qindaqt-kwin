@@ -40,7 +40,11 @@ void NativeCaptureAuthorityTest::initTestCase()
     static_cast<WaylandTestApplication *>(kwinApp())->setInputMethodServerToStart(QStringLiteral("internal"));
     qputenv("KWIN_COMPOSE", QByteArrayLiteral("O2"));
     kwinApp()->start();
-    Test::setOutputConfig({Rect(0, 0, 1100, 820)});
+    if (qEnvironmentVariable("QINDAQT_PRIVATE_CAPTURE_TWO_OUTPUTS") == QLatin1String("1")) {
+        Test::setOutputConfig({Rect(0, 0, 1100, 820), Rect(1100, 0, 800, 600)});
+    } else {
+        Test::setOutputConfig({Rect(0, 0, 1100, 820)});
+    }
     QTRY_VERIFY_WITH_TIMEOUT(server->captureAuthority()
                              && server->captureAuthority()->testBrokerReady(), 10000);
 }
