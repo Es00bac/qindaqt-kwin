@@ -4,6 +4,7 @@
 */
 #include "compatibility_endpoint.h"
 #include "runtime_store.h"
+#include "desktop_actions.h"
 #include <QDBusConnectionInterface>
 #include <QDBusReply>
 #include <unistd.h>
@@ -37,7 +38,8 @@ void CompatibilityEndpoint::ownerLost(const QString &owner)
     // remain reserved but disconnected actions cannot dispatch until reclaimed.
     for (auto it = m_owners.begin(); it != m_owners.end();) {
         if (it.value() == owner) {
-            m_registry->setActive(it.key(), false);
+            const auto binding = m_registry->binding(it.key());
+            m_registry->setActive(it.key(), binding && desktopActionAvailable(*binding));
             if (m_transient.contains(it.key())) {
                 m_registry->unregisterBinding(it.key()); m_actionIds.remove(it.key());
                 if (m_store) m_store->setTransient(it.key(), false);
@@ -49,5 +51,7 @@ void CompatibilityEndpoint::ownerLost(const QString &owner)
     m_blockers.remove(owner); m_blocked = !m_blockers.isEmpty();
     m_watch->removeWatchedService(owner);
 }
+void CompatibilityEndpoint::setAdmission(std::function<bool()> admission) { m_admission = std::move(admission); }
+bool CompatibilityEndpoint::admitted() const { return !m_blocked && (!m_admission || m_admission()); }
 bool CompatibilityEndpoint::persist(QString *error) { return !m_store || m_store->save(error); }
 }

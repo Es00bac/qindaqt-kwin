@@ -130,6 +130,7 @@ find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS
     DBusAddons
     GlobalAccel
     GuiAddons
+    KIO
     I18n
     IdleTime
     Package

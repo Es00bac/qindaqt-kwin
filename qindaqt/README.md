@@ -155,7 +155,8 @@ press/repeat/release and rolling four-chord logic, preserving copyright. The
 legacy adapter imports default-context kglobalshortcutsrc triples once; saved
 native values win, and disconnected owners become inactive without losing their
 key reservations. Non-default contexts explicitly remain unsupported here.
-Desktop-file activation and full live release qualification are still pending.
+Desktop-file actions reuse KService/KIO ApplicationLauncherJob, including the
+accepted user command-file contract. Full live release qualification is still pending.
 
 Focused source-only contracts can be configured separately from the compositor:
 `cmake -S qindaqt/shortcuts/tests -B build/shortcut-contracts -G Ninja` followed

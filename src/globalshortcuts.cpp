@@ -113,6 +113,7 @@ void GlobalShortcutsManager::init()
         qCWarning(KWIN_CORE) << "Native shortcut endpoint could not own its user bus names";
         m_nativeEndpoint.reset(); return;
     }
+    m_nativeEndpoint->setAdmission([] { return !waylandServer()->isScreenLocked() && !waylandServer()->isKeyboardShortcutsInhibited(); });
     m_nativeInput = std::make_unique<Shortcuts::InputDispatcher>(m_nativeRegistry, [this](const Shortcuts::Binding &binding, Shortcuts::ShortcutEvent event) {
         m_nativeEndpoint->notifyShortcut(binding, event, 0);
     });

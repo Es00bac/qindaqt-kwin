@@ -5,6 +5,7 @@
 #include "compatibility_endpoint.h"
 #include "compatibility_endpoint_wire.h"
 #include "runtime_store.h"
+#include "desktop_actions.h"
 #include <QDBusConnectionInterface>
 #include <QDBusReply>
 #include <unistd.h>
@@ -67,6 +68,7 @@ bool CompatibilityEndpoint::start(const QString &serviceName)
         || !m_bus.registerService(QStringLiteral("org.qindaqt.Shortcuts1"))
         || !m_bus.registerVirtualObject(QStringLiteral("/org/qindaqt/Shortcuts1"), this)) return false;
     for (const auto &binding : m_registry->bindings()) {
+        if (desktopActionAvailable(binding)) m_registry->setActive(binding.id(), true);
         m_actionIds.insert(binding.id(), {binding.component, binding.action,
             binding.owners.value(0, binding.component), binding.description});
     }
@@ -80,6 +82,9 @@ bool CompatibilityEndpoint::shortcutsBlocked() const noexcept
 
 void CompatibilityEndpoint::notifyShortcut(const Binding &binding, ShortcutEvent event, qint64 timestamp)
 {
+    if (event != ShortcutEvent::Released && (!admitted() || !binding.active)) return;
+    if (event == ShortcutEvent::Pressed && launchDesktopAction(binding)) return;
+    if (desktopActionAvailable(binding)) return;
     const QString path = componentPath(binding.component);
     if (!m_componentPaths.contains(path)) {
         if (!m_bus.registerVirtualObject(path, this))
@@ -109,7 +114,8 @@ QString CompatibilityEndpoint::componentPath(const QString &component) const
 
 bool CompatibilityEndpoint::ensureBinding(const QStringList &id, const QString &owner)
 {
-    if (id.size() != 4 || id.at(0).isEmpty() || id.at(1).isEmpty())
+    if (id.size() != 4 || id.at(0).trimmed().isEmpty() || id.at(1).trimmed().isEmpty()
+        || id.at(0).size() > 512 || id.at(1).size() > 512 || id.at(0).contains(QChar(0x1f)) || id.at(1).contains(QChar(0x1f)))
         return false;
     const QString key = actionKey(id);
     if (!owner.isEmpty()) {
@@ -122,6 +128,7 @@ bool CompatibilityEndpoint::ensureBinding(const QStringList &id, const QString &
         if (!owner.isEmpty()) m_registry->setActive(key, true);
         return true;
     }
+    if (m_actionIds.size() >= 4096) return false;
     Binding binding;
     binding.component = id.at(0);
     binding.action = id.at(1);
@@ -131,8 +138,7 @@ bool CompatibilityEndpoint::ensureBinding(const QStringList &id, const QString &
     // client opts out; this wire format has no per-action repeat switch.
     binding.repeat = true;
     binding.active = !owner.isEmpty();
-    if (m_registry->registerBinding(binding).status != RegisterStatus::Registered)
-        return false;
+    if (m_registry->registerBinding(binding).status != RegisterStatus::Registered) { m_owners.remove(key); return false; }
     m_actionIds.insert(key, id);
     return true;
 }

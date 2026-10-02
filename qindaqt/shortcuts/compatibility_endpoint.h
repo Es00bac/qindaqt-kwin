@@ -31,6 +31,8 @@ public:
     ~CompatibilityEndpoint() override;
 
     bool start(const QString &serviceName);
+    void setAdmission(std::function<bool()> admission);
+    bool admitted() const;
     bool shortcutsBlocked() const noexcept;
     void notifyShortcut(const Binding &binding, ShortcutEvent event, qint64 timestamp);
     QString introspect(const QString &path) const override;
@@ -56,6 +58,7 @@ private:
     QHash<QString, QString> m_owners;
     QSet<QString> m_blockers;
     QSet<QString> m_transient;
+    std::function<bool()> m_admission;
     bool m_blocked = false;
 };
 } // namespace KWin::Shortcuts

@@ -85,10 +85,8 @@ bool CompatibilityEndpoint::handleComponent(const QDBusMessage &message, const Q
             return true;
         }
         if (member == QLatin1String("invokeShortcut") && args.size() == 1) {
-            QDBusMessage signal = QDBusMessage::createSignal(path, ComponentInterface,
-                                                              QStringLiteral("globalShortcutPressed"));
-            signal.setArguments({component, args.first().toString(), qint64(0)});
-            connection.send(signal);
+            const auto binding = m_registry->binding(component + QChar(0x1f) + args.first().toString());
+            if (binding && binding->active && admitted()) notifyShortcut(*binding, ShortcutEvent::Pressed, 0);
             sendReply();
             return true;
         }

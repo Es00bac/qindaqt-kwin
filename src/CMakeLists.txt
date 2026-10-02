@@ -28,9 +28,10 @@ add_library(qindaqt_kwin_shortcut_endpoint STATIC
     ../qindaqt/shortcuts/compatibility_lifecycle.cpp
     ../qindaqt/shortcuts/native_endpoint.cpp
     ../qindaqt/shortcuts/runtime_store.cpp
-    ../qindaqt/shortcuts/input_dispatcher.cpp)
+    ../qindaqt/shortcuts/input_dispatcher.cpp
+    ../qindaqt/shortcuts/desktop_actions.cpp)
 target_include_directories(qindaqt_kwin_shortcut_endpoint PUBLIC ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(qindaqt_kwin_shortcut_endpoint PUBLIC qindaqt_kwin_shortcuts Qt::DBus KF6::ConfigCore)
+target_link_libraries(qindaqt_kwin_shortcut_endpoint PUBLIC qindaqt_kwin_shortcuts Qt::DBus KF6::ConfigCore KF6::KIOGui KF6::Service)
 set_target_properties(qindaqt_kwin_shortcut_endpoint PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_library(kwin SHARED)
