@@ -33,3 +33,37 @@ disabling outputs. Unknown/mixed output provenance fails closed.
 
 Only source/static checks have run for this next slice. Native compositor/bus
 integration and installation/collision gates remain required before acceptance.
+
+## Native integration qualification fixture (source checkpoint)
+
+`testNativeDisplayPower` is a noninstalled KWinIntegrationTestFramework target
+under test-only session-lock authorization. It uses the real Workspace,
+DisplayPower1 D-Bus object and separate ordinary/Session1-owner bus connections.
+The fixture's Session1 name owner is admitted by the existing actual unique
+sender/UID check; no authorizer or production permission is overridden.
+
+Stock virtual output capability remains unsupported: the fixture starts from
+VirtualOutput's actual CustomModes-only information and explicitly verifies that
+restoring this information rejects admission. For supported rows only, a private
+derived output advertises DPMS through BackendOutput's existing protected state
+setter, selected through Application::setOutputBackend before startup. Its
+upstream VirtualOutput::applyChanges and real Workspace animation/completion
+perform output mode transitions. Because VirtualOutput is not exported from the
+shared core, the target compiles the unchanged upstream virtual_output.cpp into
+its private executable; it does not modify production output/backend code.
+This proves native scoped routing over deterministic software nested outputs,
+not physical DRM or hardware DPMS.
+
+Authored rows cover real targeted epoch/inventory receipt, rejected ordinary and
+stale-epoch mutation, unsupported/mixed/missing/off inventory, conflicting legacy
+writer, topology withdrawal, actual output Off/On, same-mode/preexisting external
+Off preservation, injected keyboard wake, finite expiry and Session1 owner loss.
+Each test uses a fresh request ID so bounded retired-ID rejection cannot leak
+between rows. Compile and runtime are pending manager's coherent warm-cache
+lease; source alone is not qualification.
+
+Desktop2944dcd41 exclusive activation additionally requires a separate gate.
+At this checkpoint it suppresses its PowerDevil child before native composition
+readiness and only logs failed native-lock/power composition. That cannot satisfy
+“refuse exclusive activation without prerequisites”; this is a reported source
+blocker, not a passing fixture or installed cutover claim.
