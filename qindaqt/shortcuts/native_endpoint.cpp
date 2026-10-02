@@ -49,11 +49,11 @@ bool CompatibilityEndpoint::handleNative(const QDBusMessage &message, const QDBu
     if (!signatures.contains(member) || signatures.value(member) != message.signature()) {
         connection.send(message.createErrorReply(QStringLiteral("org.freedesktop.DBus.Error.InvalidArgs"), QStringLiteral("Native shortcut signature mismatch"))); return true;
     }
-    const Registry before = *m_registry;
-    const auto reply = [this, &connection, &message, before](QVariantList values, bool changed = false) {
+    const auto restore = snapshotRestore();
+    const auto reply = [this, &connection, &message, restore](QVariantList values, bool changed = false) {
         QString error;
         if (changed && !persist(&error)) {
-            *m_registry = before;
+            restore();
             connection.send(message.createErrorReply(QStringLiteral("org.qindaqt.Shortcuts1.Error.Persistence"), error));
             return;
         }
@@ -84,9 +84,9 @@ bool CompatibilityEndpoint::handleNative(const QDBusMessage &message, const QDBu
     if (member == QLatin1String("Register") && args.size() == 6) {
         const auto keys = nativeKeys(args.at(3));
         const QStringList id{args.at(0).toString(), args.at(1).toString(), args.at(0).toString(), args.at(2).toString()};
-        if (!keys || !ensureBinding(id, message.service())) { reply({false, QStringLiteral("Invalid or already owned binding")}); return true; }
+        if (!keys || !ensureBinding(id, message.service())) { restore(); reply({false, QStringLiteral("Invalid or already owned binding")}); return true; }
         const auto result = m_registry->setShortcuts(id.at(0) + QChar(0x1f) + id.at(1), *keys);
-        if (result.status != RegisterStatus::Registered) { *m_registry = before; reply({false, result.conflictingOwner}); return true; }
+        if (result.status != RegisterStatus::Registered) { restore(); reply({false, result.conflictingOwner}); return true; }
         const QString key = id.at(0) + QChar(0x1f) + id.at(1);
         m_registry->setRepeat(key, args.at(4).toBool());
         if (args.at(5).toBool()) m_transient.insert(key); else m_transient.remove(key);
@@ -96,6 +96,9 @@ bool CompatibilityEndpoint::handleNative(const QDBusMessage &message, const QDBu
     if (member == QLatin1String("SetShortcuts") && args.size() == 3) {
         const auto keys = nativeKeys(args.at(2));
         const QString id = args.at(0).toString() + QChar(0x1f) + args.at(1).toString();
+        if (m_transient.contains(id) && m_owners.value(id) != message.service()) {
+            reply({false, QStringLiteral("Transient shortcut belongs to another caller")}); return true;
+        }
         const auto result = keys ? m_registry->setShortcuts(id, *keys) : RegisterResult{};
         if (result.status == RegisterStatus::Registered && m_store) m_store->keysAssigned(id);
         reply({result.status == RegisterStatus::Registered, result.conflictingOwner}, result.status == RegisterStatus::Registered); return true;

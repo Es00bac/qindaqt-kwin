@@ -12,6 +12,7 @@
 #include <QSet>
 #include <QDBusServiceWatcher>
 #include <memory>
+#include <functional>
 
 #include <optional>
 
@@ -37,6 +38,7 @@ public:
 
 private:
     QString nativeIntrospection() const;
+    std::function<void()> snapshotRestore();
     bool authenticated(const QDBusMessage &) const;
     bool handleNative(const QDBusMessage &, const QDBusConnection &);
     void ownerLost(const QString &owner);

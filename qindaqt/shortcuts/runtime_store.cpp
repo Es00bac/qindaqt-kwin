@@ -24,6 +24,8 @@ QList<QKeySequence> legacyKeys(const QString &text)
     return keys;
 }
 }
+RuntimeStore::State RuntimeStore::checkpoint() const { return {m_store, m_transient, m_assigned}; }
+void RuntimeStore::restore(const State &state) { m_store = state.store; m_transient = state.transient; m_assigned = state.assigned; }
 RuntimeStore::RuntimeStore(Registry &registry) : m_registry(registry) {}
 bool RuntimeStore::load(const QString &nativePath, const QString &legacyPath, QString *error)
 {

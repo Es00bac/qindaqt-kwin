@@ -10,6 +10,21 @@
 
 namespace KWin::Shortcuts
 {
+std::function<void()> CompatibilityEndpoint::snapshotRestore()
+{
+    const auto registry = *m_registry;
+    const auto actions = m_actionIds;
+    const auto owners = m_owners;
+    const auto transient = m_transient, blockers = m_blockers;
+    const auto watched = m_watch->watchedServices();
+    const auto storage = m_store ? m_store->checkpoint() : RuntimeStore::State{};
+    return [this, registry, actions, owners, transient, blockers, watched, storage] {
+        *m_registry = registry; m_actionIds = actions; m_owners = owners;
+        m_transient = transient; m_blockers = blockers; m_blocked = !blockers.isEmpty();
+        m_watch->setWatchedServices(watched);
+        if (m_store) m_store->restore(storage);
+    };
+}
 bool CompatibilityEndpoint::authenticated(const QDBusMessage &message) const
 {
     if (!message.service().startsWith(QLatin1Char(':')) || !m_bus.interface()) return false;

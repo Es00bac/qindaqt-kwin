@@ -202,6 +202,7 @@ QList<Binding> Registry::bindings() const
 bool Store::load(const QString &path, QString *error)
 {
     QFile file(path);
+    if (file.size() > 4 * 1024 * 1024) { if (error) *error = QStringLiteral("Shortcut store exceeds its bound"); return false; }
     if (!file.exists()) {
         m_bindings.clear();
         m_legacyImported = false;

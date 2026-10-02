@@ -14,6 +14,9 @@ namespace KWin::Shortcuts
 class RuntimeStore final
 {
 public:
+    struct State { Store store; QSet<QString> transient, assigned; };
+    State checkpoint() const;
+    void restore(const State &);
     explicit RuntimeStore(Registry &registry);
     bool load(const QString &nativePath, const QString &legacyPath, QString *error);
     bool save(QString *error);

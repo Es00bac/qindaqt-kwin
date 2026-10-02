@@ -30,3 +30,6 @@ add_test(NAME qindaqt-shortcut-runtime COMMAND $<TARGET_FILE:testShortcutRuntime
 add_executable(testShortcutRegistry ${FORK_ROOT}/autotests/test_shortcut_registry.cpp)
 target_link_libraries(testShortcutRegistry PRIVATE qindaqt_kwin_shortcuts Qt6::Test)
 add_test(NAME qindaqt-shortcut-registry COMMAND $<TARGET_FILE:testShortcutRegistry>)
+add_executable(testShortcutNativeEndpoint test_shortcut_native_endpoint.cpp)
+target_link_libraries(testShortcutNativeEndpoint PRIVATE qindaqt_kwin_shortcut_endpoint Qt6::Test)
+add_test(NAME qindaqt-shortcut-native-endpoint COMMAND dbus-run-session -- $<TARGET_FILE:testShortcutNativeEndpoint>)
