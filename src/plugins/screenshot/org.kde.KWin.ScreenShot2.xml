@@ -29,7 +29,7 @@
 
             Take a screenshot of the specified window. The application that
             requests the screenshot must have the org.qindaqt.KWin.ScreenShot2
-            interface listed in the X-KDE-DBUS-Restricted-Interfaces desktop
+            interface listed in the X-QindaQt-KWin-DBus-Restricted-Interfaces desktop
             file entry.
 
             Available @options include:
@@ -77,7 +77,7 @@
 
             Take a screenshot of the active window. The application that
             requests the screenshot must have the org.qindaqt.KWin.ScreenShot2
-            interface listed in the X-KDE-DBUS-Restricted-Interfaces desktop
+            interface listed in the X-QindaQt-KWin-DBus-Restricted-Interfaces desktop
             file entry.
 
             Supported since version 2.
@@ -130,7 +130,7 @@
 
             Take a screenshot of the specified rectangular area. The application
             that requests the screenshot must have the org.qindaqt.KWin.ScreenShot2
-            interface listed in the X-KDE-DBUS-Restricted-Interfaces desktop file
+            interface listed in the X-QindaQt-KWin-DBus-Restricted-Interfaces desktop file
             entry.
 
             Available @options include:
@@ -179,7 +179,7 @@
 
             Take a screenshot of the specified monitor. The application that
             requests the screenshot must have the org.qindaqt.KWin.ScreenShot2
-            interface listed in the X-KDE-DBUS-Restricted-Interfaces desktop file
+            interface listed in the X-QindaQt-KWin-DBus-Restricted-Interfaces desktop file
             entry.
 
             Available @options include:
@@ -226,7 +226,7 @@
 
             Take a screenshot of the active monitor. The application that
             requests the screenshot must have the org.qindaqt.KWin.ScreenShot2
-            interface listed in the X-KDE-DBUS-Restricted-Interfaces desktop file
+            interface listed in the X-QindaQt-KWin-DBus-Restricted-Interfaces desktop file
             entry.
 
             Supported since version 2.
@@ -331,7 +331,7 @@
 
             Take a screenshot of the workspace, i.e. all screens united. The
             application that requests the screenshot must have the org.qindaqt.KWin.ScreenShot2
-            interface listed in the X-KDE-DBUS-Restricted-Interfaces desktop file
+            interface listed in the X-QindaQt-KWin-DBus-Restricted-Interfaces desktop file
             entry.
 
             Supported since version 3.
