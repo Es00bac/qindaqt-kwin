@@ -106,6 +106,8 @@ RULES = [
     Rule("D-Bus lower-case interfaces",
          r"\borg\.kde\.kwin\.(Effects|Compositing|Scripting|Script|FTrace|ColorPicker|InputDevice|VirtualKeyboard)\b(?![\w.]*\.xml\b)",
          r"org.qindaqt.KWin.\1"),
+    Rule("D-Bus tablet-mode object path", r"(?<=[\"'])/org/kde/KWin(?=[\"'])",
+         "/org/qindaqt/KWin/TabletModeManager", files=["*tabletmodemanager.cpp"]),
     Rule("D-Bus object paths", r"(?<=[\"'])/org/kde/KWin(?=[/\"'])", "/org/qindaqt/KWin"),
     Rule("D-Bus main object path", r"(?<=[\"'])/KWin(?=[\"'])", "/org/qindaqt/KWin"),
     Rule("D-Bus root object paths", r"(?<=[\"'])/(Compositor|VirtualDesktopManager|Plugins|Effects|FTrace|ColorPicker|Scripting|VirtualKeyboard)(?=[\"'/])",
