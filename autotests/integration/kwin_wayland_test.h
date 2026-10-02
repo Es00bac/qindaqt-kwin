@@ -117,6 +117,9 @@ class WaylandTestApplication : public Application
     Q_OBJECT
 public:
     WaylandTestApplication(int &argc, char **argv, bool runOnKMS);
+    // AGENT-CONTRACT: fixture backend ownership transfers before the one-shot
+    // Application setter; old callers retain their original constructor symbol.
+    WaylandTestApplication(int &argc, char **argv, bool runOnKMS, std::unique_ptr<OutputBackend> outputBackend);
     ~WaylandTestApplication() override;
 
     void setInputMethodServerToStart(const QString &inputMethodServer)
