@@ -105,6 +105,11 @@ preferences (container-wm ADR-0313). A production configure must succeed with
 
 ## Helper tests
 
+Remote-input EIS admission follows only the exact unique owner of
+`org.freedesktop.impl.portal.desktop.qindaqt.capture`: the compositor-launched
+broker composes sharing and input sessions together (container-wm ADR-0341).
+The ordinary resident backend and stock KDE backend receive no EIS context.
+
 `-DQINDAQT_KWIN_BUILD_TESTS=ON` builds the tests of qindaqt-kwin's own helpers
 without KWin's autotests; run them with
 `ctest --test-dir build/qindaqt/helpers/terminate-process/tests`.
