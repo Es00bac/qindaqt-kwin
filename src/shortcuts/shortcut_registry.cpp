@@ -53,11 +53,9 @@ bool readSequences(const QJsonValue &value, QList<QKeySequence> *result)
     for (const QJsonValue &entry : value.toArray()) {
         if (!entry.isString()) return false;
         const QString text = entry.toString();
-        const QKeySequence sequence(text, QKeySequence::PortableText);
-        if (sequence.isEmpty() || sequence.count() > 4
-            || sequence.toString(QKeySequence::PortableText) != text)
-            return false;
-        result->append(sequence);
+        const auto sequence = portableSequence(text);
+        if (!sequence) return false;
+        result->append(*sequence);
     }
     return true;
 }
@@ -100,6 +98,24 @@ std::optional<Binding> decode(const QJsonValue &value)
         return std::nullopt;
     return binding;
 }
+}
+
+std::optional<QKeySequence> portableSequence(const QString &text)
+{
+    QKeySequence sequence(text, QKeySequence::PortableText);
+    // AGENT-GUARD: Qt writes bare modifiers as "Meta+" but reads them as an
+    // unknown key. Decode through a temporary real key and require the exact
+    // original canonical spelling; ordinary plus-key chords remain unchanged.
+    if (text.endsWith(QLatin1Char('+'))) {
+        const QKeySequence chord(text + QStringLiteral("F24"), QKeySequence::PortableText);
+        if (chord.count() == 1 && chord[0].key() == Qt::Key_F24) {
+            const QKeySequence modifiers{int(chord[0].keyboardModifiers())};
+            if (modifiers.toString(QKeySequence::PortableText) == text) sequence = modifiers;
+        }
+    }
+    if (sequence.isEmpty() || sequence.count() > 4
+        || sequence.toString(QKeySequence::PortableText) != text) return std::nullopt;
+    return sequence;
 }
 
 QString Binding::id() const

@@ -134,19 +134,23 @@ private Q_SLOTS:
     {
         QTest::addColumn<uint>("physicalKey");
         QTest::addColumn<QString>("portable");
-        QTest::newRow("physical-w") << uint(KEY_W) << QStringLiteral("Ctrl+Alt+W");
-        QTest::newRow("layout-independent-f12") << uint(KEY_F12) << QStringLiteral("Ctrl+Alt+F12");
+        QTest::addColumn<bool>("alt");
+        QTest::newRow("physical-w") << uint(KEY_W) << QStringLiteral("Ctrl+Alt+W") << true;
+        // AGENT-GUARD: Ctrl+Alt+F12 is reserved for console switching before
+        // shortcut filtering. Use an unreserved function-key chord here.
+        QTest::newRow("layout-independent-f12") << uint(KEY_F12) << QStringLiteral("Ctrl+F12") << false;
     }
     void nonLatinLayoutPressAndRelease()
     {
         QFETCH(uint, physicalKey);
         QFETCH(QString, portable);
+        QFETCH(bool, alt);
         QVERIFY(bind("layout", portable));
         input()->keyboard()->xkb()->switchToLayout(1);
         QCOMPARE(input()->keyboard()->xkb()->layoutName(), QStringLiteral("Russian"));
         QSignalSpy press(this, &NativeShortcutsIntegrationTest::nativeActivated), release(this, &NativeShortcutsIntegrationTest::nativeDeactivated);
         uint time = 1;
-        chord(time, physicalKey);
+        chord(time, physicalKey, true, alt);
         QTRY_COMPARE(press.count(), 1);
         QTRY_COMPARE(release.count(), 1);
         QCOMPARE(press.first().at(1).toString(), QStringLiteral("layout"));
@@ -172,44 +176,42 @@ private Q_SLOTS:
     }
     void repeatedNativeAction()
     {
-        QVERIFY(bind("repeat", "Ctrl+Alt+F12", true));
+        QVERIFY(bind("repeat", "Ctrl+F12", true));
         waylandServer()->seat()->keyboard()->setRepeatInfo(25, 300);
         QSignalSpy press(this, &NativeShortcutsIntegrationTest::nativeActivated), release(this, &NativeShortcutsIntegrationTest::nativeDeactivated);
         uint time = 1;
         Test::keyboardKeyPressed(KEY_WAKEUP, time++);
         Test::keyboardKeyReleased(KEY_WAKEUP, time++);
         Test::keyboardKeyPressed(KEY_LEFTCTRL, time++);
-        Test::keyboardKeyPressed(KEY_LEFTALT, time++);
         Test::keyboardKeyPressed(KEY_F12, time++);
         QTRY_VERIFY_WITH_TIMEOUT(press.count() >= 3, 3000);
         Test::keyboardKeyReleased(KEY_F12, time++);
-        Test::keyboardKeyReleased(KEY_LEFTALT, time++);
         Test::keyboardKeyReleased(KEY_LEFTCTRL, time++);
         QTRY_COMPARE(release.count(), 1);
     }
     void actualNativeLockSuppressesThenRestores()
     {
-        QVERIFY(bind("lock", "Ctrl+Alt+F12"));
+        QVERIFY(bind("lock", "Ctrl+F12"));
         QSignalSpy press(this, &NativeShortcutsIntegrationTest::nativeActivated);
         uint time = 1;
-        chord(time, KEY_F12);
+        chord(time, KEY_F12, true, false);
         QTRY_COMPARE(press.count(), 1);
         auto locker = NativeClient::create(true);
         QVERIFY(locker && locker->manager);
         NativeLock lock(locker->manager->lock());
         QTRY_VERIFY(lock.locked);
         QVERIFY(waylandServer()->isScreenLocked());
-        chord(time, KEY_F12);
+        chord(time, KEY_F12, true, false);
         QTest::qWait(100);
         QCOMPARE(press.count(), 1);
         lock.unlock();
         QTRY_VERIFY(!waylandServer()->isScreenLocked());
-        chord(time, KEY_F12);
+        chord(time, KEY_F12, true, false);
         QTRY_COMPARE(press.count(), 2);
     }
     void actualFocusedSurfaceInhibitorSuppressesThenRestores()
     {
-        QVERIFY(bind("inhibit", "Ctrl+Alt+F12"));
+        QVERIFY(bind("inhibit", "Ctrl+F12"));
         auto connection = Test::Connection::setup(Test::AdditionalWaylandInterface::Seat);
         QVERIFY(connection && connection->seat);
         KWayland::Client::Registry registry;
@@ -235,13 +237,13 @@ private Q_SLOTS:
         QTRY_VERIFY(waylandServer()->isKeyboardShortcutsInhibited());
         QSignalSpy press(this, &NativeShortcutsIntegrationTest::nativeActivated);
         uint time = 1;
-        chord(time, KEY_F12);
+        chord(time, KEY_F12, true, false);
         QTest::qWait(100);
         QCOMPARE(press.count(), 0);
         inhibitor.destroy();
         QVERIFY(connection->sync());
         QTRY_VERIFY(!waylandServer()->isKeyboardShortcutsInhibited());
-        chord(time, KEY_F12);
+        chord(time, KEY_F12, true, false);
         QTRY_COMPARE(press.count(), 1);
         manager.destroy();
     }

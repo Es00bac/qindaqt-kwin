@@ -19,7 +19,7 @@ QList<QKeySequence> legacyKeys(const QString &text)
     QList<QKeySequence> keys;
     for (const QString &part : text.split(QLatin1Char('\t'))) {
         if (part.isEmpty() || part == QLatin1String("none")) continue;
-        keys.append(QKeySequence(part, QKeySequence::PortableText));
+        keys.append(portableSequence(part).value_or(QKeySequence(part, QKeySequence::PortableText)));
     }
     return keys;
 }

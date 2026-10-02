@@ -13,6 +13,10 @@
 
 namespace KWin::Shortcuts
 {
+// Pure, thread-independent value conversion. Accept canonical PortableText,
+// including modifier-only chords; invalid or noncanonical input has no value.
+std::optional<QKeySequence> portableSequence(const QString &text);
+
 // AGENT-CONTRACT: PF22 persists stable component/action IDs and complete Qt
 // sequences; PF23's input adapter must normalize layout-independent event keys
 // to the same portable sequence representation.
