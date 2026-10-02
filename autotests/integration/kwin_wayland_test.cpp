@@ -56,6 +56,11 @@ namespace KWin
 {
 
 WaylandTestApplication::WaylandTestApplication(int &argc, char **argv, bool runOnKMS)
+    : WaylandTestApplication(argc, argv, runOnKMS, nullptr)
+{
+}
+
+WaylandTestApplication::WaylandTestApplication(int &argc, char **argv, bool runOnKMS, std::unique_ptr<OutputBackend> outputBackend)
     : Application(argc, argv)
 {
     QStandardPaths::setTestModeEnabled(true);
@@ -102,6 +107,7 @@ WaylandTestApplication::WaylandTestApplication(int &argc, char **argv, bool runO
     addLibraryPath(ownPath);
 
     if (runOnKMS) {
+        Q_ASSERT(!outputBackend);
         // in order to allow running the test manually on a tty,
         // we need the real session. This doesn't work in CI though,
         // so manually check for that and use the noop session instead
@@ -113,7 +119,7 @@ WaylandTestApplication::WaylandTestApplication(int &argc, char **argv, bool runO
         setOutputBackend(std::make_unique<DrmBackend>(session()));
     } else {
         setSession(Session::create(Session::Type::Noop));
-        setOutputBackend(std::make_unique<VirtualBackend>());
+        setOutputBackend(outputBackend ? std::move(outputBackend) : std::make_unique<VirtualBackend>());
     }
     m_waylandServer.reset(WaylandServer::create());
     setProcessStartupEnvironment(QProcessEnvironment::systemEnvironment());

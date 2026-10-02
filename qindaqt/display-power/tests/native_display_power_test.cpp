@@ -146,9 +146,7 @@ private Q_SLOTS:
     void initTestCase()
     {
         QVERIFY(waylandServer()->init(QStringLiteral("qindaqt-native-power-test")));
-        auto backend = std::make_unique<FixtureBackend>();
-        m_backend = backend.get();
-        kwinApp()->setOutputBackend(std::move(backend));
+        m_backend = static_cast<FixtureBackend *>(kwinApp()->outputBackend());
         auto config = KSharedConfig::openConfig(QString(), KConfig::SimpleConfig);
         config->group(QStringLiteral("Effect-Kscreen")).writeEntry("Duration", 0);
         kwinApp()->setConfig(config);
@@ -291,5 +289,23 @@ private Q_SLOTS:
     }
 };
 }
-WAYLANDTEST_MAIN(KWin::NativeDisplayPowerTest)
+// AGENT-GUARD: keep the normal WAYLANDTEST_MAIN setup, but transfer this
+// fixture backend during construction: Application forbids a second setter.
+int main(int argc, char *argv[])
+{
+    setenv("QT_QPA_PLATFORM", "wayland-org.kde.kwin.qpa", true);
+    setenv("QT_QPA_PLATFORM_PLUGIN_PATH", QFileInfo(QString::fromLocal8Bit(argv[0])).absolutePath().toLocal8Bit().constData(), true);
+    setenv("KWIN_FORCE_OWN_QPA", "1", true);
+    qunsetenv("KDE_FULL_SESSION");
+    qunsetenv("KDE_SESSION_VERSION");
+    qunsetenv("XDG_SESSION_DESKTOP");
+    qunsetenv("XDG_CURRENT_DESKTOP");
+    KWin::WaylandTestApplication app(argc, argv, false, std::make_unique<KWin::FixtureBackend>());
+    qunsetenv("QT_QPA_PLATFORM");
+    qunsetenv("QT_QPA_PLATFORM_PLUGIN_PATH");
+    qunsetenv("KWIN_FORCE_OWN_QPA");
+    app.setAttribute(Qt::AA_Use96Dpi, true);
+    KWin::NativeDisplayPowerTest tc;
+    return QTest::qExec(&tc, argc, argv);
+}
 #include "native_display_power_test.moc"

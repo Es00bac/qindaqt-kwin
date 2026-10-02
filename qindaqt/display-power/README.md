@@ -46,7 +46,9 @@ Stock virtual output capability remains unsupported: the fixture starts from
 VirtualOutput's actual CustomModes-only information and explicitly verifies that
 restoring this information rejects admission. For supported rows only, a private
 derived output advertises DPMS through BackendOutput's existing protected state
-setter, selected through Application::setOutputBackend before startup. Its
+setter, transferred to the test application at construction through its additive
+backend-owning overload. The existing constructor ABI and default VirtualBackend
+remain unchanged; Application::setOutputBackend still runs exactly once. Its
 upstream VirtualOutput::applyChanges and real Workspace animation/completion
 perform output mode transitions. Because VirtualOutput is not exported from the
 shared core, the target compiles the unchanged upstream virtual_output.cpp into
@@ -67,3 +69,9 @@ At this checkpoint it suppresses its PowerDevil child before native composition
 readiness and only logs failed native-lock/power composition. That cannot satisfy
 “refuse exclusive activation without prerequisites”; this is a reported source
 blocker, not a passing fixture or installed cutover claim.
+
+The first actual short-TMPDIR runtime attempt stopped at initialization because
+the original fixture installed a second backend after the framework constructor.
+The construction-time fixture injection repairs only that ordering defect. All
+eleven behavior rows and production admission/output assertions are unchanged;
+the repaired source is awaiting coherent compilation and actual replay.
