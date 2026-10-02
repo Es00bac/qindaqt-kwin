@@ -40,6 +40,9 @@ DisplayPowerAuthority::DisplayPowerAuthority(Workspace *workspace)
     connect(workspace, &Workspace::outputsChanged, this, &DisplayPowerAuthority::inventoryChanged);
     const auto watchOutput = [this](BackendOutput *output) {
         connect(output, &BackendOutput::capabilitiesChanged, this, &DisplayPowerAuthority::inventoryChanged);
+        // Actual physical completion can arrive after Workspace's config signal.
+        // Requery mode without treating normal Off/On completion as topology loss.
+        connect(output, &BackendOutput::dpmsModeChanged, this, &DisplayPowerAuthority::InventoryChanged);
     };
     for (auto *output : kwinApp()->outputBackend()->outputs()) watchOutput(output);
     connect(kwinApp()->outputBackend(), &OutputBackend::outputAdded, this, watchOutput);
