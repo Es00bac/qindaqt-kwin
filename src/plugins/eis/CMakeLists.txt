@@ -23,6 +23,7 @@ target_sources(eis PRIVATE
     eisbackend.cpp
     eiscontext.cpp
     eisplugin.cpp
+    eisportaladmission.cpp
     eisinputcapture.cpp
     eisinputcapturemanager.cpp
     eisinputcapturefilter.cpp

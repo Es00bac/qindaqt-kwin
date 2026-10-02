@@ -8,6 +8,7 @@
 
 #include "eiscontext.h"
 #include "eisdevice.h"
+#include "eisportaladmission.h"
 #include "libeis_logging.h"
 
 #include "core/output.h"
@@ -15,6 +16,7 @@
 #include "keyboard_input.h"
 #include "keyboard_layout.h"
 #include "main_wayland.h"
+#include "wayland_server.h"
 #include "workspace.h"
 #include "xkb.h"
 
@@ -93,6 +95,13 @@ void EisBackend::initialize()
         }
     });
 
+    // AGENT-GUARD: native lock ends every portal-issued RemoteDesktop transport
+    // before the locker maps; contexts never resume after unlock.
+    connect(waylandServer(), &WaylandServer::screenAboutToLock, this, [this] {
+        m_contexts.clear();
+        m_serviceWatcher->setWatchedServices({});
+    });
+
     QDBusConnection::sessionBus().registerObject("/org/kde/KWin/EIS/RemoteDesktop", "org.kde.KWin.EIS.RemoteDesktop", this, QDBusConnection::ExportAllInvokables);
 }
 
@@ -105,6 +114,14 @@ void EisBackend::updateScreens()
 
 QDBusUnixFileDescriptor EisBackend::connectToEIS(const int &capabilities, int &cookie)
 {
+    if (!eisPortalBackendCaller(*this)) {
+        sendErrorReply(QDBusError::AccessDenied, QStringLiteral("Only the selected portal backend may connect to EIS"));
+        return {};
+    }
+    if (eisNativeLockActive()) {
+        sendErrorReply(QDBusError::AccessDenied, QStringLiteral("Native session lock is active"));
+        return {};
+    }
     constexpr int keyboardPortal = 1;
     constexpr int pointerPortal = 2;
     constexpr int touchPortal = 4;
@@ -134,7 +151,8 @@ void EisBackend::disconnect(int cookie)
     auto it = std::ranges::find(m_contexts, cookie, [](const std::unique_ptr<DbusEisContext> &context) {
         return context->cookie;
     });
-    if (it != std::ranges::end(m_contexts)) {
+    // A cookie is a handle, not authority: only its creating sender may end it.
+    if (it != std::ranges::end(m_contexts) && calledFromDBus() && (*it)->dbusService == message().service()) {
         m_contexts.erase(it);
     }
 }
