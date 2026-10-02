@@ -26,7 +26,9 @@ bool eisPortalBackendCaller(const QDBusContext &context)
     if (!uid.isValid() || uid.value() != static_cast<uint>(geteuid())) {
         return false;
     }
-    for (const auto *name : {"org.freedesktop.impl.portal.desktop.qindaqt"}) {
+    // Combined sharing/input sessions live in the compositor-launched native
+    // capture broker. The ordinary resident owns no input grant (ADR-0341).
+    for (const auto *name : {"org.freedesktop.impl.portal.desktop.qindaqt.capture"}) {
         const QDBusReply<QString> owner = daemon->serviceOwner(QString::fromLatin1(name));
         if (owner.isValid() && owner.value() == sender) {
             return true;
