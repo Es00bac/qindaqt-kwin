@@ -140,3 +140,24 @@ In the build tree the program is `build/program/qindaqt-kwin`, because
 | Vendored kdecoration, decorations only from the fork namespace | KWin links kdecoration's private library, whose ABI follows Plasma releases | 0289 |
 | Native termination of hung processes of root or another user (`qindaqt/helpers/terminate-process`) | KAuth needed polkit-kde and ksysguard's helper; the root helper pins the process with a pidfd and checks its start time, so a reused PID is never signalled | 0289 |
 | Plasma Activities unavailable | the fork fixes `KWIN_BUILD_ACTIVITIES` and the exported consumer capability to false; activity-neutral workspace and output contracts remain | 0311 |
+
+## Native shortcut authority candidate
+
+The bounded PF23 adaptation uses `-DKWIN_NATIVE_SHORTCUTS=ON` to select
+QindaQt's registry/store, authenticated owner lifetime, standard compatibility
+wire, and additive `org.qindaqt.Shortcuts1` endpoint. The option remains OFF
+until the private KF6 client contracts and real compositor scenarios qualify
+it. With it ON, KGlobalAccelD is neither discovered nor linked. KF6 GlobalAccel
+client wire names remain compatibility contracts, with no daemon dependency.
+
+The input collaborator adapts the existing KGlobalAccelD v6.6.6 modifier-only,
+press/repeat/release and rolling four-chord logic, preserving copyright. The
+legacy adapter imports default-context kglobalshortcutsrc triples once; saved
+native values win, and disconnected owners become inactive without losing their
+key reservations. Non-default contexts explicitly remain unsupported here.
+Desktop-file activation and full live release qualification are still pending.
+
+Focused source-only contracts can be configured separately from the compositor:
+`cmake -S qindaqt/shortcuts/tests -B build/shortcut-contracts -G Ninja` followed
+by `cmake --build build/shortcut-contracts -j4` and
+`ctest --test-dir build/shortcut-contracts --output-on-failure`.

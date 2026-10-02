@@ -42,6 +42,9 @@ public:
     RegisterResult registerBinding(Binding binding);
     RegisterResult setShortcuts(const QString &id, QList<QKeySequence> shortcuts);
     bool setActive(const QString &id, bool active);
+    bool setRepeat(const QString &id, bool repeat);
+    bool setDefaultShortcuts(const QString &id, QList<QKeySequence> shortcuts);
+    bool unregisterBinding(const QString &id);
     void unregisterComponent(const QString &component);
     std::optional<Binding> binding(const QString &id) const;
     std::optional<Binding> dispatch(const QKeySequence &shortcut, bool repeat = false,
@@ -58,6 +61,8 @@ class Store final
 public:
     bool load(const QString &path, QString *error = nullptr);
     bool save(const QString &path, QString *error = nullptr) const;
+    bool upsert(const Binding &binding);
+    bool remove(const QString &id);
     bool importLegacy(const QList<Binding> &legacyBindings);
     bool setShortcuts(const QString &id, QList<QKeySequence> shortcuts);
     std::optional<Binding> binding(const QString &id) const;

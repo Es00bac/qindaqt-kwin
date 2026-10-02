@@ -10,13 +10,20 @@
 #include "globalshortcuts.h"
 // config
 #include "config-kwin.h"
+#if KWIN_NATIVE_SHORTCUTS
+#include "qindaqt/shortcuts/compatibility_endpoint.h"
+#include "qindaqt/shortcuts/runtime_store.h"
+#include "qindaqt/shortcuts/input_dispatcher.h"
+#include "wayland_server.h"
+#include <QStandardPaths>
+#endif
 // kwin
 #include "effect/globals.h"
 #include "gestures.h"
 #include "main.h"
 #include "utils/common.h"
 // KDE
-#if KWIN_BUILD_GLOBALSHORTCUTS
+#if KWIN_BUILD_GLOBALSHORTCUTS && !KWIN_NATIVE_SHORTCUTS
 #include <kglobalaccel_interface.h>
 #include <kglobalacceld.h>
 #endif
@@ -93,7 +100,23 @@ GlobalShortcutsManager::~GlobalShortcutsManager()
 
 void GlobalShortcutsManager::init()
 {
-#if KWIN_BUILD_GLOBALSHORTCUTS
+#if KWIN_NATIVE_SHORTCUTS
+    m_nativeStore = std::make_unique<Shortcuts::RuntimeStore>(m_nativeRegistry);
+    QString error;
+    const auto config = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
+    if (!m_nativeStore->load(config + QStringLiteral("/qindaqt/shortcuts.json"), config + QStringLiteral("/kglobalshortcutsrc"), &error)) {
+        qCWarning(KWIN_CORE) << "Native shortcut store failed" << error;
+        return;
+    }
+    m_nativeEndpoint = std::make_unique<Shortcuts::CompatibilityEndpoint>(QDBusConnection::sessionBus(), &m_nativeRegistry, m_nativeStore.get());
+    if (!m_nativeEndpoint->start(QStringLiteral("org.kde.kglobalaccel"))) {
+        qCWarning(KWIN_CORE) << "Native shortcut endpoint could not own its user bus names";
+        m_nativeEndpoint.reset(); return;
+    }
+    m_nativeInput = std::make_unique<Shortcuts::InputDispatcher>(m_nativeRegistry, [this](const Shortcuts::Binding &binding, Shortcuts::ShortcutEvent event) {
+        m_nativeEndpoint->notifyShortcut(binding, event, 0);
+    });
+#elif KWIN_BUILD_GLOBALSHORTCUTS
     qputenv("KGLOBALACCELD_PLATFORM", QByteArrayLiteral("org.kde.kwin"));
     m_kglobalAccel = std::make_unique<KGlobalAccelD>();
     if (!m_kglobalAccel->init()) {
@@ -187,7 +210,14 @@ void GlobalShortcutsManager::forceRegisterTouchscreenSwipe(SwipeDirection direct
 
 bool GlobalShortcutsManager::processKey(Qt::KeyboardModifiers mods, int keyQt, KeyboardKeyState state)
 {
-#if KWIN_BUILD_GLOBALSHORTCUTS
+#if KWIN_NATIVE_SHORTCUTS
+    if (m_nativeInput) {
+        const auto event = state == KeyboardKeyState::Released ? Shortcuts::ShortcutEvent::Released
+            : state == KeyboardKeyState::Repeated ? Shortcuts::ShortcutEvent::Repeated : Shortcuts::ShortcutEvent::Pressed;
+        return m_nativeInput->key(int(mods) | keyQt, event, waylandServer()->isScreenLocked(),
+            waylandServer()->isKeyboardShortcutsInhibited() || m_nativeEndpoint->shortcutsBlocked());
+    }
+#elif KWIN_BUILD_GLOBALSHORTCUTS
     if (m_kglobalAccelInterface) {
         auto check = [this](Qt::KeyboardModifiers mods, int keyQt, KeyboardKeyState keyState) {
             bool retVal = false;
@@ -238,7 +268,10 @@ GlobalShortcut *match(QList<GlobalShortcut> &shortcuts, Args... args)
 // TODO(C++20): use ranges for a nicer way of filtering by shortcut type
 bool GlobalShortcutsManager::processPointerPressed(Qt::KeyboardModifiers mods, Qt::MouseButtons pointerButtons)
 {
-#if KWIN_BUILD_GLOBALSHORTCUTS
+#if KWIN_NATIVE_SHORTCUTS
+    if (m_nativeInput) m_nativeInput->cancelModifierOnly();
+#endif
+#if KWIN_BUILD_GLOBALSHORTCUTS && !KWIN_NATIVE_SHORTCUTS
     // currently only used to better support modifier only shortcuts
     // modifier-only shortcuts are not triggered if a pointer button is pressed
     if (m_kglobalAccelInterface) {
@@ -257,7 +290,10 @@ bool GlobalShortcutsManager::processPointerPressed(Qt::KeyboardModifiers mods, Q
 
 bool GlobalShortcutsManager::processAxis(Qt::KeyboardModifiers mods, PointerAxisDirection axis, qreal delta)
 {
-#if KWIN_BUILD_GLOBALSHORTCUTS
+#if KWIN_NATIVE_SHORTCUTS
+    if (m_nativeInput) m_nativeInput->cancelModifierOnly();
+#endif
+#if KWIN_BUILD_GLOBALSHORTCUTS && !KWIN_NATIVE_SHORTCUTS
     // currently only used to better support modifier only shortcuts
     // modifier-only shortcuts are not triggered if a pointer axis is used
     if (m_kglobalAccelInterface) {
@@ -333,7 +369,9 @@ void GlobalShortcutsManager::processPinchEnd()
 
 void GlobalShortcutsManager::cancelModiferOnlySequence()
 {
-#if KWIN_BUILD_GLOBALSHORTCUTS
+#if KWIN_NATIVE_SHORTCUTS
+    if (m_nativeInput) m_nativeInput->cancelModifierOnly();
+#elif KWIN_BUILD_GLOBALSHORTCUTS
     if (m_kglobalAccelInterface) {
         QMetaObject::invokeMethod(m_kglobalAccelInterface, "cancelModiferOnlySequence");
     }
