@@ -165,6 +165,12 @@ key reservations. Non-default contexts explicitly remain unsupported here.
 Desktop-file actions reuse KService/KIO ApplicationLauncherJob, including the
 accepted user command-file contract. Full live release qualification is still pending.
 
+Native wire and store parsing share canonical PortableText conversion, including
+bare modifiers such as `Meta+`, which Qt cannot directly read back from its own
+serialization. Legacy import keeps its prior alias handling. Real native tests
+use `Ctrl+F12` for function-key behavior; `Ctrl+Alt+F12` remains a reserved
+console-switch combination and is intentionally handled before shortcuts.
+
 Focused source-only contracts can be configured separately from the compositor:
 `cmake -S qindaqt/shortcuts/tests -B build/shortcut-contracts -G Ninja` followed
 by `cmake --build build/shortcut-contracts -j4` and

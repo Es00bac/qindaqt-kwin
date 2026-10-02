@@ -22,6 +22,29 @@ QDBusMessage invoke(const QDBusConnection &bus, const QString &member, const QVa
 class NativeEndpointTest : public QObject {
     Q_OBJECT
 private Q_SLOTS:
+    void modifierOnlyWireAndStoreRoundTrip() {
+        QTemporaryDir dir; Registry registry; RuntimeStore store(registry); QString error;
+        const auto path = dir.filePath("native.json");
+        QVERIFY(store.load(path, dir.filePath("legacy"), &error));
+        CompatibilityEndpoint endpoint(QDBusConnection::sessionBus(), &registry, &store);
+        QVERIFY(endpoint.start("org.kde.kglobalaccel"));
+        auto client = QDBusConnection::connectToBus(QDBusConnection::SessionBus, "modifier-native");
+        const QKeySequence modifier{int(Qt::MetaModifier)};
+        const auto reply = invoke(client, "Register", {"shell", "launcher", "Launcher",
+            QStringList{modifier.toString(QKeySequence::PortableText)}, false, false});
+        QCOMPARE(reply.type(), QDBusMessage::ReplyMessage);
+        QVERIFY(reply.arguments().first().toBool());
+        const QString id = QStringLiteral("shell") + QChar(0x1f) + QStringLiteral("launcher");
+        QCOMPARE(registry.binding(id)->shortcuts, QList<QKeySequence>{modifier});
+        Registry reloaded; RuntimeStore second(reloaded);
+        QVERIFY2(second.load(path, dir.filePath("legacy"), &error), qPrintable(error));
+        QCOMPARE(reloaded.binding(id)->shortcuts, QList<QKeySequence>{modifier});
+        QVERIFY(!portableSequence(QStringLiteral("Ctrl+Blah")));
+        const auto plus = portableSequence(QStringLiteral("Ctrl++"));
+        QVERIFY(plus);
+        QCOMPARE(*plus, QKeySequence(QStringLiteral("Ctrl++")));
+        QDBusConnection::disconnectFromBus("modifier-native");
+    }
     void transientOwnerIsolationAndDisconnect() {
         Registry registry; CompatibilityEndpoint endpoint(QDBusConnection::sessionBus(), &registry); QVERIFY(endpoint.start("org.kde.kglobalaccel"));
         auto first = QDBusConnection::connectToBus(QDBusConnection::SessionBus, "native-first");

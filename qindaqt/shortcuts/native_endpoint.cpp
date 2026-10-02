@@ -20,9 +20,9 @@ std::optional<QList<QKeySequence>> nativeKeys(const QVariant &value)
     QList<QKeySequence> keys;
     for (const auto &text : strings) {
         if (text.size() > 256) return std::nullopt;
-        const QKeySequence key(text, QKeySequence::PortableText);
-        if (key.isEmpty() || key.toString(QKeySequence::PortableText) != text || keys.contains(key)) return std::nullopt;
-        keys.append(key);
+        const auto key = portableSequence(text);
+        if (!key || keys.contains(*key)) return std::nullopt;
+        keys.append(*key);
     }
     return keys;
 }
