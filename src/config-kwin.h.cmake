@@ -12,6 +12,7 @@
 #cmakedefine01 KWIN_BUILD_TABBOX
 #define KWIN_BUILD_ACTIVITIES 0
 #cmakedefine01 KWIN_BUILD_GLOBALSHORTCUTS
+#cmakedefine01 KWIN_NATIVE_SHORTCUTS
 #cmakedefine01 KWIN_BUILD_X11
 #cmakedefine01 KWIN_BUILD_QACCESSIBILITYCLIENT
 constexpr QLatin1String KWIN_CONFIG("qindaqt/kwinrc");

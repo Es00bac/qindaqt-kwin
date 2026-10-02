@@ -150,6 +150,25 @@ bool Registry::setActive(const QString &id, bool active)
     return true;
 }
 
+bool Registry::setRepeat(const QString &id, bool repeat)
+{
+    auto it = m_bindings.find(id); if (it == m_bindings.end()) return false;
+    it->repeat = repeat; return true;
+}
+
+bool Registry::setDefaultShortcuts(const QString &id, QList<QKeySequence> shortcuts)
+{
+    auto it = m_bindings.find(id);
+    if (it == m_bindings.end() || !validSequenceList(shortcuts)) return false;
+    it->defaultShortcuts = std::move(shortcuts);
+    return true;
+}
+
+bool Registry::unregisterBinding(const QString &id)
+{
+    return m_bindings.remove(id) != 0;
+}
+
 void Registry::unregisterComponent(const QString &component)
 {
     for (auto it = m_bindings.begin(); it != m_bindings.end();) {
@@ -183,6 +202,7 @@ QList<Binding> Registry::bindings() const
 bool Store::load(const QString &path, QString *error)
 {
     QFile file(path);
+    if (file.size() > 4 * 1024 * 1024) { if (error) *error = QStringLiteral("Shortcut store exceeds its bound"); return false; }
     if (!file.exists()) {
         m_bindings.clear();
         m_legacyImported = false;
@@ -236,6 +256,15 @@ bool Store::save(const QString &path, QString *error) const
     }
     return true;
 }
+
+bool Store::upsert(const Binding &binding)
+{
+    if (!validBinding(binding)) return false;
+    m_bindings.insert(binding.id(), binding);
+    return true;
+}
+
+bool Store::remove(const QString &id) { return m_bindings.remove(id) != 0; }
 
 bool Store::importLegacy(const QList<Binding> &legacyBindings)
 {

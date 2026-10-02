@@ -25,6 +25,7 @@ class QDBusServiceWatcher;
 namespace KWin
 {
 class DbusEisContext;
+class EisClipboard;
 class XWaylandEisContext;
 
 class EisBackend : public KWin::InputBackend, public QDBusContext
@@ -39,6 +40,11 @@ public:
 
     Q_INVOKABLE QDBusUnixFileDescriptor connectToEIS(const int &capabilities, int &cookie);
     Q_INVOKABLE void disconnect(int cookie);
+    // RemoteDesktop clipboard adjunct for the selected portal backend only.
+    Q_INVOKABLE int connectClipboard();
+    Q_INVOKABLE void disconnectClipboard(int handle);
+    Q_INVOKABLE void setSelection(int handle, const QStringList &mimeTypes);
+    Q_INVOKABLE QDBusUnixFileDescriptor readSelection(int handle, const QString &mimeType);
 
     eis_device *createKeyboard(eis_seat *seat);
     eis_device *createPointer(eis_seat *seat);
@@ -49,6 +55,8 @@ private:
     RamFile m_keymapFile;
     std::unique_ptr<XWaylandEisContext> m_xWaylandContext;
     std::vector<std::unique_ptr<DbusEisContext>> m_contexts;
+    std::unique_ptr<EisClipboard> m_clipboard;
+    bool portalCall();
 };
 
 }

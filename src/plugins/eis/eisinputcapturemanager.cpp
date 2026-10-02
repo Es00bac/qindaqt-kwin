@@ -8,6 +8,7 @@
 
 #include "eisinputcapture.h"
 #include "eisinputcapturefilter.h"
+#include "eisportaladmission.h"
 #include "inputcapture_logging.h"
 
 #include "core/output.h"
@@ -17,6 +18,7 @@
 #include "keyboard_input.h"
 #include "keyboard_layout.h"
 #include "pointer_input.h"
+#include "wayland_server.h"
 #include "workspace.h"
 #include "xkb.h"
 
@@ -45,7 +47,9 @@ public:
     }
     void pointerMotion(KWin::PointerMotionEvent *event) override
     {
-        if (manager->activeCapture()) {
+        // AGENT-GUARD: a barrier crossing during native lock would forward
+        // credential input to the capture client.
+        if (manager->activeCapture() || eisNativeLockActive()) {
             return;
         }
         for (const auto &capture : manager->m_inputCaptures) {
@@ -99,6 +103,7 @@ EisInputCaptureManager::EisInputCaptureManager()
 {
     qDBusRegisterMetaType<QPair<QPoint, QPoint>>();
     qDBusRegisterMetaType<QList<QPair<QPoint, QPoint>>>();
+    qDBusRegisterMetaType<QList<QRect>>();
 
     const auto keymap = input()->keyboard()->xkb()->keymapContents();
     if (!keymap.isEmpty()) {
@@ -131,6 +136,17 @@ EisInputCaptureManager::EisInputCaptureManager()
     m_disableCaptureAction->setText(i18nc("@action shortcut", "Disable Active Input Capture"));
     KGlobalAccel::setGlobalShortcut(m_disableCaptureAction, QKeySequence(defaultDisableKeys));
 
+    connect(workspace(), &Workspace::outputsChanged, this, &EisInputCaptureManager::zonesChanged);
+    connect(workspace(), &Workspace::geometryChanged, this, &EisInputCaptureManager::zonesChanged);
+
+    // AGENT-GUARD: native lock deactivates and disables every capture before the
+    // locker maps; the portal reports Disabled and the client must re-enable.
+    connect(waylandServer(), &WaylandServer::screenAboutToLock, this, [this] {
+        for (const auto &capture : m_inputCaptures) {
+            capture->disable();
+        }
+    });
+
     QDBusConnection::sessionBus().registerObject("/org/kde/KWin/EIS/InputCapture", "org.kde.KWin.EIS.InputCaptureManager", this, QDBusConnection::ExportAllInvokables | QDBusConnection::ExportAllSignals);
 }
 
@@ -153,6 +169,10 @@ void EisInputCaptureManager::removeInputCapture(const QDBusObjectPath &capture)
     if (it == std::ranges::end(m_inputCaptures)) {
         return;
     }
+    if (calledFromDBus() && (*it)->dbusService != message().service()) {
+        sendErrorReply(QDBusError::AccessDenied, QStringLiteral("Input capture belongs to another portal backend"));
+        return;
+    }
     if (m_activeCapture == it->get()) {
         deactivate();
     }
@@ -162,8 +182,28 @@ void EisInputCaptureManager::removeInputCapture(const QDBusObjectPath &capture)
     }
 }
 
+QList<QRect> EisInputCaptureManager::zones()
+{
+    if (!eisPortalBackendCaller(*this)) {
+        sendErrorReply(QDBusError::AccessDenied, QStringLiteral("Only the selected portal backend may read capture zones"));
+        return {};
+    }
+    QList<QRect> result;
+    for (const auto output : workspace()->outputs()) {
+        // Replicated outputs share one zone, as in the upstream portal.
+        if (const QRect geometry = output->geometry(); !result.contains(geometry)) {
+            result.push_back(geometry);
+        }
+    }
+    return result;
+}
+
 QDBusObjectPath EisInputCaptureManager::addInputCapture(uint capabilities)
 {
+    if (!eisPortalBackendCaller(*this) || eisNativeLockActive()) {
+        sendErrorReply(QDBusError::AccessDenied, QStringLiteral("Only the selected unlocked portal backend may capture input"));
+        return {};
+    }
     constexpr uint keyboardPortal = 1;
     constexpr uint pointerPortal = 2;
     constexpr uint touchPortal = 4;

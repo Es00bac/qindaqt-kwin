@@ -20,6 +20,19 @@ endif()
 add_library(qindaqt_kwin_shortcuts STATIC shortcuts/shortcut_registry.cpp)
 target_include_directories(qindaqt_kwin_shortcuts PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(qindaqt_kwin_shortcuts PUBLIC Qt::Core Qt::Gui)
+# Separate wire/runtime collaborators, selectively ported from native-shortcuts.
+add_library(qindaqt_kwin_shortcut_endpoint STATIC
+    ../qindaqt/shortcuts/compatibility_endpoint.cpp
+    ../qindaqt/shortcuts/compatibility_component.cpp
+    ../qindaqt/shortcuts/compatibility_endpoint_wire.cpp
+    ../qindaqt/shortcuts/compatibility_lifecycle.cpp
+    ../qindaqt/shortcuts/native_endpoint.cpp
+    ../qindaqt/shortcuts/runtime_store.cpp
+    ../qindaqt/shortcuts/input_dispatcher.cpp
+    ../qindaqt/shortcuts/desktop_actions.cpp)
+target_include_directories(qindaqt_kwin_shortcut_endpoint PUBLIC ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(qindaqt_kwin_shortcut_endpoint PUBLIC qindaqt_kwin_shortcuts Qt::DBus KF6::ConfigCore KF6::KIOGui KF6::Service)
+set_target_properties(qindaqt_kwin_shortcut_endpoint PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_library(kwin SHARED)
 target_include_directories(kwin INTERFACE "$<INSTALL_INTERFACE:${KDE_INSTALL_INCLUDEDIR}/qindaqt-kwin>")
@@ -270,8 +283,11 @@ target_link_libraries(kwin
 )
 
 target_link_libraries(kwin PRIVATE qindaqt_kwin_shortcuts)
+if(KWIN_NATIVE_SHORTCUTS)
+    target_link_libraries(kwin PRIVATE qindaqt_kwin_shortcut_endpoint)
+endif()
 
-if (TARGET K::KGlobalAccelD)
+if (TARGET K::KGlobalAccelD AND NOT KWIN_NATIVE_SHORTCUTS)
     target_link_libraries(kwin PRIVATE K::KGlobalAccelD)
 endif()
 
