@@ -28,7 +28,7 @@ public Q_SLOTS:
     bool ReleaseBlank(qulonglong epoch, const QString &requestId);
 Q_SIGNALS:
     void InventoryChanged();
-    void InventoryReceipt(const QString &nonce, qulonglong epoch, bool available, const QByteArray &inventory);
+    void InventoryReceipt(const QString &nonce, qulonglong epoch, bool available, bool admitted, const QByteArray &inventory);
     void LeaseEnded(const QString &requestId, const QString &reason);
 private:
     qint64 now() const;

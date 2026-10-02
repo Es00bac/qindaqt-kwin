@@ -113,7 +113,10 @@ void DisplayPowerAuthority::refreshOwners()
         const QDBusReply<bool> legacy = bus->isServiceRegistered(Legacy);
         absent = legacy.isValid() && !legacy.value();
     }
-    if (owner != m_sessionOwner || !absent) revoke(QStringLiteral("authority-lost"));
+    if (owner != m_sessionOwner || (m_legacyAbsent && !absent)) {
+        revoke(QStringLiteral("authority-lost"));
+        Q_EMIT InventoryChanged();
+    }
     m_sessionOwner = owner;
     m_legacyAbsent = absent;
 }
@@ -129,7 +132,7 @@ void DisplayPowerAuthority::RequestInventoryWithReceipt(const QString &nonce)
     QByteArray inventory;
     const bool complete = completeInventory(&inventory);
     auto receipt = QDBusMessage::createTargetedSignal(message().service(), Path, Interface, QStringLiteral("InventoryReceipt"));
-    receipt << nonce << m_epoch << (m_registered && m_legacyAbsent && complete) << inventory;
+    receipt << nonce << m_epoch << (m_registered && m_legacyAbsent && complete) << m_enabled << inventory;
     m_bus.send(receipt);
 }
 bool DisplayPowerAuthority::SetNativeAdmission(qulonglong epoch, bool enabled)

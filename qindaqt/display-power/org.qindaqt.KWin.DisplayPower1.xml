@@ -6,7 +6,7 @@
     <method name="AcquireBlank"><arg name="epoch" type="t" direction="in"/><arg name="requestId" type="s" direction="in"/><arg name="deadlineMs" type="t" direction="in"/><arg name="accepted" type="b" direction="out"/></method>
     <method name="ReleaseBlank"><arg name="epoch" type="t" direction="in"/><arg name="requestId" type="s" direction="in"/><arg name="released" type="b" direction="out"/></method>
     <signal name="InventoryChanged"/>
-    <signal name="InventoryReceipt"><arg name="nonce" type="s"/><arg name="epoch" type="t"/><arg name="available" type="b"/><arg name="inventory" type="ay"/></signal>
+    <signal name="InventoryReceipt"><arg name="nonce" type="s"/><arg name="epoch" type="t"/><arg name="available" type="b"/><arg name="admitted" type="b"/><arg name="inventory" type="ay"/></signal>
     <signal name="LeaseEnded"><arg name="requestId" type="s"/><arg name="reason" type="s"/></signal>
   </interface>
 </node>
