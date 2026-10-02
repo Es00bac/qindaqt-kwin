@@ -109,6 +109,10 @@ preferences (container-wm ADR-0313). A production configure must succeed with
 without KWin's autotests; run them with
 `ctest --test-dir build/qindaqt/helpers/terminate-process/tests`.
 
+Native lock and shortcut integration fixtures require the non-installable
+session-lock authorization option. They share one generated lock client
+protocol in the integration binary directory so Qt emits each scanner rule once.
+
 ## Building
 
 ```sh
