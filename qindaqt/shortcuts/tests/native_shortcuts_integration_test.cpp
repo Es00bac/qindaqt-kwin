@@ -19,6 +19,7 @@
 #include <KWayland/Client/seat.h>
 #include <QDBusConnectionInterface>
 #include <QDBusMessage>
+#include <QDBusPendingCall>
 #include <QDBusReply>
 #include <linux/input.h>
 
@@ -27,11 +28,22 @@ namespace KWin
 namespace
 {
 constexpr auto component = "qindaqt.native-shortcut-fixture";
+QDBusConnection nativeClient()
+{
+    // AGENT-GUARD: the caller needs a real unique sender distinct from the
+    // compositor; a same-connection local call cannot qualify admission.
+    return QDBusConnection::connectToBus(qEnvironmentVariable("DBUS_SESSION_BUS_ADDRESS"),
+                                        QStringLiteral("native-shortcuts-runtime-client"));
+}
 QDBusMessage nativeCall(const QString &method, const QVariantList &args = {})
 {
     auto call = QDBusMessage::createMethodCall("org.qindaqt.Shortcuts1", "/org/qindaqt/Shortcuts1", "org.qindaqt.Shortcuts1", method);
     call.setArguments(args);
-    return QDBusConnection::sessionBus().call(call, QDBus::Block, 2000);
+    auto pending = nativeClient().asyncCall(call, 2000);
+    if (!QTest::qWaitFor([&] { return pending.isFinished(); }, 2500)) {
+        return QDBusMessage::createError(QStringLiteral("org.freedesktop.DBus.Error.Timeout"), QStringLiteral("Native shortcut reply timed out"));
+    }
+    return pending.reply();
 }
 void chord(uint &time, uint key, bool control = true, bool alt = true)
 {
@@ -96,8 +108,12 @@ private Q_SLOTS:
         const QDBusReply<QString> owner = bus.interface()->serviceOwner("org.qindaqt.Shortcuts1");
         QVERIFY2(owner.isValid(), "This actual-compositor gate requires KWIN_NATIVE_SHORTCUTS=ON");
         QCOMPARE(owner.value(), bus.baseService());
-        QVERIFY(bus.connect(owner.value(), "/org/qindaqt/Shortcuts1", "org.qindaqt.Shortcuts1", "Activated", this, SIGNAL(nativeActivated(QString, QString, quint64))));
-        QVERIFY(bus.connect(owner.value(), "/org/qindaqt/Shortcuts1", "org.qindaqt.Shortcuts1", "Deactivated", this, SIGNAL(nativeDeactivated(QString, QString, quint64))));
+        QVERIFY(nativeClient().connect(owner.value(), "/org/qindaqt/Shortcuts1", "org.qindaqt.Shortcuts1", "Activated", this, SIGNAL(nativeActivated(QString, QString, quint64))));
+        QVERIFY(nativeClient().connect(owner.value(), "/org/qindaqt/Shortcuts1", "org.qindaqt.Shortcuts1", "Deactivated", this, SIGNAL(nativeDeactivated(QString, QString, quint64))));
+    }
+    void cleanupTestCase()
+    {
+        QDBusConnection::disconnectFromBus(QStringLiteral("native-shortcuts-runtime-client"));
     }
     void init()
     {
