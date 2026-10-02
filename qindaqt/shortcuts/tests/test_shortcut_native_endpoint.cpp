@@ -21,7 +21,33 @@ QDBusMessage invoke(const QDBusConnection &bus, const QString &member, const QVa
 }
 class NativeEndpointTest : public QObject {
     Q_OBJECT
+Q_SIGNALS:
+    void nativeActivated(const QString &, const QString &, quint64);
+    void nativeDeactivated(const QString &, const QString &, quint64);
 private Q_SLOTS:
+    void repeatedActivationOnNativeWire() {
+        Registry registry;
+        const auto bus = QDBusConnection::sessionBus();
+        CompatibilityEndpoint endpoint(bus, &registry);
+        QVERIFY(endpoint.start("org.kde.kglobalaccel"));
+        auto client = QDBusConnection::connectToBus(QDBusConnection::SessionBus, "repeat-native");
+        QVERIFY(client.connect(bus.baseService(), "/org/qindaqt/Shortcuts1", "org.qindaqt.Shortcuts1", "Activated", this, SIGNAL(nativeActivated(QString, QString, quint64))));
+        QVERIFY(client.connect(bus.baseService(), "/org/qindaqt/Shortcuts1", "org.qindaqt.Shortcuts1", "Deactivated", this, SIGNAL(nativeDeactivated(QString, QString, quint64))));
+        QSignalSpy activated(this, &NativeEndpointTest::nativeActivated), deactivated(this, &NativeEndpointTest::nativeDeactivated);
+        const auto reply = invoke(client, "Register", {"shell", "repeat", "Repeat", QStringList{"Ctrl+F12"}, true, true});
+        QCOMPARE(reply.type(), QDBusMessage::ReplyMessage);
+        QVERIFY(reply.arguments().first().toBool());
+        const auto binding = registry.binding(QStringLiteral("shell") + QChar(0x1f) + QStringLiteral("repeat"));
+        QVERIFY(binding && binding->repeat);
+        endpoint.notifyShortcut(*binding, ShortcutEvent::Pressed, 100);
+        endpoint.notifyShortcut(*binding, ShortcutEvent::Repeated, 200);
+        endpoint.notifyShortcut(*binding, ShortcutEvent::Released, 300);
+        QTRY_COMPARE(activated.count(), 2);
+        QTRY_COMPARE(deactivated.count(), 1);
+        QCOMPARE(activated.last(), QVariantList({QStringLiteral("shell"), QStringLiteral("repeat"), quint64(200)}));
+        QCOMPARE(deactivated.first().at(2).toULongLong(), quint64(300));
+        QDBusConnection::disconnectFromBus("repeat-native");
+    }
     void modifierOnlyWireAndStoreRoundTrip() {
         QTemporaryDir dir; Registry registry; RuntimeStore store(registry); QString error;
         const auto path = dir.filePath("native.json");

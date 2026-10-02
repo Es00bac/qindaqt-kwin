@@ -99,11 +99,11 @@ void CompatibilityEndpoint::notifyShortcut(const Binding &binding, ShortcutEvent
     QDBusMessage signal = QDBusMessage::createSignal(path, ComponentInterface, QString::fromLatin1(signalName));
     signal.setArguments({binding.component, binding.action, timestamp});
     m_bus.send(signal);
-    if (event != ShortcutEvent::Repeated) {
-        auto native = QDBusMessage::createSignal(QStringLiteral("/org/qindaqt/Shortcuts1"), QStringLiteral("org.qindaqt.Shortcuts1"),
-            event == ShortcutEvent::Pressed ? QStringLiteral("Activated") : QStringLiteral("Deactivated"));
-        native.setArguments({binding.component, binding.action, quint64(timestamp)}); m_bus.send(native);
-    }
+    // AGENT-CONTRACT: Shortcuts1 has one activation signal for initial and
+    // repeated presses. The registry admits repeats only for opted-in actions.
+    auto native = QDBusMessage::createSignal(QStringLiteral("/org/qindaqt/Shortcuts1"), QStringLiteral("org.qindaqt.Shortcuts1"),
+        event == ShortcutEvent::Released ? QStringLiteral("Deactivated") : QStringLiteral("Activated"));
+    native.setArguments({binding.component, binding.action, quint64(timestamp)}); m_bus.send(native);
 }
 
 QString CompatibilityEndpoint::componentPath(const QString &component) const
