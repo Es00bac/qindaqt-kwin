@@ -9,6 +9,7 @@
 #include <QDBusConnectionInterface>
 #include <QDBusReply>
 #include <unistd.h>
+#include <time.h>
 
 #include <QDBusArgument>
 #include <QDBusMetaType>
@@ -39,6 +40,7 @@ CompatibilityEndpoint::CompatibilityEndpoint(QDBusConnection bus, Registry *regi
     : m_bus(std::move(bus))
     , m_registry(registry)
     , m_store(store)
+    , m_desktop(std::make_unique<DesktopActions>())
     , m_watch(std::make_unique<QDBusServiceWatcher>(QString(), m_bus, QDBusServiceWatcher::WatchForUnregistration))
 {
     connect(m_watch.get(), &QDBusServiceWatcher::serviceUnregistered, this, &CompatibilityEndpoint::ownerLost);
@@ -68,7 +70,7 @@ bool CompatibilityEndpoint::start(const QString &serviceName)
         || !m_bus.registerService(QStringLiteral("org.qindaqt.Shortcuts1"))
         || !m_bus.registerVirtualObject(QStringLiteral("/org/qindaqt/Shortcuts1"), this)) return false;
     for (const auto &binding : m_registry->bindings()) {
-        if (desktopActionAvailable(binding)) m_registry->setActive(binding.id(), true);
+        if (m_desktop->registerAction(binding)) m_registry->setActive(binding.id(), true);
         m_actionIds.insert(binding.id(), {binding.component, binding.action,
             binding.owners.value(0, binding.component), binding.description});
     }
@@ -83,8 +85,9 @@ bool CompatibilityEndpoint::shortcutsBlocked() const noexcept
 void CompatibilityEndpoint::notifyShortcut(const Binding &binding, ShortcutEvent event, qint64 timestamp)
 {
     if (event != ShortcutEvent::Released && (!admitted() || !binding.active)) return;
-    if (event == ShortcutEvent::Pressed && launchDesktopAction(binding)) return;
-    if (desktopActionAvailable(binding)) return;
+    if (!timestamp) { timespec now{}; if (clock_gettime(CLOCK_MONOTONIC, &now) == 0) timestamp = qint64(now.tv_sec) * 1000 + now.tv_nsec / 1000000; }
+    if (event == ShortcutEvent::Pressed && m_desktop->launch(binding)) return;
+    if (m_desktop->available(binding)) return;
     const QString path = componentPath(binding.component);
     if (!m_componentPaths.contains(path)) {
         if (!m_bus.registerVirtualObject(path, this))
@@ -125,6 +128,7 @@ bool CompatibilityEndpoint::ensureBinding(const QStringList &id, const QString &
         m_watch->addWatchedService(owner);
     }
     if (m_actionIds.contains(key)) {
+        if (const auto current = m_registry->binding(key)) m_desktop->registerAction(*current);
         if (!owner.isEmpty()) m_registry->setActive(key, true);
         return true;
     }
@@ -139,6 +143,7 @@ bool CompatibilityEndpoint::ensureBinding(const QStringList &id, const QString &
     binding.repeat = true;
     binding.active = !owner.isEmpty();
     if (m_registry->registerBinding(binding).status != RegisterStatus::Registered) { m_owners.remove(key); return false; }
+    m_desktop->registerAction(binding);
     m_actionIds.insert(key, id);
     return true;
 }

@@ -22,6 +22,7 @@ namespace KWin::Shortcuts
 // owning bus thread. Runtime registration is limited to the experimental
 // source option; KGlobalAccelD remains the default until all migration gates pass.
 class RuntimeStore;
+class DesktopActions;
 enum class ShortcutEvent { Pressed, Repeated, Released };
 
 class CompatibilityEndpoint final : public QDBusVirtualObject
@@ -54,6 +55,7 @@ private:
     QSet<QString> m_componentPaths;
     QString m_serviceName;
     RuntimeStore *m_store = nullptr;
+    std::unique_ptr<DesktopActions> m_desktop;
     std::unique_ptr<QDBusServiceWatcher> m_watch;
     QHash<QString, QString> m_owners;
     QSet<QString> m_blockers;

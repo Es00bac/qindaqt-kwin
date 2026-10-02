@@ -32,19 +32,26 @@ public:
     void showUntrustedProgramWarning(KJob *, const QString &) override { Q_EMIT result(true); }
 };
 }
-bool desktopActionAvailable(const Binding &binding)
+bool DesktopActions::registerAction(const Binding &binding)
 {
-    const auto application = service(binding.component); if (!application || !application->isValid()) return false;
+    const auto application = service(binding.component);
+    if (application && application->isValid()) m_services.insert(binding.component, application);
+    else m_services.remove(binding.component);
+    return available(binding);
+}
+bool DesktopActions::available(const Binding &binding) const
+{
+    const auto application = m_services.value(binding.component); if (!application) return false;
     if (binding.action == QLatin1String("_launch")) return true;
     const auto actions = application->actions();
     return std::any_of(actions.cbegin(), actions.cend(), [&binding](const KServiceAction &action) { return action.name() == binding.action; });
 }
-bool launchDesktopAction(const Binding &binding)
+bool DesktopActions::launch(const Binding &binding) const
 {
     // Adapted KGlobalAccelD v6.6.6 KServiceActionComponent, same admitted
     // desktop-file semantics. Framework launch parser supplies field codes and
     // startup handling; no shell rewriting, ambient command or Plasma service.
-    const auto application = service(binding.component); if (!application || !application->isValid()) return false;
+    const auto application = m_services.value(binding.component); if (!application) return false;
     KIO::ApplicationLauncherJob *job = nullptr;
     if (binding.action == QLatin1String("_launch")) job = new KIO::ApplicationLauncherJob(application);
     else {

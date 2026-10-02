@@ -18,11 +18,13 @@ std::function<void()> CompatibilityEndpoint::snapshotRestore()
     const auto owners = m_owners;
     const auto transient = m_transient, blockers = m_blockers;
     const auto watched = m_watch->watchedServices();
+    const auto desktop = *m_desktop;
     const auto storage = m_store ? m_store->checkpoint() : RuntimeStore::State{};
-    return [this, registry, actions, owners, transient, blockers, watched, storage] {
+    return [this, registry, actions, owners, transient, blockers, watched, storage, desktop] {
         *m_registry = registry; m_actionIds = actions; m_owners = owners;
         m_transient = transient; m_blockers = blockers; m_blocked = !blockers.isEmpty();
         m_watch->setWatchedServices(watched);
+        *m_desktop = desktop;
         if (m_store) m_store->restore(storage);
     };
 }
@@ -39,7 +41,7 @@ void CompatibilityEndpoint::ownerLost(const QString &owner)
     for (auto it = m_owners.begin(); it != m_owners.end();) {
         if (it.value() == owner) {
             const auto binding = m_registry->binding(it.key());
-            m_registry->setActive(it.key(), binding && desktopActionAvailable(*binding));
+            m_registry->setActive(it.key(), binding && m_desktop->available(*binding));
             if (m_transient.contains(it.key())) {
                 m_registry->unregisterBinding(it.key()); m_actionIds.remove(it.key());
                 if (m_store) m_store->setTransient(it.key(), false);

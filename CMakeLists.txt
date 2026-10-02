@@ -66,6 +66,9 @@ option(KWIN_BUILD_TABBOX "Enable building of KWin Tabbox functionality" ON)
 option(KWIN_BUILD_X11 "Enable building X11 common code and Xwayland support" ON)
 option(KWIN_NATIVE_SHORTCUTS "Use the QindaQt native shortcut authority (candidate, explicitly qualified by packaging)" OFF)
 option(KWIN_BUILD_GLOBALSHORTCUTS "Enable building of KWin with global shortcuts support" ON)
+if(KWIN_NATIVE_SHORTCUTS AND NOT KWIN_BUILD_GLOBALSHORTCUTS)
+    message(FATAL_ERROR "Native shortcuts require the existing compositor shortcut input filter")
+endif()
 option(KWIN_BUILD_RUNNERS "Enable building of KWin with krunner support" OFF)
 # AGENT-GUARD: qindaqt-kwin must install beside an unmodified kde-plasma/kwin
 # (container-wm ADR-0289). Both switches install stock-named files.

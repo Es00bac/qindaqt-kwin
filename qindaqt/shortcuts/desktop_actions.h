@@ -4,10 +4,20 @@
 */
 #pragma once
 #include "shortcuts/shortcut_registry.h"
+#include <KService>
+#include <QHash>
 namespace KWin::Shortcuts
 {
-// Static desktop-file actions retain activation after the Settings client exits.
-// Uses the existing KService/KIO launcher contract; never interprets Exec itself.
-bool desktopActionAvailable(const Binding &binding);
-bool launchDesktopAction(const Binding &binding);
+// Static actions retain activation after Settings exits. Desktop lookup belongs
+// to control-plane registration, never synchronous input dispatch. Uses existing
+// KService/KIO parsing, with no hand interpretation of Exec.
+class DesktopActions final
+{
+public:
+    bool registerAction(const Binding &);
+    bool available(const Binding &) const;
+    bool launch(const Binding &) const;
+private:
+    QHash<QString, KService::Ptr> m_services;
+};
 }
