@@ -11,7 +11,7 @@
 */
 // own
 #include "workspace.h"
-#include "qindaqt/display-power/displaypowerauthority.h"
+#include "../qindaqt/display-power/displaypowerauthority.h"
 // kwin libs
 #include "opengl/glplatform.h"
 // kwin
