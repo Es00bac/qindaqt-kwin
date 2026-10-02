@@ -7,6 +7,7 @@
 #include "eisinputcapture.h"
 
 #include "eisinputcapturemanager.h"
+#include "eisportaladmission.h"
 #include "inputcapture_logging.h"
 
 #include "core/output.h"
@@ -191,8 +192,24 @@ void EisInputCapture::deactivate(const std::optional<QPointF> &releasePosition)
     }
 }
 
+bool EisInputCapture::ownerCall()
+{
+    if (calledFromDBus() && message().service() != dbusService) {
+        sendErrorReply(QDBusError::AccessDenied, QStringLiteral("Input capture belongs to another portal backend"));
+        return false;
+    }
+    return true;
+}
+
 void EisInputCapture::enable(const QList<QPair<QPoint, QPoint>> &barriers)
 {
+    if (!ownerCall()) {
+        return;
+    }
+    if (eisNativeLockActive()) {
+        sendErrorReply(QDBusError::AccessDenied, QStringLiteral("Native session lock is active"));
+        return;
+    }
     m_barriers.clear();
     m_barriers.reserve(barriers.size());
     for (const auto &[p1, p2] : barriers) {
@@ -206,6 +223,9 @@ void EisInputCapture::enable(const QList<QPair<QPoint, QPoint>> &barriers)
 
 void EisInputCapture::disable()
 {
+    if (!ownerCall()) {
+        return;
+    }
     if (m_manager->activeCapture() == this) {
         deactivate(std::nullopt);
     }
@@ -215,6 +235,9 @@ void EisInputCapture::disable()
 
 void EisInputCapture::release(const QPointF &cursorPosition, bool applyPosition)
 {
+    if (!ownerCall()) {
+        return;
+    }
     if (m_manager->activeCapture() != this) {
         return;
     }
@@ -223,6 +246,9 @@ void EisInputCapture::release(const QPointF &cursorPosition, bool applyPosition)
 
 QDBusUnixFileDescriptor EisInputCapture::connectToEIS()
 {
+    if (!ownerCall()) {
+        return {};
+    }
     return QDBusUnixFileDescriptor(eis_backend_fd_add_client(m_eis));
 }
 

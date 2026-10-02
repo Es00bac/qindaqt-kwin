@@ -21,8 +21,10 @@ target_sources(eis PRIVATE
     main.cpp
     eisdevice.cpp
     eisbackend.cpp
+    eisclipboard.cpp
     eiscontext.cpp
     eisplugin.cpp
+    eisportaladmission.cpp
     eisinputcapture.cpp
     eisinputcapturemanager.cpp
     eisinputcapturefilter.cpp

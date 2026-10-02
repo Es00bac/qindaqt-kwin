@@ -13,6 +13,7 @@
 #include <QDBusUnixFileDescriptor>
 #include <QObject>
 #include <QPointF>
+#include <QRect>
 
 #include <memory>
 
@@ -43,12 +44,19 @@ public:
 
     Q_INVOKABLE QDBusObjectPath addInputCapture(uint capabilities);
     Q_INVOKABLE void removeInputCapture(const QDBusObjectPath &capture);
+    // AGENT-CONTRACT: compositor-authoritative logical output rectangles used
+    // by the QindaQt portal InputCapture GetZones/barrier validation; the same
+    // coordinates BarrierSpy enforces. zonesChanged follows layout changes.
+    Q_INVOKABLE QList<QRect> zones();
 
     const RamFile &keyMap() const;
 
     void barrierHit(EisInputCapture *capture, const QPointF &position);
     EisInputCapture *activeCapture();
     void deactivate(const std::optional<QPointF> &releasePosition = std::nullopt);
+
+Q_SIGNALS:
+    void zonesChanged();
 
 private:
     RamFile m_keymapFile;

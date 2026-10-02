@@ -22,7 +22,7 @@ namespace KWin
 {
 class BarrierSpy;
 
-class EisInputCapture : public QObject
+class EisInputCapture : public QObject, protected QDBusContext
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.kde.KWin.EIS.InputCapture")
@@ -51,6 +51,9 @@ Q_SIGNALS:
     void deactivated(uint activationId);
 
 private:
+    // AGENT-GUARD: capture objects are session-bus visible; only the creating
+    // portal backend may connect, arm, disarm or release them.
+    bool ownerCall();
     void handleEvents();
     void createDevice();
     void deactivate(const std::optional<QPointF> &releasePosition);
