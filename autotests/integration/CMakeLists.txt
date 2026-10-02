@@ -215,6 +215,16 @@ add_subdirectory(effects)
 add_subdirectory(fakes)
 
 if(QINDAQT_SESSION_LOCK_TEST_AUTHORIZATION)
+    if(KWIN_NATIVE_SHORTCUTS)
+        integrationTest(NAME testNativeShortcuts
+            RUNNER ${PROJECT_SOURCE_DIR}/qindaqt/tools/run-native-lock
+            SRCS ${PROJECT_SOURCE_DIR}/qindaqt/shortcuts/tests/native_shortcuts_integration_test.cpp
+            LIBS Qt::DBus)
+        target_include_directories(testNativeShortcuts PRIVATE ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+        qt6_generate_wayland_protocol_client_sources(testNativeShortcuts PRIVATE_CODE FILES
+            ${WaylandProtocols_DATADIR}/staging/ext-session-lock/ext-session-lock-v1.xml
+            ${WaylandProtocols_DATADIR}/unstable/keyboard-shortcuts-inhibit/keyboard-shortcuts-inhibit-unstable-v1.xml)
+    endif()
     add_subdirectory(${PROJECT_SOURCE_DIR}/qindaqt/session-lock/tests/probe ${CMAKE_CURRENT_BINARY_DIR}/native-lock-probe)
     integrationTest(NAME testNativeSessionLock
         RUNNER ${PROJECT_SOURCE_DIR}/qindaqt/tools/run-native-lock
