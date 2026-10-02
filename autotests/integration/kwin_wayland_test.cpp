@@ -45,7 +45,8 @@
 #include <unistd.h>
 
 Q_IMPORT_PLUGIN(KWinIntegrationPlugin)
-#if KWIN_BUILD_GLOBALSHORTCUTS
+// Native shortcuts own the core endpoint; its build omits the legacy plugin.
+#if KWIN_BUILD_GLOBALSHORTCUTS && !KWIN_NATIVE_SHORTCUTS
 Q_IMPORT_PLUGIN(KGlobalAccelImpl)
 #endif
 Q_IMPORT_PLUGIN(KWindowSystemKWinPlugin)
