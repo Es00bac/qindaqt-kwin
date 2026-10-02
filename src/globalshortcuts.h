@@ -15,9 +15,13 @@
 #include <QKeySequence>
 
 #include <memory>
+#if KWIN_NATIVE_SHORTCUTS
+#include "shortcuts/shortcut_registry.h"
+namespace KWin::Shortcuts { class CompatibilityEndpoint; class RuntimeStore; class InputDispatcher; }
+#endif
 
 class QAction;
-#if KWIN_BUILD_GLOBALSHORTCUTS
+#if KWIN_BUILD_GLOBALSHORTCUTS && !KWIN_NATIVE_SHORTCUTS
 class KGlobalAccelD;
 class KGlobalAccelInterface;
 #endif
@@ -119,9 +123,15 @@ private:
 
     QList<GlobalShortcut> m_shortcuts;
 
-#if KWIN_BUILD_GLOBALSHORTCUTS
+#if KWIN_BUILD_GLOBALSHORTCUTS && !KWIN_NATIVE_SHORTCUTS
     std::unique_ptr<KGlobalAccelD> m_kglobalAccel;
     KGlobalAccelInterface *m_kglobalAccelInterface = nullptr;
+#endif
+#if KWIN_NATIVE_SHORTCUTS
+    Shortcuts::Registry m_nativeRegistry;
+    std::unique_ptr<Shortcuts::RuntimeStore> m_nativeStore;
+    std::unique_ptr<Shortcuts::CompatibilityEndpoint> m_nativeEndpoint;
+    std::unique_ptr<Shortcuts::InputDispatcher> m_nativeInput;
 #endif
     std::unique_ptr<GestureRecognizer> m_touchpadGestureRecognizer;
     std::unique_ptr<GestureRecognizer> m_touchscreenGestureRecognizer;

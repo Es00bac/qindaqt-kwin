@@ -64,7 +64,11 @@ if(NOT KWIN_BUILD_SCREENLOCKER)
 endif()
 option(KWIN_BUILD_TABBOX "Enable building of KWin Tabbox functionality" ON)
 option(KWIN_BUILD_X11 "Enable building X11 common code and Xwayland support" ON)
+option(KWIN_NATIVE_SHORTCUTS "Use the QindaQt native shortcut authority (candidate, explicitly qualified by packaging)" OFF)
 option(KWIN_BUILD_GLOBALSHORTCUTS "Enable building of KWin with global shortcuts support" ON)
+if(KWIN_NATIVE_SHORTCUTS AND NOT KWIN_BUILD_GLOBALSHORTCUTS)
+    message(FATAL_ERROR "Native shortcuts require the existing compositor shortcut input filter")
+endif()
 option(KWIN_BUILD_RUNNERS "Enable building of KWin with krunner support" OFF)
 # AGENT-GUARD: qindaqt-kwin must install beside an unmodified kde-plasma/kwin
 # (container-wm ADR-0289). Both switches install stock-named files.
@@ -129,6 +133,7 @@ find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS
     DBusAddons
     GlobalAccel
     GuiAddons
+    KIO
     I18n
     IdleTime
     Package
@@ -367,7 +372,7 @@ set_package_properties(QAccessibilityClient6 PROPERTIES
 pkg_check_modules(libsystemd IMPORTED_TARGET libsystemd)
 add_feature_info(libsystemd libsystemd_FOUND "Required for setting up the service watchdog")
 
-if(KWIN_BUILD_GLOBALSHORTCUTS)
+if(KWIN_BUILD_GLOBALSHORTCUTS AND NOT KWIN_NATIVE_SHORTCUTS)
     find_package(KGlobalAccelD REQUIRED)
 endif()
 
