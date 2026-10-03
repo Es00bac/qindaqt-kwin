@@ -216,8 +216,8 @@ bool CompatibilityEndpoint::handleMessage(const QDBusMessage &message, const QDB
         } else {
             // AGENT-CONTRACT: Virtual objects need an explicit standard wire
             // reply; Qt uses introspect(path) for XML but routes bus calls here.
-            connection.send(message.createReply({QStringLiteral("<node>") + introspect(path)
-                                                 + QStringLiteral("</node>")}));
+            connection.send(message.createReply(QVariantList{QStringLiteral("<node>") + introspect(path)
+                                                               + QStringLiteral("</node>")}));
         }
         return true;
     }
