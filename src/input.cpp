@@ -1064,6 +1064,15 @@ public:
                 }
             }
         } else if (event->state == KeyboardKeyState::Released) {
+            // AGENT-GUARD: a shortcut press withheld from the focused client
+            // must withhold its physical release too. Otherwise web pages can
+            // act on an orphan keyup (and steal focus during push-to-talk).
+            // The scan-code ledger survives focus and shortcut-inhibition
+            // changes while the key is held; still notify the shortcut owner.
+            if (input()->keyboard()->filteredKeys().contains(event->nativeScanCode)) {
+                input()->shortcuts()->processKey(event->modifiersRelevantForGlobalShortcuts, event->key, event->state);
+                return true;
+            }
             if (!waylandServer()->isKeyboardShortcutsInhibited()) {
                 return input()->shortcuts()->processKey(event->modifiersRelevantForGlobalShortcuts, event->key, event->state);
             }

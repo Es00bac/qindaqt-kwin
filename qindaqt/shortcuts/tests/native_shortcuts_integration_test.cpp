@@ -9,6 +9,7 @@
 #include "keyboard_input.h"
 #include "kwin_wayland_test.h"
 #include "main.h"
+#include "pluginmanager.h"
 #include "qindaqt/session-lock/tests/native_lock_fixture.h"
 #include "qwayland-keyboard-shortcuts-inhibit-unstable-v1.h"
 #include "wayland/keyboard.h"
@@ -103,6 +104,7 @@ private Q_SLOTS:
         qputenv("XKB_DEFAULT_RULES", QByteArrayLiteral("evdev"));
         qputenv("XKB_DEFAULT_LAYOUT", QByteArrayLiteral("us,ru"));
         kwinApp()->start();
+        kwinApp()->pluginManager()->unloadPlugin(QStringLiteral("qindaqt_compositor"));
         Test::setOutputConfig({Rect(0, 0, 1100, 820)});
         const auto bus = QDBusConnection::sessionBus();
         const QDBusReply<QString> owner = bus.interface()->serviceOwner("org.qindaqt.Shortcuts1");
@@ -173,6 +175,73 @@ private Q_SLOTS:
         QTRY_COMPARE(press.count(), 2);
         QTRY_COMPARE(release.count(), 2);
         QCOMPARE(press.last().at(1).toString(), QStringLiteral("modifier"));
+    }
+    void consumedShortcutReleaseStaysOutOfFocusedClient()
+    {
+        QVERIFY(bind("dictation", "Ins"));
+        auto connection = Test::Connection::setup(Test::AdditionalWaylandInterface::Seat);
+        QVERIFY(connection && connection->kwinSeat);
+        auto keyboard = connection->kwinSeat->getKeyboard();
+        QSignalSpy entered(keyboard.get(), &Test::WlKeyboard::enter);
+        QSignalSpy keys(keyboard.get(), &Test::WlKeyboard::key);
+        Test::XdgToplevelWindow window{connection.get()};
+        QVERIFY(window.show());
+        QVERIFY(entered.wait());
+        QVERIFY(!waylandServer()->isScreenLocked());
+        QVERIFY(!waylandServer()->isKeyboardShortcutsInhibited());
+
+        QSignalSpy press(this, &NativeShortcutsIntegrationTest::nativeActivated);
+        QSignalSpy release(this, &NativeShortcutsIntegrationTest::nativeDeactivated);
+        uint time = 1;
+        Test::keyboardKeyPressed(KEY_A, time++);
+        QVERIFY(keys.wait());
+        QCOMPARE(keys.last().at(2).toUInt(), uint(KEY_A));
+        Test::keyboardKeyReleased(KEY_A, time++);
+        QVERIFY(keys.wait());
+        QCOMPARE(keys.last().at(2).toUInt(), uint(KEY_A));
+        keys.clear();
+
+        // Probe immediately downstream of the global shortcut filter. The
+        // Wayland seat can itself discard an orphan release, so client silence
+        // alone would not prove that the compositor consumed both halves.
+        struct DownstreamInsertProbe final : InputEventFilter {
+            DownstreamInsertProbe() : InputEventFilter(InputFilterOrder::Effects) {}
+            int presses = 0;
+            int releases = 0;
+            bool keyboardKey(KeyboardKeyEvent *event) override {
+                if (event->nativeScanCode == KEY_INSERT) {
+                    if (event->state == KeyboardKeyState::Pressed) ++presses;
+                    if (event->state == KeyboardKeyState::Released) ++releases;
+                }
+                return false;
+            }
+        } downstream;
+        input()->installInputEventFilter(&downstream);
+
+        Test::keyboardKeyPressed(KEY_INSERT, time++);
+        QTRY_COMPARE(press.count(), 1);
+        QVERIFY(!keys.wait(100));
+        Test::keyboardKeyReleased(KEY_INSERT, time++);
+        QTRY_COMPARE(release.count(), 1);
+        QVERIFY(!keys.wait(100));
+        QCOMPARE(downstream.presses, 0);
+        QCOMPARE(downstream.releases, 0);
+
+        // A changed binding must return both halves of Insert to the app.
+        const auto rebound = nativeCall("SetShortcuts", {QLatin1String(component), QStringLiteral("dictation"), QStringList{QStringLiteral("Ctrl+Alt+F20")}});
+        QCOMPARE(rebound.type(), QDBusMessage::ReplyMessage);
+        QVERIFY2(rebound.arguments().first().toBool(), qPrintable(rebound.arguments().at(1).toString()));
+        Test::keyboardKeyPressed(KEY_INSERT, time++);
+        QVERIFY(keys.wait());
+        QCOMPARE(keys.last().at(2).toUInt(), uint(KEY_INSERT));
+        QCOMPARE(keys.last().at(3).value<Test::WlKeyboard::key_state>(), Test::WlKeyboard::key_state::key_state_pressed);
+        Test::keyboardKeyReleased(KEY_INSERT, time++);
+        QVERIFY(keys.wait());
+        QCOMPARE(keys.last().at(2).toUInt(), uint(KEY_INSERT));
+        QCOMPARE(keys.last().at(3).value<Test::WlKeyboard::key_state>(), Test::WlKeyboard::key_state::key_state_released);
+        QCOMPARE(press.count(), 1);
+        QCOMPARE(downstream.presses, 1);
+        QCOMPARE(downstream.releases, 1);
     }
     void repeatedNativeAction()
     {

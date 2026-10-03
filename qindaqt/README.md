@@ -171,8 +171,11 @@ serialization. Legacy import keeps its prior alias handling. Real native tests
 use `Ctrl+F12` for function-key behavior; `Ctrl+Alt+F12` remains a reserved
 console-switch combination and is intentionally handled before shortcuts.
 The native `Activated` signal reports initial presses and admitted repeats;
-`Deactivated` reports release. Repeat admission remains the registry's per-action
-policy, while the KF6 compatibility wire retains its separate repeat signal.
+`Deactivated` reports release. A physical key press consumed by a shortcut also
+consumes that key's release, even if focus or shortcut inhibition changes while
+held; reassigning the shortcut returns both events to the focused client.
+Repeat admission remains the registry's per-action policy, while the KF6
+compatibility wire retains its separate repeat signal.
 
 Focused source-only contracts can be configured separately from the compositor:
 `cmake -S qindaqt/shortcuts/tests -B build/shortcut-contracts -G Ninja` followed
