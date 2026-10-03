@@ -152,9 +152,10 @@ In the build tree the program is `build/program/qindaqt-kwin`, because
 
 The bounded PF23 adaptation uses `-DKWIN_NATIVE_SHORTCUTS=ON` to select
 QindaQt's registry/store, authenticated owner lifetime, standard compatibility
-wire, and additive `org.qindaqt.Shortcuts1` endpoint. The option remains OFF
-until the private KF6 client contracts and real compositor scenarios qualify
-it. With it ON, KGlobalAccelD is neither discovered nor linked. KF6 GlobalAccel
+wire, and additive `org.qindaqt.Shortcuts1` endpoint. The source CMake default
+remains OFF; the QindaQt Gentoo package enables it after the private KF6 client
+contracts and compositor scenarios qualified the migration. With it ON,
+KGlobalAccelD is neither discovered nor linked. KF6 GlobalAccel
 client wire names remain compatibility contracts, with no daemon dependency.
 
 The input collaborator adapts the existing KGlobalAccelD v6.6.6 modifier-only,
@@ -178,6 +179,9 @@ multi-step shortcut first activates on a repeated key after its physical press
 reached the client, that client's release is still delivered.
 Repeat admission remains the registry's per-action policy, while the KF6
 compatibility wire retains its separate repeat signal.
+The compatibility root and component objects and the native Shortcuts1 object
+answer standard D-Bus introspection with a complete XML node. Tools and
+settings clients can discover their current methods without a private schema.
 
 Focused source-only contracts can be configured separately from the compositor:
 `cmake -S qindaqt/shortcuts/tests -B build/shortcut-contracts -G Ninja` followed

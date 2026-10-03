@@ -150,9 +150,11 @@ bool CompatibilityEndpoint::ensureBinding(const QStringList &id, const QString &
 
 QString CompatibilityEndpoint::introspect(const QString &path) const
 {
-    if (path == QLatin1String("/org/qindaqt/Shortcuts1")) return nativeIntrospection();
+    const auto standard = QStringLiteral("<interface name='org.freedesktop.DBus.Introspectable'>"
+        "<method name='Introspect'><arg type='s' direction='out'/></method></interface>");
+    if (path == QLatin1String("/org/qindaqt/Shortcuts1")) return standard + nativeIntrospection();
     if (path.startsWith(QLatin1String("/component/"))) {
-        return QStringLiteral("<interface name='org.kde.kglobalaccel.Component'>"
+        return standard + QStringLiteral("<interface name='org.kde.kglobalaccel.Component'>"
             "<property name='friendlyName' type='s' access='read'/>"
             "<property name='uniqueName' type='s' access='read'/>"
             "<method name='cleanUp'><arg type='b' direction='out'/></method>"
@@ -168,7 +170,7 @@ QString CompatibilityEndpoint::introspect(const QString &path) const
             "<signal name='globalShortcutReleased'><arg type='s'/><arg type='s'/><arg type='x'/></signal>"
             "</interface>");
     }
-    return QStringLiteral("<interface name='org.kde.KGlobalAccel'>"
+    return standard + QStringLiteral("<interface name='org.kde.KGlobalAccel'>"
         "<method name='allMainComponents'><arg type='aas' direction='out'/></method>"
         "<method name='allComponents'><arg type='ao' direction='out'/></method>"
         "<method name='allActionsForComponent'><arg type='as' direction='in'/><arg type='aas' direction='out'/></method>"
@@ -201,6 +203,22 @@ bool CompatibilityEndpoint::handleMessage(const QDBusMessage &message, const QDB
 {
     if (!authenticated(message)) {
         connection.send(message.createErrorReply(QStringLiteral("org.freedesktop.DBus.Error.AccessDenied"), QStringLiteral("Shortcut caller is not in this user session")));
+        return true;
+    }
+    if (message.interface() == QLatin1String("org.freedesktop.DBus.Introspectable")
+        && message.member() == QLatin1String("Introspect") && message.signature().isEmpty()) {
+        const QString path = message.path();
+        if (path != QLatin1String("/kglobalaccel")
+            && path != QLatin1String("/org/qindaqt/Shortcuts1")
+            && !m_componentPaths.contains(path)) {
+            connection.send(message.createErrorReply(QStringLiteral("org.freedesktop.DBus.Error.UnknownObject"),
+                                                     QStringLiteral("Shortcut object does not exist")));
+        } else {
+            // AGENT-CONTRACT: Virtual objects need an explicit standard wire
+            // reply; Qt uses introspect(path) for XML but routes bus calls here.
+            connection.send(message.createReply({QStringLiteral("<node>") + introspect(path)
+                                                 + QStringLiteral("</node>")}));
+        }
         return true;
     }
     if (message.path() == QLatin1String("/org/qindaqt/Shortcuts1")) return handleNative(message, connection);

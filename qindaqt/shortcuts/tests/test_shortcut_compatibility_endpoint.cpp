@@ -17,6 +17,7 @@
 #include <QCoreApplication>
 #include <QSignalSpy>
 #include <QtTest>
+#include <QXmlStreamReader>
 
 using namespace KWin::Shortcuts;
 
@@ -64,6 +65,22 @@ void ShortcutCompatibilityEndpointTest::publicClientRegistrationAndInvocation()
                              QStringLiteral("org.kde.kglobalaccel.Component"),
                              QDBusConnection::sessionBus());
     QVERIFY(component.isValid());
+    for (const auto &[path, expected] : QList<std::pair<QString, QString>>{
+             {QStringLiteral("/kglobalaccel"), QStringLiteral("org.kde.KGlobalAccel")},
+             {QStringLiteral("/component/qindaqt_private_contract"),
+              QStringLiteral("org.kde.kglobalaccel.Component")},
+             {QStringLiteral("/org/qindaqt/Shortcuts1"), QStringLiteral("org.qindaqt.Shortcuts1")}}) {
+        const auto call = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"), path,
+            QStringLiteral("org.freedesktop.DBus.Introspectable"), QStringLiteral("Introspect"));
+        const auto response = QDBusConnection::sessionBus().call(call);
+        QCOMPARE(response.type(), QDBusMessage::ReplyMessage);
+        const QString xml = response.arguments().first().toString();
+        QXmlStreamReader reader(xml);
+        while (!reader.atEnd()) reader.readNext();
+        QVERIFY2(!reader.hasError(), qPrintable(reader.errorString()));
+        QVERIFY(xml.contains(expected));
+        QVERIFY(xml.contains(QStringLiteral("org.freedesktop.DBus.Introspectable")));
+    }
     const auto activeReply = component.call(QStringLiteral("isActive"));
     QVERIFY(activeReply.type() == QDBusMessage::ReplyMessage);
     QVERIFY(activeReply.arguments().first().toBool());
