@@ -22,6 +22,7 @@
 #include <QDBusMessage>
 #include <QDBusPendingCall>
 #include <QDBusReply>
+#include <chrono>
 #include <linux/input.h>
 
 namespace KWin
@@ -242,6 +243,34 @@ private Q_SLOTS:
         QCOMPARE(press.count(), 1);
         QCOMPARE(downstream.presses, 1);
         QCOMPARE(downstream.releases, 1);
+    }
+    void repeatOnlyShortcutKeepsOriginalRelease()
+    {
+        QVERIFY(bind("repeat-sequence", "A, A", true));
+        auto connection = Test::Connection::setup(Test::AdditionalWaylandInterface::Seat);
+        QVERIFY(connection && connection->kwinSeat);
+        auto keyboard = connection->kwinSeat->getKeyboard();
+        QSignalSpy entered(keyboard.get(), &Test::WlKeyboard::enter);
+        QSignalSpy keys(keyboard.get(), &Test::WlKeyboard::key);
+        Test::XdgToplevelWindow window{connection.get()};
+        QVERIFY(window.show());
+        QVERIFY(entered.wait());
+        QSignalSpy shortcutPress(this, &NativeShortcutsIntegrationTest::nativeActivated);
+
+        // The first physical press belongs to the client. A repeat may be
+        // consumed by a sequence later; its release still belongs to the client.
+        uint time = 1;
+        Test::keyboardKeyPressed(KEY_A, time++);
+        QVERIFY(keys.wait());
+        QCOMPARE(keys.last().at(2).toUInt(), uint(KEY_A));
+        QCOMPARE(keys.last().at(3).value<Test::WlKeyboard::key_state>(), Test::WlKeyboard::key_state::key_state_pressed);
+        input()->keyboard()->processKey(KEY_A, KeyboardKeyState::Repeated, std::chrono::milliseconds(time++));
+        QTRY_COMPARE(shortcutPress.count(), 1);
+        QVERIFY(!keys.wait(100));
+        Test::keyboardKeyReleased(KEY_A, time++);
+        QVERIFY(keys.wait());
+        QCOMPARE(keys.last().at(2).toUInt(), uint(KEY_A));
+        QCOMPARE(keys.last().at(3).value<Test::WlKeyboard::key_state>(), Test::WlKeyboard::key_state::key_state_released);
     }
     void repeatedNativeAction()
     {

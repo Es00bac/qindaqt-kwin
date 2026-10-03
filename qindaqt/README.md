@@ -172,8 +172,10 @@ use `Ctrl+F12` for function-key behavior; `Ctrl+Alt+F12` remains a reserved
 console-switch combination and is intentionally handled before shortcuts.
 The native `Activated` signal reports initial presses and admitted repeats;
 `Deactivated` reports release. A physical key press consumed by a shortcut also
-consumes that key's release, even if focus or shortcut inhibition changes while
-held; reassigning the shortcut returns both events to the focused client.
+consumes that key's release, even if ordinary app focus or shortcut inhibition changes while
+held; reassigning the shortcut returns both events to the focused client. If a
+multi-step shortcut first activates on a repeated key after its physical press
+reached the client, that client's release is still delivered.
 Repeat admission remains the registry's per-action policy, while the KF6
 compatibility wire retains its separate repeat signal.
 

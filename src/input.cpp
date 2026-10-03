@@ -1059,7 +1059,12 @@ public:
         } else if (event->state == KeyboardKeyState::Repeated || event->state == KeyboardKeyState::Pressed) {
             if (!waylandServer()->isKeyboardShortcutsInhibited()) {
                 if (input()->shortcuts()->processKey(event->modifiersRelevantForGlobalShortcuts, event->key, event->state)) {
-                    input()->keyboard()->addFilteredKey(event->nativeScanCode);
+                    // A repeat can first complete a multi-step shortcut after
+                    // the physical press reached the client. Its release must
+                    // still reach that client to balance the forwarded press.
+                    if (event->state == KeyboardKeyState::Pressed) {
+                        input()->keyboard()->addFilteredKey(event->nativeScanCode);
+                    }
                     return true;
                 }
             }
@@ -1067,7 +1072,7 @@ public:
             // AGENT-GUARD: a shortcut press withheld from the focused client
             // must withhold its physical release too. Otherwise web pages can
             // act on an orphan keyup (and steal focus during push-to-talk).
-            // The scan-code ledger survives focus and shortcut-inhibition
+            // The scan-code ledger survives ordinary focus and shortcut-inhibition
             // changes while the key is held; still notify the shortcut owner.
             if (input()->keyboard()->filteredKeys().contains(event->nativeScanCode)) {
                 input()->shortcuts()->processKey(event->modifiersRelevantForGlobalShortcuts, event->key, event->state);
