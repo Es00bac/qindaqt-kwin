@@ -80,6 +80,10 @@ void ShortcutCompatibilityEndpointTest::publicClientRegistrationAndInvocation()
         QVERIFY2(!reader.hasError(), qPrintable(reader.errorString()));
         QVERIFY(xml.contains(expected));
         QVERIFY(xml.contains(QStringLiteral("org.freedesktop.DBus.Introspectable")));
+        if (path.startsWith(QStringLiteral("/component/"))) {
+            QVERIFY(xml.contains(QStringLiteral("org.freedesktop.DBus.Properties")));
+            QVERIFY(xml.contains(QStringLiteral("<method name='Get'>")));
+        }
     }
     const auto activeReply = component.call(QStringLiteral("isActive"));
     QVERIFY(activeReply.type() == QDBusMessage::ReplyMessage);

@@ -154,7 +154,10 @@ QString CompatibilityEndpoint::introspect(const QString &path) const
         "<method name='Introspect'><arg type='s' direction='out'/></method></interface>");
     if (path == QLatin1String("/org/qindaqt/Shortcuts1")) return standard + nativeIntrospection();
     if (path.startsWith(QLatin1String("/component/"))) {
-        return standard + QStringLiteral("<interface name='org.kde.kglobalaccel.Component'>"
+        const auto properties = QStringLiteral("<interface name='org.freedesktop.DBus.Properties'>"
+            "<method name='Get'><arg type='s' direction='in'/><arg type='s' direction='in'/>"
+            "<arg type='v' direction='out'/></method></interface>");
+        return standard + properties + QStringLiteral("<interface name='org.kde.kglobalaccel.Component'>"
             "<property name='friendlyName' type='s' access='read'/>"
             "<property name='uniqueName' type='s' access='read'/>"
             "<method name='cleanUp'><arg type='b' direction='out'/></method>"
