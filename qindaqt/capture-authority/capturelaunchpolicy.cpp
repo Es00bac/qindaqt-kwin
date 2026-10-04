@@ -74,8 +74,8 @@ bool isInstalledCaptureEntry(const QString &desktopPath, const QString &executab
     if (command.size() != 1 || command.constFirst() != executablePath) {
         return false;
     }
-    const auto dbus = entry.property<QStringList>(s_dbusRestrictedInterfaceName);
-    const auto wayland = entry.property<QStringList>(s_waylandInterfaceName);
+    const auto dbus = readServicePermissionList(entry, s_dbusRestrictedInterfaceName);
+    const auto wayland = readServicePermissionList(entry, s_waylandInterfaceName);
     if (helper) {
         return dbus == QStringList{QStringLiteral("org.qindaqt.KWin.ScreenShot2")}
             && wayland.isEmpty();

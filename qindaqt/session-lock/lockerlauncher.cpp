@@ -82,7 +82,7 @@ bool LockerLauncher::start()
     }
     KService entry(desktop);
     const auto command = QProcess::splitCommand(entry.exec());
-    if (!fixture && (command.size() != 1 || QFileInfo(command.first()).canonicalFilePath() != QFileInfo(executable).canonicalFilePath() || !entry.property<QStringList>(s_waylandInterfaceName).contains(QStringLiteral("ext_session_lock_manager_v1")))) {
+    if (!fixture && (command.size() != 1 || QFileInfo(command.first()).canonicalFilePath() != QFileInfo(executable).canonicalFilePath() || !readServicePermissionList(entry, s_waylandInterfaceName).contains(QStringLiteral("ext_session_lock_manager_v1")))) {
         m_error = QStringLiteral("Native locker permission entry does not grant the standard lock interface");
         return false;
     }

@@ -21,6 +21,16 @@ non-writable, including parent hierarchies. The desktop entry requests the
 standard interface through the public permission field and supplies no shell
 command override. Native binding has no client app-ID or debug bypass.
 
+`X-QindaQt-KWin-Wayland-Interfaces` is an XDG string list. The launcher and
+public service discovery share KDE's desktop-entry list decoding, so the
+packaged `ext_session_lock_manager_v1;` grants the exact standard interface.
+Generic KService QStringList conversion leaves that semicolon in the value and
+would reject the trusted locker into clientless black protection. Stock KDE
+keys remain insufficient; root-managed paths, the single exact Exec image and
+the owned private connection remain required. The bounded metadata/discovery
+regression gate is documented in [Helper tests](../README.md#helper-tests); it
+does not qualify physical lock/PAM or installed delivery.
+
 The launcher requires Yama ptrace_scope1–3, and the compositor/native children
 disable core dumps and dumpability. execve resets dumpability, so Yama protects
 the owned child before its early native protection runs. No kernel setting is

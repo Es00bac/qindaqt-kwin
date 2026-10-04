@@ -12,6 +12,15 @@ negative-case plan are in
 `CaptureLaunchPolicy` checks the fixed installed executable and desktop entry,
 including root ownership and non-writable original/canonical parent
 directories. It rejects missing Yama protection of the exec-to-PR0 interval.
+Its native Wayland and D-Bus permission fields use the shared
+`src/utils/serviceutils.h` XDG desktop-entry list decoder,
+also used by service discovery and the native locker. A trailing semicolon
+therefore terminates a permission rather than becoming part of its name.
+The helper still requires exactly `org.qindaqt.KWin.ScreenShot2` and no Wayland
+permissions; the broker still requires both lists empty. Stock KDE keys grant
+no native access. See [Helper tests](../README.md#helper-tests) for the bounded
+metadata/consumer regression gate; capture authority and actor checks remain
+independent requirements.
 `CaptureChild` creates the private seqpacket control socket and, for a helper,
 separate ordinary GUI and restricted capture Wayland socketpairs and two
 request/result pipes. It launches only the configured broker/helper image with

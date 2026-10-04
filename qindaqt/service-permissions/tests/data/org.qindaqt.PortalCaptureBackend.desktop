@@ -1,0 +1,5 @@
+[Desktop Entry]
+Type=Application
+Name=QindaQt Portal Capture Backend
+Exec=/usr/libexec/qindaqt-portal-capture-backend
+NoDisplay=true

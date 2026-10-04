@@ -57,6 +57,16 @@ systemd unit, the hicolor `kwin` icons, the kcfg files, `kwindowprop`.
   desktop-file keys; stock KDE keys do not grant access. Deploy with the matching
   container-wm caller cutover and Gabbee native endpoint preference (ADR-0340).
 
+The native privileged-interface fields use XDG desktop-entry string lists:
+semicolon-separated entries with an optional trailing semicolon. The shared
+`src/utils/serviceutils.h` boundary reads the selected
+KService's desktop file through `KDesktopFile` and `readXdgListEntry`, including
+KDE's list escaping. Generic `KService::property<QStringList>` conversion is not
+this codec. Executable, desktop-ID and PID discovery, the private native locker,
+and capture launch validation all use this boundary. It grants no legacy-key
+fallback and does not replace any executable, file ownership, connection or
+exact-interface admission check (ADR-0340).
+
 A source line that must keep a stock name despite a rename rule carries the
 comment marker `qindaqt-identity: keep`.
 
@@ -113,6 +123,24 @@ The ordinary resident backend and stock KDE backend receive no EIS context.
 `-DQINDAQT_KWIN_BUILD_TESTS=ON` builds the tests of qindaqt-kwin's own helpers
 without KWin's autotests; run them with
 `ctest --test-dir build/qindaqt/helpers/terminate-process/tests`.
+
+The native permission-list regression tests also run without rebuilding the
+compositor:
+
+```sh
+cmake -S qindaqt/service-permissions/tests -B build-permissions -G Ninja -DCMAKE_BUILD_TYPE=Debug
+cmake --build build-permissions
+ctest --test-dir build-permissions --output-on-failure --no-tests=error
+```
+
+Use the concurrency/load limits configured in Portage's `MAKEOPTS` when building.
+The tests cover both native fields, trailing separators, multiple and escaped
+values, empty/missing entries, packaged lock metadata, real KService discovery
+and child PID resolution, and refusal of stock keys through the consumers.
+The standalone build also compiles the production locker and capture policy,
+and reruns the capture trust/environment tests.
+Their service menu, cache and child processes use disposable roots and a private
+session bus; they do not change the installed desktop or start the real locker.
 
 Native lock and shortcut integration fixtures require the non-installable
 session-lock authorization option. They share one generated lock client

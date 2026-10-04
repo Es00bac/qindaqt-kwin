@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=QindaQt Portal Capture
+Exec=/usr/libexec/qindaqt-portal-capture
+NoDisplay=true
+X-QindaQt-KWin-DBus-Restricted-Interfaces=org.qindaqt.KWin.ScreenShot2;

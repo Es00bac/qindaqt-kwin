@@ -17,6 +17,8 @@
 #include <QProcess>
 // KF
 #include <KApplicationTrader>
+#include <KConfigGroup>
+#include <KDesktopFile>
 
 namespace KWin
 {
@@ -26,6 +28,20 @@ namespace KWin
 // not grant privileged access in a QindaQt session (container-wm ADR-0340).
 const static QString s_waylandInterfaceName = QStringLiteral("X-QindaQt-KWin-Wayland-Interfaces");
 const static QString s_dbusRestrictedInterfaceName = QStringLiteral("X-QindaQt-KWin-DBus-Restricted-Interfaces");
+
+// AGENT-CONTRACT: native privileged-interface fields are XDG desktop-entry
+// string lists (container-wm ADR-0340), not KConfig's comma-separated lists.
+// Read the selected service's source with KDE's XDG decoder so separators and
+// escaped literal values have the same meaning for discovery and private launch.
+// The caller retains its identity/trust checks; missing source grants nothing.
+static inline QStringList readServicePermissionList(const KService &service, const QString &fieldName)
+{
+    if (!service.isValid() || service.entryPath().isEmpty()) {
+        return {};
+    }
+    const KDesktopFile desktopFile(service.entryPath());
+    return desktopFile.desktopGroup().readXdgListEntry(fieldName);
+}
 
 static QStringList fetchProcessServiceField(const QString &executablePath, const QString &fieldName)
 {
@@ -44,7 +60,7 @@ static QStringList fetchProcessServiceField(const QString &executablePath, const
         return {};
     }
 
-    const auto fieldValues = servicesFound.first()->property<QStringList>(fieldName);
+    const auto fieldValues = readServicePermissionList(*servicesFound.first(), fieldName);
     if (KWIN_UTILS().isDebugEnabled()) {
         qCDebug(KWIN_UTILS) << "Interfaces found for" << executablePath << fieldName << ":" << fieldValues;
     }
@@ -57,7 +73,7 @@ static inline QStringList fetchRequestedInterfacesForDesktopId(const QString &de
     if (!service) {
         return {};
     }
-    return service->property<QStringList>(s_waylandInterfaceName);
+    return readServicePermissionList(*service, s_waylandInterfaceName);
 }
 
 static inline QStringList fetchRequestedInterfaces(const QString &executablePath)

@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=QindaQt Lock
+Exec=/usr/bin/qindaqt-lock
+NoDisplay=true
+X-QindaQt-KWin-Wayland-Interfaces=ext_session_lock_manager_v1;
